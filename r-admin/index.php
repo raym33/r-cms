@@ -11,29 +11,80 @@ if (!ccms_is_installed()) {
 $data = ccms_load_data();
 $flash = ccms_consume_flash();
 $currentAdmin = ccms_current_admin();
+$pendingTwoFactor = ccms_pending_2fa();
 $error = '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string) ($_POST['action'] ?? '');
 
-        if ($action === 'login') {
-            ccms_verify_same_origin_request();
-            $username = trim((string) ($_POST['username'] ?? ''));
-            $password = (string) ($_POST['password'] ?? '');
-            if (!ccms_login($username, $password)) {
-                throw new RuntimeException('Usuario o contraseña incorrectos.');
+        if (!$currentAdmin) {
+            if ($action === 'login') {
+                ccms_verify_same_origin_request();
+                $username = trim((string) ($_POST['username'] ?? ''));
+                $password = (string) ($_POST['password'] ?? '');
+                if (!ccms_login($username, $password)) {
+                    throw new RuntimeException('Usuario o contraseña incorrectos.');
+                }
+                if (ccms_pending_2fa()) {
+                    ccms_flash('success', 'Contraseña correcta. Introduce ahora el código de tu app de autenticación.');
+                    ccms_redirect('/r-admin/?step=2fa');
+                }
+                $freshData = ccms_load_data();
+                $loggedUser = ccms_current_admin();
+                if ($loggedUser) {
+                    ccms_push_audit_log($freshData, 'auth.login', 'User logged in', $loggedUser, [
+                        'ip' => ccms_client_ip(),
+                    ]);
+                    ccms_save_data($freshData);
+                }
+                ccms_flash('success', 'Sesión iniciada.');
+                ccms_redirect('/r-admin/');
             }
-            $freshData = ccms_load_data();
-            $loggedUser = ccms_current_admin();
-            if ($loggedUser) {
-                ccms_push_audit_log($freshData, 'auth.login', 'User logged in', $loggedUser, [
+
+            if ($action === 'verify_2fa') {
+                ccms_verify_same_origin_request();
+                ccms_verify_csrf();
+                $code = trim((string) ($_POST['totp_code'] ?? ''));
+                if (!ccms_complete_pending_2fa($code)) {
+                    throw new RuntimeException('Código 2FA no válido.');
+                }
+                $freshData = ccms_load_data();
+                $loggedUser = ccms_current_admin();
+                if ($loggedUser) {
+                    ccms_push_audit_log($freshData, 'auth.login_2fa', 'User completed 2FA login', $loggedUser, [
+                        'ip' => ccms_client_ip(),
+                    ]);
+                    ccms_save_data($freshData);
+                }
+                ccms_flash('success', 'Sesión iniciada con 2FA.');
+                ccms_redirect('/r-admin/');
+            }
+
+            if ($action === 'complete_password_reset') {
+                ccms_verify_same_origin_request();
+                ccms_verify_csrf();
+                $token = trim((string) ($_POST['reset_token'] ?? ''));
+                $newPassword = (string) ($_POST['new_password'] ?? '');
+                $confirmPassword = (string) ($_POST['confirm_new_password'] ?? '');
+                if (strlen($newPassword) < 10) {
+                    throw new RuntimeException('La nueva contraseña debe tener al menos 10 caracteres.');
+                }
+                if ($newPassword !== $confirmPassword) {
+                    throw new RuntimeException('Las contraseñas no coinciden.');
+                }
+                $data = ccms_load_data();
+                $resetUser = ccms_consume_password_reset_token($data, $token, $newPassword);
+                if (!$resetUser) {
+                    throw new RuntimeException('El enlace de recuperación no es válido o ha caducado.');
+                }
+                ccms_push_audit_log($data, 'auth.password_reset', 'Password reset completed', $resetUser, [
                     'ip' => ccms_client_ip(),
                 ]);
-                ccms_save_data($freshData);
+                ccms_save_data($data);
+                ccms_flash('success', 'Contraseña restablecida. Ya puedes iniciar sesión.');
+                ccms_redirect('/r-admin/');
             }
-            ccms_flash('success', 'Sesión iniciada.');
-            ccms_redirect('/r-admin/');
         }
 
         $currentAdmin = ccms_require_admin();
@@ -44,6 +95,62 @@ try {
 
         if ($mustChangePassword && $action !== 'change_own_password') {
             throw new RuntimeException('Debes cambiar tu contraseña temporal antes de continuar.');
+        }
+
+        if ($action === 'start_totp_setup') {
+            $secret = ccms_begin_totp_setup();
+            ccms_flash('success', 'Se ha generado una clave 2FA nueva. Añádela en tu app y confirma un código.');
+            ccms_redirect('/r-admin/?tab=account&setup_totp=1');
+        }
+
+        if ($action === 'cancel_totp_setup') {
+            ccms_clear_totp_setup();
+            ccms_flash('success', 'Configuración 2FA cancelada.');
+            ccms_redirect('/r-admin/?tab=account');
+        }
+
+        if ($action === 'enable_totp') {
+            $setupSecret = ccms_totp_setup_secret();
+            if (!$setupSecret) {
+                throw new RuntimeException('Primero debes generar una clave de configuración 2FA.');
+            }
+            $code = trim((string) ($_POST['totp_code'] ?? ''));
+            if (!ccms_verify_totp_code($setupSecret, $code)) {
+                throw new RuntimeException('El código de verificación no es válido.');
+            }
+            $selfIndex = ccms_find_user_index($data, (string) ($currentAdmin['id'] ?? ''));
+            if ($selfIndex === null) {
+                throw new RuntimeException('Usuario no encontrado.');
+            }
+            $data['users'][$selfIndex]['totp_secret'] = $setupSecret;
+            $data['users'][$selfIndex]['totp_enabled'] = true;
+            $data['users'][$selfIndex]['updated_at'] = ccms_now_iso();
+            ccms_push_audit_log($data, 'auth.2fa_enabled', 'Two-factor authentication enabled', $data['users'][$selfIndex]);
+            ccms_save_data($data);
+            ccms_clear_totp_setup();
+            $_SESSION['ccms_admin']['totp_enabled'] = true;
+            ccms_flash('success', '2FA activado correctamente.');
+            ccms_redirect('/r-admin/?tab=account');
+        }
+
+        if ($action === 'disable_totp') {
+            $currentPassword = (string) ($_POST['current_password'] ?? '');
+            $selfIndex = ccms_find_user_index($data, (string) ($currentAdmin['id'] ?? ''));
+            if ($selfIndex === null) {
+                throw new RuntimeException('Usuario no encontrado.');
+            }
+            if (!password_verify($currentPassword, (string) ($data['users'][$selfIndex]['password_hash'] ?? ''))) {
+                throw new RuntimeException('La contraseña actual no es correcta.');
+            }
+            $data['users'][$selfIndex]['totp_secret'] = '';
+            $data['users'][$selfIndex]['totp_enabled'] = false;
+            $data['users'][$selfIndex]['updated_at'] = ccms_now_iso();
+            ccms_push_audit_log($data, 'auth.2fa_disabled', 'Two-factor authentication disabled', $data['users'][$selfIndex]);
+            ccms_save_data($data);
+            ccms_clear_totp_setup();
+            $_SESSION['ccms_admin']['totp_enabled'] = false;
+            ccms_flash('success', '2FA desactivado.');
+            ccms_redirect('/r-admin/?tab=account');
         }
 
         if ($action === 'change_own_password') {
@@ -420,6 +527,8 @@ try {
                 'role' => $role,
                 'must_change_password' => true,
                 'last_login_at' => null,
+                'totp_secret' => '',
+                'totp_enabled' => false,
                 'created_at' => ccms_now_iso(),
                 'updated_at' => ccms_now_iso(),
             ];
@@ -485,6 +594,23 @@ try {
             ccms_redirect('/r-admin/?tab=users');
         }
 
+        if ($action === 'create_password_reset_token') {
+            ccms_require_capability('users_manage');
+            $userId = (string) ($_POST['user_id'] ?? '');
+            $index = ccms_find_user_index($data, $userId);
+            if ($index === null) {
+                throw new RuntimeException('Usuario no encontrado.');
+            }
+            $token = ccms_create_password_reset_token($data, $data['users'][$index], $currentAdmin);
+            $resetUrl = ccms_base_url() . '/r-admin/?reset=' . rawurlencode($token);
+            ccms_push_audit_log($data, 'user.reset_link_created', 'Password reset link created', $currentAdmin, [
+                'target_user' => $data['users'][$index]['username'] ?? '',
+            ]);
+            ccms_save_data($data);
+            ccms_flash('success', 'Enlace de restablecimiento generado: ' . $resetUrl);
+            ccms_redirect('/r-admin/?tab=users');
+        }
+
         if ($action === 'delete_user') {
             ccms_require_capability('users_manage');
             $userId = (string) ($_POST['user_id'] ?? '');
@@ -517,6 +643,7 @@ try {
 
 $data = ccms_load_data();
 $currentAdmin = ccms_current_admin();
+$pendingTwoFactor = ccms_pending_2fa();
 $canManageSite = ccms_user_can('site_manage');
 $canManageUsers = ccms_user_can('users_manage');
 $canManagePages = ccms_user_can('pages_manage');
@@ -558,6 +685,9 @@ $selectedRevisions = $selectedPage && is_array($selectedPage['revisions'] ?? nul
 $storageInfo = ccms_storage_runtime_info();
 $aiSettings = ccms_ai_settings($data);
 $auditLogs = array_slice(is_array($data['audit_logs'] ?? null) ? $data['audit_logs'] : [], 0, 80);
+$totpSetupSecret = $currentAdmin ? ccms_totp_setup_secret() : null;
+$resetTokenValue = !$currentAdmin ? trim((string) ($_GET['reset'] ?? '')) : '';
+$resetTokenEntry = (!$currentAdmin && $resetTokenValue !== '') ? ccms_find_valid_reset_token($data, $resetTokenValue) : null;
 $sectionTemplates = [
     [
         'id' => 'hero',
@@ -802,22 +932,62 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     <?php if (!$currentAdmin): ?>
       <div class="card" style="max-width:520px;margin:40px auto;padding:26px">
         <p class="muted"><strong>LinuxCMS</strong></p>
-        <h1 style="margin:0 0 12px;font-size:42px;line-height:1">Entrar al panel</h1>
-        <p class="muted">Usa tu usuario y contraseña para editar páginas, colores, medios y contenido publicado.</p>
+        <h1 style="margin:0 0 12px;font-size:42px;line-height:1"><?= $pendingTwoFactor ? 'Verificación en dos pasos' : ($resetTokenEntry ? 'Restablecer contraseña' : 'Entrar al panel') ?></h1>
+        <p class="muted">
+          <?php if ($pendingTwoFactor): ?>
+            Introduce el código de 6 dígitos de tu app de autenticación para completar el acceso.
+          <?php elseif ($resetTokenEntry): ?>
+            Elige una nueva contraseña segura para recuperar esta cuenta.
+          <?php else: ?>
+            Usa tu usuario y contraseña para editar páginas, colores, medios y contenido publicado.
+          <?php endif; ?>
+        </p>
         <?php if ($flash): ?><div class="flash <?= ccms_h($flash['type']) ?>"><?= ccms_h($flash['message']) ?></div><?php endif; ?>
         <?php if ($error !== ''): ?><div class="flash error"><?= ccms_h($error) ?></div><?php endif; ?>
-        <form method="post">
-          <input type="hidden" name="action" value="login">
-          <div class="field">
-            <label for="username">Usuario</label>
-            <input id="username" name="username" required>
-          </div>
-          <div class="field">
-            <label for="password">Contraseña</label>
-            <input id="password" name="password" type="password" required>
-          </div>
-          <button class="btn" type="submit">Entrar</button>
-        </form>
+        <?php if ($pendingTwoFactor): ?>
+          <form method="post">
+            <input type="hidden" name="action" value="verify_2fa">
+            <input type="hidden" name="csrf_token" value="<?= ccms_h(ccms_csrf_token()) ?>">
+            <div class="field">
+              <label for="totp_code">Código 2FA</label>
+              <input id="totp_code" name="totp_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+            </div>
+            <button class="btn" type="submit">Validar y entrar</button>
+          </form>
+        <?php elseif ($resetTokenValue !== ''): ?>
+          <?php if ($resetTokenEntry): ?>
+            <form method="post">
+              <input type="hidden" name="action" value="complete_password_reset">
+              <input type="hidden" name="csrf_token" value="<?= ccms_h(ccms_csrf_token()) ?>">
+              <input type="hidden" name="reset_token" value="<?= ccms_h($resetTokenValue) ?>">
+              <div class="field">
+                <label for="new_password">Nueva contraseña</label>
+                <input id="new_password" name="new_password" type="password" minlength="10" required>
+              </div>
+              <div class="field">
+                <label for="confirm_new_password">Repite la nueva contraseña</label>
+                <input id="confirm_new_password" name="confirm_new_password" type="password" minlength="10" required>
+              </div>
+              <button class="btn" type="submit">Guardar contraseña</button>
+            </form>
+          <?php else: ?>
+            <div class="flash error">El enlace de recuperación no es válido o ha caducado.</div>
+            <a class="btn btn-secondary" href="/r-admin/">Volver al acceso</a>
+          <?php endif; ?>
+        <?php else: ?>
+          <form method="post">
+            <input type="hidden" name="action" value="login">
+            <div class="field">
+              <label for="username">Usuario</label>
+              <input id="username" name="username" required>
+            </div>
+            <div class="field">
+              <label for="password">Contraseña</label>
+              <input id="password" name="password" type="password" required>
+            </div>
+            <button class="btn" type="submit">Entrar</button>
+          </form>
+        <?php endif; ?>
       </div>
     <?php else: ?>
       <header class="topbar">
@@ -867,6 +1037,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
               <div class="small"><strong>Email:</strong> <?= ccms_h((string) ($currentAdmin['email'] ?? '')) ?></div>
               <div class="small"><strong>Rol:</strong> <?= ccms_h((string) ($currentAdmin['role'] ?? '')) ?></div>
               <div class="small"><strong>Último acceso:</strong> <?= ccms_h((string) ($currentAdmin['last_login_at'] ?? 'Sin registrar')) ?></div>
+              <div class="small"><strong>2FA:</strong> <?= !empty($currentAdmin['totp_enabled']) ? 'Activado' : 'Desactivado' ?></div>
             </div>
           </aside>
           <section class="workspace">
@@ -887,6 +1058,61 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                   <button class="btn" type="submit">Guardar nueva contraseña</button>
                 </div>
               </form>
+            </div>
+            <div class="card editor-card">
+              <div class="editor-header">
+                <div class="editor-title">
+                  <div class="chip">2FA</div>
+                  <h2>Autenticación en dos pasos</h2>
+                  <p class="muted" style="margin:0">Añade una capa extra de seguridad con una app tipo Google Authenticator, 1Password o Authy.</p>
+                </div>
+              </div>
+              <?php if (!empty($currentAdmin['totp_enabled'])): ?>
+                <div class="help-box">
+                  <h4>2FA activado</h4>
+                  <p class="small">Tu cuenta ya requiere un código adicional al iniciar sesión.</p>
+                </div>
+                <form method="post" class="stack" style="max-width:560px">
+                  <input type="hidden" name="action" value="disable_totp">
+                  <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                  <div class="field"><label>Contraseña actual</label><input name="current_password" type="password" required></div>
+                  <div class="toolbar">
+                    <button class="btn btn-danger" type="submit">Desactivar 2FA</button>
+                  </div>
+                </form>
+              <?php else: ?>
+                <?php if ($totpSetupSecret): ?>
+                  <div class="help-box">
+                    <h4>Configura tu app</h4>
+                    <p class="small">Añade esta clave manualmente en tu app de autenticación y escribe un código de 6 dígitos para confirmar.</p>
+                    <div class="small"><strong>Clave secreta:</strong> <code><?= ccms_h($totpSetupSecret) ?></code></div>
+                    <div class="small" style="margin-top:8px;word-break:break-all"><strong>URI:</strong> <code><?= ccms_h(ccms_totp_otpauth_uri($currentAdmin, $totpSetupSecret)) ?></code></div>
+                  </div>
+                  <form method="post" class="stack" style="max-width:560px">
+                    <input type="hidden" name="action" value="enable_totp">
+                    <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                    <div class="field"><label>Código de verificación</label><input name="totp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></div>
+                    <div class="toolbar">
+                      <button class="btn" type="submit">Activar 2FA</button>
+                    </div>
+                  </form>
+                  <form method="post" style="margin-top:10px">
+                    <input type="hidden" name="action" value="cancel_totp_setup">
+                    <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                    <button class="btn btn-secondary" type="submit">Cancelar configuración</button>
+                  </form>
+                <?php else: ?>
+                  <div class="help-box">
+                    <h4>2FA desactivado</h4>
+                    <p class="small">Actívalo para que el acceso al panel requiera tu contraseña y un código temporal de 6 dígitos.</p>
+                  </div>
+                  <form method="post">
+                    <input type="hidden" name="action" value="start_totp_setup">
+                    <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                    <button class="btn" type="submit">Empezar configuración 2FA</button>
+                  </form>
+                <?php endif; ?>
+              <?php endif; ?>
             </div>
           </section>
         </div>
@@ -1232,11 +1458,20 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                       <div class="small">
                         Último acceso: <?= ccms_h((string) (($user['last_login_at'] ?? null) ?: 'Sin registrar')) ?>
                         · Cambio obligatorio de contraseña: <?= !empty($user['must_change_password']) ? 'Sí' : 'No' ?>
+                        · 2FA: <?= !empty($user['totp_enabled']) ? 'Sí' : 'No' ?>
                       </div>
                       <div class="toolbar">
                         <button class="btn" type="submit">Guardar usuario</button>
                       </div>
                     </form>
+                    <?php if (($user['id'] ?? '') !== ($currentAdmin['id'] ?? '')): ?>
+                      <form method="post" style="margin-top:10px">
+                        <input type="hidden" name="action" value="create_password_reset_token">
+                        <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                        <input type="hidden" name="user_id" value="<?= ccms_h((string) ($user['id'] ?? '')) ?>">
+                        <button class="btn btn-secondary" type="submit">Generar enlace de recuperación</button>
+                      </form>
+                    <?php endif; ?>
                     <?php if (($user['id'] ?? '') !== ($currentAdmin['id'] ?? '')): ?>
                       <form method="post" style="margin-top:10px" onsubmit="return confirm('¿Seguro que quieres eliminar este usuario?');">
                         <input type="hidden" name="action" value="delete_user">

@@ -19,8 +19,10 @@ It is security-conscious by default, but it is not presented as a formally audit
   - `owner`
   - `editor`
   - `viewer`
+- optional TOTP 2FA for admin accounts
 - forced password change for newly created or reset user accounts
 - audit log for sensitive admin actions
+- owner-generated password reset links
 - `HttpOnly` + `SameSite=Lax` session cookies
 - session rotation on successful login
 - basic idle session expiry handling
@@ -48,8 +50,6 @@ For `/r-admin`, use:
 
 ## Known limitations
 
-- no 2FA yet
-- no formal audit log yet
 - no external identity provider yet
 - shared-hosting hardening still depends partly on provider configuration
 - CSP is intentionally permissive enough to support the current inline admin UX and LM Studio local integration

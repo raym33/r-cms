@@ -71,6 +71,8 @@ LinuxCMS already includes:
   - security headers and admin no-cache headers
   - audit log for sensitive admin actions
   - forced password change for temporary user credentials
+  - optional TOTP 2FA for admin accounts
+  - owner-generated password reset links
 
 ## Local development
 
@@ -121,6 +123,8 @@ Current protections include:
   - `owner`
   - `editor`
   - `viewer`
+- optional TOTP 2FA for admin accounts
+- owner-generated password reset links
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
@@ -150,6 +154,8 @@ This test exercises more than 100 checks, including:
 - JSON and SQLite storage
 - CSRF and same-origin checks
 - login, logout and throttling
+- TOTP 2FA login completion
+- password reset token generation and consumption
 - role permissions
 - LM Studio fallback generation
 - capsule rendering

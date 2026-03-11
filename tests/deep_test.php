@@ -161,6 +161,30 @@ lc_assert(ccms_user_can('ai_generate') === true, 'owner has ai_generate');
 ccms_logout();
 lc_assert(ccms_current_admin() === null, 'logout clears current admin');
 
+// TOTP flow
+$data = ccms_load_data();
+$ownerIndex = ccms_find_user_index($data, (string) $data['users'][0]['id']);
+$ownerSecret = ccms_generate_totp_secret();
+$data['users'][$ownerIndex]['totp_secret'] = $ownerSecret;
+$data['users'][$ownerIndex]['totp_enabled'] = true;
+ccms_save_data($data);
+lc_assert(ccms_login('owner', 'PasswordDemo2026!') === true, 'owner login with 2fa first step works');
+lc_assert(ccms_current_admin() === null, '2fa login does not create full session before code');
+$pending = ccms_pending_2fa();
+lc_assert(($pending['username'] ?? '') === 'owner', 'pending 2fa session is stored');
+lc_assert(ccms_complete_pending_2fa('000000') === false, 'invalid 2fa code is rejected');
+lc_assert(ccms_complete_pending_2fa(ccms_totp_code($ownerSecret)) === true, 'valid 2fa code completes login');
+lc_assert(ccms_current_admin()['username'] === 'owner', '2fa completion restores admin session');
+lc_assert(!empty(ccms_current_admin()['totp_enabled']), 'current admin reports totp enabled');
+ccms_logout();
+lc_assert(ccms_pending_2fa() === null, 'logout clears pending 2fa session');
+
+$data = ccms_load_data();
+$ownerIndex = ccms_find_user_index($data, (string) $data['users'][0]['id']);
+$data['users'][$ownerIndex]['totp_secret'] = '';
+$data['users'][$ownerIndex]['totp_enabled'] = false;
+ccms_save_data($data);
+
 // Login throttling
 for ($i = 0; $i < 5; $i++) {
     $ok = ccms_login('owner', 'wrong-password');
@@ -209,6 +233,22 @@ lc_assert(ccms_login('viewer-user', 'ViewerPass2026!') === true, 'viewer login w
 lc_assert(ccms_user_can('pages_manage') === false, 'viewer cannot manage pages');
 lc_assert(ccms_user_can('media_manage') === false, 'viewer cannot manage media');
 lc_assert(ccms_user_can('ai_generate') === false, 'viewer cannot generate with AI');
+ccms_logout();
+ccms_login('owner', 'PasswordDemo2026!');
+
+// Password reset tokens
+$data = ccms_load_data();
+$editorUser = ccms_find_user($data, (string) $data['users'][1]['id']);
+$resetToken = ccms_create_password_reset_token($data, $editorUser, ccms_current_admin());
+lc_assert(strlen($resetToken) >= 20, 'password reset token generated');
+lc_assert(ccms_find_valid_reset_token($data, $resetToken) !== null, 'valid password reset token can be found');
+$consumedUser = ccms_consume_password_reset_token($data, $resetToken, 'EditorResetPass2026!');
+lc_assert(($consumedUser['username'] ?? '') === 'editor-user', 'password reset token updates target user');
+lc_assert(ccms_find_valid_reset_token($data, $resetToken) === null, 'used password reset token becomes invalid');
+ccms_save_data($data);
+ccms_logout();
+lc_assert(ccms_login('editor-user', 'EditorResetPass2026!') === true, 'editor can login with reset password');
+lc_assert(empty(ccms_current_admin()['must_change_password']), 'password reset clears forced password change');
 ccms_logout();
 ccms_login('owner', 'PasswordDemo2026!');
 
@@ -333,6 +373,32 @@ lc_assert(str_contains($adminHtml, 'Guardar configuración'), 'studio settings f
 lc_assert(str_contains($adminHtml, 'Generar borrador con LM Studio'), 'studio generate button rendered');
 lc_assert(str_contains($adminHtml, 'Cómo funciona LinuxCMS'), 'admin renders LinuxCMS guidance copy');
 
+// Include login screen in pending 2FA mode
+$_GET = ['step' => '2fa'];
+unset($_SESSION['ccms_admin']);
+$_SESSION['ccms_pending_2fa'] = [
+    'id' => $data['users'][0]['id'],
+    'username' => $data['users'][0]['username'],
+    'email' => $data['users'][0]['email'],
+    'role' => 'owner',
+];
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$twoFactorHtml = ob_get_clean();
+lc_assert(str_contains($twoFactorHtml, 'Verificación en dos pasos'), 'pending 2fa screen renders');
+lc_assert(str_contains($twoFactorHtml, 'Código 2FA'), 'pending 2fa form renders');
+unset($_SESSION['ccms_pending_2fa']);
+
+// Include login screen in password-reset mode
+$data = ccms_load_data();
+$_GET = ['reset' => ccms_create_password_reset_token($data, $data['users'][1], $data['users'][0])];
+ccms_save_data($data);
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$resetHtml = ob_get_clean();
+lc_assert(str_contains($resetHtml, 'Restablecer contraseña'), 'password reset screen renders');
+lc_assert(str_contains($resetHtml, 'Guardar contraseña'), 'password reset form renders');
+
 // Include admin as viewer
 $_GET = ['tab' => 'pages'];
 $_SESSION['ccms_admin'] = [
@@ -351,6 +417,10 @@ lc_assert(!str_contains($viewerHtml, 'Guardar página'), 'viewer does not see sa
 
 // Include admin as forced-password user
 $_GET = ['tab' => 'pages'];
+$data = ccms_load_data();
+$editorIndex = ccms_find_user_index($data, (string) $data['users'][1]['id']);
+$data['users'][$editorIndex]['must_change_password'] = true;
+ccms_save_data($data);
 $_SESSION['ccms_admin'] = [
     'id' => $data['users'][1]['id'],
     'username' => $data['users'][1]['username'],
@@ -364,6 +434,27 @@ $forcedHtml = ob_get_clean();
 lc_assert(str_contains($forcedHtml, 'Tu cuenta usa una contraseña temporal'), 'forced-password banner is visible');
 lc_assert(str_contains($forcedHtml, 'Guardar nueva contraseña'), 'forced-password form is rendered');
 lc_assert(!str_contains($forcedHtml, 'Generar borrador con LM Studio'), 'forced-password mode hides the studio view');
+
+// Include account tab with 2FA enabled
+$_GET = ['tab' => 'account'];
+$_SESSION['ccms_admin'] = [
+    'id' => $data['users'][0]['id'],
+    'username' => $data['users'][0]['username'],
+    'email' => $data['users'][0]['email'],
+    'role' => 'owner',
+    'must_change_password' => false,
+    'totp_enabled' => true,
+];
+$data = ccms_load_data();
+$ownerIndex = ccms_find_user_index($data, (string) $data['users'][0]['id']);
+$data['users'][$ownerIndex]['totp_secret'] = ccms_generate_totp_secret();
+$data['users'][$ownerIndex]['totp_enabled'] = true;
+ccms_save_data($data);
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$account2faHtml = ob_get_clean();
+lc_assert(str_contains($account2faHtml, 'Autenticación en dos pasos'), 'account tab renders 2fa section');
+lc_assert(str_contains($account2faHtml, 'Desactivar 2FA'), 'account tab renders disable 2fa action');
 
 // Include admin audit tab as owner
 $_GET = ['tab' => 'audit'];

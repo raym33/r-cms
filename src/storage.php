@@ -117,7 +117,33 @@ function ccms_default_data(): array
         'pages' => [],
         'media' => [],
         'audit_logs' => [],
+        'password_reset_tokens' => [],
     ];
+}
+
+function ccms_normalize_password_reset_tokens(array $data): array
+{
+    $data['password_reset_tokens'] = array_values(array_filter(array_map(static function ($entry) {
+        if (!is_array($entry) || trim((string) ($entry['token'] ?? '')) === '') {
+            return null;
+        }
+        return [
+            'id' => (string) ($entry['id'] ?? ccms_next_id('reset')),
+            'token' => trim((string) ($entry['token'] ?? '')),
+            'user_id' => trim((string) ($entry['user_id'] ?? '')),
+            'created_at' => (string) ($entry['created_at'] ?? ccms_now_iso()),
+            'expires_at' => (string) ($entry['expires_at'] ?? ccms_now_iso()),
+            'used_at' => ($entry['used_at'] ?? null) ? (string) $entry['used_at'] : null,
+            'created_by' => [
+                'id' => trim((string) ($entry['created_by']['id'] ?? '')),
+                'username' => trim((string) ($entry['created_by']['username'] ?? '')),
+            ],
+        ];
+    }, is_array($data['password_reset_tokens'] ?? null) ? $data['password_reset_tokens'] : []), static function ($entry): bool {
+        return is_array($entry) && $entry['token'] !== '';
+    }));
+
+    return $data;
 }
 
 function ccms_normalize_users(array $data): array
@@ -134,6 +160,8 @@ function ccms_normalize_users(array $data): array
             'role' => in_array(($user['role'] ?? 'editor'), ['owner', 'editor', 'viewer'], true) ? (string) $user['role'] : 'editor',
             'must_change_password' => !empty($user['must_change_password']),
             'last_login_at' => ($user['last_login_at'] ?? null) ? (string) $user['last_login_at'] : null,
+            'totp_secret' => trim((string) ($user['totp_secret'] ?? '')),
+            'totp_enabled' => !empty($user['totp_enabled']),
             'created_at' => (string) ($user['created_at'] ?? ccms_now_iso()),
             'updated_at' => (string) ($user['updated_at'] ?? ccms_now_iso()),
         ];
@@ -150,6 +178,8 @@ function ccms_normalize_users(array $data): array
             'role' => 'owner',
             'must_change_password' => false,
             'last_login_at' => null,
+            'totp_secret' => '',
+            'totp_enabled' => false,
             'created_at' => (string) ($data['admin']['created_at'] ?? ccms_now_iso()),
             'updated_at' => (string) ($data['admin']['created_at'] ?? ccms_now_iso()),
         ];
@@ -175,7 +205,7 @@ function ccms_normalize_users(array $data): array
         ];
     }
 
-    return $data;
+    return ccms_normalize_password_reset_tokens($data);
 }
 
 function ccms_audit_log_entry(string $action, string $label, ?array $user = null, array $meta = []): array

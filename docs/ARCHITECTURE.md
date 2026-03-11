@@ -64,6 +64,8 @@ Main structures:
 - `viewer`
   - read-only admin review mode
 - newly created users can be forced to change their temporary password on first login
+- admin accounts can optionally enable TOTP 2FA
+- owners can generate one-time password reset links for other users
 - sensitive actions are recorded in `audit_logs`
 
 ## Page model
