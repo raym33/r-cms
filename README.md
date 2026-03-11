@@ -68,6 +68,7 @@ LinuxCMS already includes:
 - double-click visible images in the selected preview block to jump to the matching media field
 - inline text editing inside the preview for selected blocks, synced back to the builder
 - double-click visible links in the selected preview block to edit both label and URL
+- double-click visible buttons in the selected preview block to edit label, URL and basic button colors
 - page revisions and restore
 - page duplication
 - media library

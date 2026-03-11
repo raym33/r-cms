@@ -143,6 +143,24 @@ function ccms_capsule_section_style_attr(array $block, string $defaultStyle = ''
     if (!empty($style['text_color'])) {
         $rules[] = 'color:' . (string) $style['text_color'];
     }
+    if (!empty($style['button_bg'])) {
+        $rules[] = '--ccms-button-bg:' . (string) $style['button_bg'];
+    }
+    if (!empty($style['button_text_color'])) {
+        $rules[] = '--ccms-button-color:' . (string) $style['button_text_color'];
+    }
+    if (!empty($style['button_border_color'])) {
+        $rules[] = '--ccms-button-border:' . (string) $style['button_border_color'];
+    }
+    if (!empty($style['button_ghost_bg'])) {
+        $rules[] = '--ccms-button-ghost-bg:' . (string) $style['button_ghost_bg'];
+    }
+    if (!empty($style['button_ghost_text_color'])) {
+        $rules[] = '--ccms-button-ghost-color:' . (string) $style['button_ghost_text_color'];
+    }
+    if (!empty($style['button_ghost_border_color'])) {
+        $rules[] = '--ccms-button-ghost-border:' . (string) $style['button_ghost_border_color'];
+    }
     return $rules === [] ? '' : ' style="' . ccms_h(implode(';', $rules) . ';') . '"';
 }
 
@@ -300,8 +318,8 @@ function ccms_render_capsule_body(array $capsule): string
       .ccms-capsule section{position:relative}
       .ccms-c-inner{width:min(1180px,calc(100% - 48px));margin:0 auto}
       .ccms-chip{display:inline-flex;padding:8px 14px;border-radius:999px;background:rgba(229,115,115,.12);color:' . ccms_h($style['accent_dark']) . ';font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-      .ccms-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 22px;border-radius:999px;background:' . ccms_h($style['gradient_accent']) . ';color:#fff;text-decoration:none;font-weight:800;box-shadow:0 18px 34px -24px rgba(0,0,0,.28)}
-      .ccms-btn--ghost{background:#fff;color:' . ccms_h($style['text_primary']) . ';border:1px solid rgba(0,0,0,.08)}
+      .ccms-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 22px;border-radius:999px;background:var(--ccms-button-bg,' . ccms_h($style['gradient_accent']) . ');color:var(--ccms-button-color,#fff);text-decoration:none;font-weight:800;box-shadow:0 18px 34px -24px rgba(0,0,0,.28);border:1px solid var(--ccms-button-border,transparent)}
+      .ccms-btn--ghost{background:var(--ccms-button-ghost-bg,#fff);color:var(--ccms-button-ghost-color,' . ccms_h($style['text_primary']) . ');border:1px solid var(--ccms-button-ghost-border,rgba(0,0,0,.08))}
       .ccms-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
       .ccms-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
       .ccms-card{background:' . ccms_h($style['card_bg']) . ';border:1px solid ' . ccms_h($style['card_border']) . ';border-radius:24px;box-shadow:0 28px 55px -34px rgba(0,0,0,.18)}
@@ -471,6 +489,45 @@ function ccms_admin_preview_html(string $html): string
               setSelected(index);
               const originalText = (el.textContent || "").trim();
               const tag = (el.tagName || "").toLowerCase();
+              const isButtonLike = el.matches(".ccms-btn, button, [role=\"button\"]");
+              if (isButtonLike) {
+                const originalHref = String(el.getAttribute("href") || "").trim();
+                const currentStyle = window.getComputedStyle(el);
+                const currentBg = currentStyle.backgroundColor || "";
+                const currentColor = currentStyle.color || "";
+                const newText = window.prompt("Edit button text", originalText);
+                if (newText === null) {
+                  return;
+                }
+                const hrefPrompt = tag === "a" ? window.prompt("Edit button URL", originalHref) : originalHref;
+                if (hrefPrompt === null) {
+                  return;
+                }
+                const bgPrompt = window.prompt("Edit button background color", currentBg);
+                if (bgPrompt === null) {
+                  return;
+                }
+                const colorPrompt = window.prompt("Edit button text color", currentColor);
+                if (colorPrompt === null) {
+                  return;
+                }
+                if (newText.trim() !== originalText || String(hrefPrompt).trim() !== originalHref || String(bgPrompt).trim() !== currentBg || String(colorPrompt).trim() !== currentColor) {
+                  postToParent({
+                    type: "ccms-preview-apply-button",
+                    index,
+                    tag,
+                    oldText: originalText.slice(0, 220),
+                    newText: newText.trim().slice(0, 220),
+                    oldHref: originalHref,
+                    newHref: String(hrefPrompt).trim().slice(0, 500),
+                    buttonBg: String(bgPrompt).trim().slice(0, 120),
+                    buttonTextColor: String(colorPrompt).trim().slice(0, 120),
+                    blockType: node.dataset.ccmsBlockType || "",
+                    blockId: node.dataset.ccmsBlockId || ""
+                  });
+                }
+                return;
+              }
               if (tag === "a") {
                 const originalHref = String(el.getAttribute("href") || "").trim();
                 postToParent({

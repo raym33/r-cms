@@ -1985,6 +1985,12 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       { key: "text_align", label: "Text align", type: "select", options: ["", "left", "center", "right"] },
       { key: "background", label: "Background override", type: "text", placeholder: "#fff or linear-gradient(...)" },
       { key: "text_color", label: "Text color", type: "color", placeholder: "Optional" },
+      { key: "button_bg", label: "Button background", type: "color", placeholder: "Optional" },
+      { key: "button_text_color", label: "Button text color", type: "color", placeholder: "Optional" },
+      { key: "button_border_color", label: "Button border color", type: "color", placeholder: "Optional" },
+      { key: "button_ghost_bg", label: "Ghost button background", type: "color", placeholder: "Optional" },
+      { key: "button_ghost_text_color", label: "Ghost button text color", type: "color", placeholder: "Optional" },
+      { key: "button_ghost_border_color", label: "Ghost button border color", type: "color", placeholder: "Optional" },
     ];
 
     function escapeHtml(value) {
@@ -2522,6 +2528,22 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       target.focus({ preventScroll: false });
       if (typeof target.select === "function") target.select();
       target.scrollIntoView({ block: "center", behavior: "smooth" });
+      return true;
+    }
+
+    function applySelectedBlockButtonStyle(styleUpdates = {}) {
+      if (activeBuilderBlockIndex < 0 || !capsuleState.blocks[activeBuilderBlockIndex]) return false;
+      capsuleState.blocks[activeBuilderBlockIndex].style ||= {};
+      Object.entries(styleUpdates || {}).forEach(([key, value]) => {
+        const normalized = String(value || "").trim();
+        if (normalized === "") {
+          delete capsuleState.blocks[activeBuilderBlockIndex].style[key];
+        } else {
+          capsuleState.blocks[activeBuilderBlockIndex].style[key] = normalized;
+        }
+      });
+      renderBuilderBlocks();
+      selectBuilderBlock(activeBuilderBlockIndex, { scroll: false, syncPreview: true });
       return true;
     }
 
@@ -3640,6 +3662,23 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         if (String(payload.oldText || "") !== String(payload.newText || "")) {
           applySelectedBlockTextField(String(payload.oldText || ""), String(payload.newText || ""), String(payload.tag || "a"));
         }
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-apply-button") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        if (String(payload.oldHref || "") || String(payload.newHref || "")) {
+          applySelectedBlockLinkField(String(payload.oldHref || ""), String(payload.newHref || ""), String(payload.oldText || payload.text || ""));
+        }
+        if (String(payload.oldText || "") !== String(payload.newText || "")) {
+          applySelectedBlockTextField(String(payload.oldText || ""), String(payload.newText || ""), String(payload.tag || "button"));
+        }
+        applySelectedBlockButtonStyle({
+          button_bg: String(payload.buttonBg || ""),
+          button_text_color: String(payload.buttonTextColor || ""),
+        });
         return;
       }
       if (payload && payload.type === "ccms-preview-action") {

@@ -319,6 +319,7 @@ lc_assert(str_contains($previewHtml, 'ccms-preview-apply-text'), 'admin preview 
 lc_assert(str_contains($previewHtml, 'ccms-preview-quick-media'), 'admin preview includes quick media hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-quick-link'), 'admin preview includes quick link hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-apply-link'), 'admin preview includes inline link apply hook');
+lc_assert(str_contains($previewHtml, 'ccms-preview-apply-button'), 'admin preview includes inline button apply hook');
 lc_assert(str_contains($previewHtml, 'Edit content'), 'admin preview includes edit content action');
 lc_assert(str_contains($previewHtml, 'Edit link'), 'admin preview includes edit link action');
 lc_assert(str_contains($previewHtml, 'Edit media'), 'admin preview includes edit media action');
@@ -500,6 +501,9 @@ lc_assert(ccms_capsule_media_url('/uploads/demo.png', 'seed', 800, 600) === '/up
 $styleAttr = ccms_capsule_section_style_attr(['style' => ['padding_top' => 80, 'background' => '#fff']], 'padding:10px');
 lc_assert(str_contains($styleAttr, 'padding-top:80px'), 'section style attr includes padding top');
 lc_assert(str_contains($styleAttr, 'background:#fff'), 'section style attr includes background');
+$buttonStyleAttr = ccms_capsule_section_style_attr(['style' => ['button_bg' => '#112233', 'button_text_color' => '#ffffff']], '');
+lc_assert(str_contains($buttonStyleAttr, '--ccms-button-bg:#112233'), 'section style attr includes button background var');
+lc_assert(str_contains($buttonStyleAttr, '--ccms-button-color:#ffffff'), 'section style attr includes button text color var');
 $innerAttr = ccms_capsule_inner_style_attr(['style' => ['content_width' => 900]]);
 lc_assert(str_contains($innerAttr, '900px'), 'inner style attr includes content width');
 
