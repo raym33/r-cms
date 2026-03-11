@@ -102,6 +102,24 @@ Then open:
 - `http://127.0.0.1:8088/install.php`
 - `http://127.0.0.1:8088/r-admin`
 
+### macOS stable mode
+
+If you do not want the local server to depend on an open Terminal window, install the bundled `launchd` service:
+
+```bash
+bash scripts/install_launchd.sh
+```
+
+Then open:
+
+- `http://127.0.0.1:8088/r-admin/`
+
+To remove it later:
+
+```bash
+bash scripts/uninstall_launchd.sh
+```
+
 ## LM Studio setup
 
 1. Run LM Studio locally.
