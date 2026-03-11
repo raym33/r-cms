@@ -184,6 +184,12 @@ try {
             $data['site']['tagline'] = trim((string) ($_POST['site_tagline'] ?? ''));
             $data['site']['footer_text'] = trim((string) ($_POST['footer_text'] ?? ''));
             $data['site']['contact_email'] = trim((string) ($_POST['contact_email'] ?? ''));
+            $themePreset = trim((string) ($_POST['theme_preset'] ?? 'warm'));
+            if (!in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
+                $themePreset = 'warm';
+            }
+            $data['site']['theme_preset'] = $themePreset;
+            $data['site']['custom_css'] = trim((string) ($_POST['custom_css'] ?? ''));
             $data['site']['colors'] = [
                 'bg' => trim((string) ($_POST['color_bg'] ?? '#f7f4ee')),
                 'surface' => trim((string) ($_POST['color_surface'] ?? '#ffffff')),
@@ -194,6 +200,7 @@ try {
             ];
             ccms_push_audit_log($data, 'site.updated', 'Site settings updated', $currentAdmin, [
                 'contact_email' => $data['site']['contact_email'],
+                'theme_preset' => $data['site']['theme_preset'],
             ]);
             ccms_save_data($data);
             ccms_flash('success', 'Configuración del sitio guardada.');
@@ -1260,6 +1267,29 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
               </div>
               <div class="field"><label>Subtítulo</label><input name="site_tagline" value="<?= ccms_h((string) $data['site']['tagline']) ?>"></div>
               <div class="field"><label>Texto del footer</label><input name="footer_text" value="<?= ccms_h((string) $data['site']['footer_text']) ?>"></div>
+              <div class="split-2">
+                <div class="field">
+                  <label>Tema visual</label>
+                  <select name="theme_preset">
+                    <?php
+                      $themeOptions = [
+                          'warm' => 'Warm',
+                          'editorial' => 'Editorial',
+                          'minimal' => 'Minimal',
+                          'bold' => 'Bold',
+                      ];
+                      $activeThemePreset = (string) ($data['site']['theme_preset'] ?? 'warm');
+                    ?>
+                    <?php foreach ($themeOptions as $themeValue => $themeLabel): ?>
+                      <option value="<?= ccms_h($themeValue) ?>" <?= $activeThemePreset === $themeValue ? 'selected' : '' ?>><?= ccms_h($themeLabel) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="help-box" style="padding:14px 16px">
+                  <h4 style="margin:0 0 6px">Cómo funciona</h4>
+                  <p class="small" style="margin:0">El preset cambia tipografía, radios, sombras y el look general. Los colores siguen mandando desde la paleta de abajo.</p>
+                </div>
+              </div>
               <div class="color-grid">
                 <?php
                   $siteColors = [
@@ -1281,6 +1311,11 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                   </div>
                 <?php endforeach; ?>
               </div>
+              <div class="field">
+                <label>CSS personalizado del sitio</label>
+                <textarea name="custom_css" class="html-editor" style="min-height:180px" placeholder="/* CSS opcional para retoques globales del tema */"><?= ccms_h((string) ($data['site']['custom_css'] ?? '')) ?></textarea>
+                <p class="small">Este CSS se inyecta al final de la página pública. Úsalo para ajustes finos de estilo del tema, no para editar el contenido.</p>
+              </div>
               <div class="toolbar">
                 <button class="btn" type="submit">Guardar cambios del sitio</button>
               </div>
@@ -1290,6 +1325,8 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
             <h4>Cómo usar esta sección</h4>
             <ul>
               <li>Cambia los colores principales si quieres adaptar toda la web a una nueva marca.</li>
+              <li>Elige un preset visual si quieres cambiar el tono general sin tocar cada bloque.</li>
+              <li>Usa el CSS personalizado solo para ajustes globales más avanzados.</li>
               <li>El título y el subtítulo aparecen en la cabecera y ayudan al posicionamiento básico.</li>
               <li>El email de contacto se puede reutilizar luego en formularios y páginas.</li>
             </ul>
@@ -2542,6 +2579,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           capsuleState.blocks[activeBuilderBlockIndex].style[key] = normalized;
         }
       });
+      if (Object.prototype.hasOwnProperty.call(styleUpdates || {}, "button_variant")) {
+        const variantValue = String(styleUpdates.button_variant || "").trim();
+        if (variantValue === "") {
+          delete capsuleState.blocks[activeBuilderBlockIndex].style.button_variant;
+        } else {
+          capsuleState.blocks[activeBuilderBlockIndex].style.button_variant = variantValue;
+        }
+      }
       renderBuilderBlocks();
       selectBuilderBlock(activeBuilderBlockIndex, { scroll: false, syncPreview: true });
       return true;
@@ -3678,6 +3723,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         applySelectedBlockButtonStyle({
           button_bg: String(payload.buttonBg || ""),
           button_text_color: String(payload.buttonTextColor || ""),
+          button_variant: Number(payload.ghost || 0) ? "ghost" : "",
         });
         return;
       }

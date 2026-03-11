@@ -174,6 +174,17 @@ function ccms_capsule_inner_style_attr(array $block): string
     return $rules === [] ? '' : ' style="' . ccms_h(implode(';', $rules) . ';') . '"';
 }
 
+function ccms_capsule_button_classes(array $block, bool $ghost = false): string
+{
+    $style = ccms_capsule_block_style($block);
+    $variant = (string) ($style['button_variant'] ?? '');
+    $classes = ['ccms-btn'];
+    if ($ghost || $variant === 'ghost') {
+        $classes[] = 'ccms-btn--ghost';
+    }
+    return implode(' ', $classes);
+}
+
 function ccms_capsule_media_url(string $value, string $seed = 'capsule', int $width = 1200, int $height = 900): string
 {
     $trimmed = trim($value);
@@ -181,6 +192,51 @@ function ccms_capsule_media_url(string $value, string $seed = 'capsule', int $wi
         return $trimmed;
     }
     return 'https://picsum.photos/seed/' . rawurlencode($seed) . '/' . $width . '/' . $height;
+}
+
+function ccms_site_theme_preset(array $site): array
+{
+    $preset = (string) ($site['theme_preset'] ?? 'warm');
+    $themes = [
+        'warm' => [
+            'font_body' => 'Inter, Arial, Helvetica, sans-serif',
+            'font_heading' => 'Inter, Arial, Helvetica, sans-serif',
+            'header_bg' => 'rgba(255,255,255,.92)',
+            'header_border' => 'rgba(0,0,0,.05)',
+            'surface_radius' => '28px',
+            'button_radius' => '999px',
+            'shadow' => '0 30px 60px -35px rgba(0,0,0,.22)',
+        ],
+        'editorial' => [
+            'font_body' => 'Georgia, "Times New Roman", serif',
+            'font_heading' => 'Inter, Arial, Helvetica, sans-serif',
+            'header_bg' => 'rgba(255,255,255,.88)',
+            'header_border' => 'rgba(47,36,31,.09)',
+            'surface_radius' => '16px',
+            'button_radius' => '14px',
+            'shadow' => '0 24px 52px -34px rgba(47,36,31,.28)',
+        ],
+        'minimal' => [
+            'font_body' => 'Inter, Arial, Helvetica, sans-serif',
+            'font_heading' => 'Inter, Arial, Helvetica, sans-serif',
+            'header_bg' => 'rgba(255,255,255,.96)',
+            'header_border' => 'rgba(0,0,0,.04)',
+            'surface_radius' => '18px',
+            'button_radius' => '10px',
+            'shadow' => '0 18px 42px -34px rgba(15,23,42,.18)',
+        ],
+        'bold' => [
+            'font_body' => 'Inter, Arial, Helvetica, sans-serif',
+            'font_heading' => '"Arial Black", Inter, Arial, Helvetica, sans-serif',
+            'header_bg' => 'rgba(255,255,255,.94)',
+            'header_border' => 'rgba(47,36,31,.12)',
+            'surface_radius' => '22px',
+            'button_radius' => '999px',
+            'shadow' => '0 34px 70px -34px rgba(0,0,0,.3)',
+        ],
+    ];
+
+    return $themes[$preset] ?? $themes['warm'];
 }
 
 function ccms_capsule_link_text(array $link, string $fallback = 'Link'): string
@@ -215,6 +271,8 @@ function ccms_page_body_html(array $page): string
 function ccms_render_public_page(array $site, array $page, array $menuPages): string
 {
     $colors = $site['colors'] ?? [];
+    $theme = ccms_site_theme_preset($site);
+    $customCss = trim((string) ($site['custom_css'] ?? ''));
     $pageTitle = trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? ''));
     $metaDescription = trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? ''));
     $capsule = ccms_capsule_decode($page);
@@ -278,28 +336,36 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
       --primary:' . ccms_h((string) ($colors['primary'] ?? '#c86f5c')) . ';
       --secondary:' . ccms_h((string) ($colors['secondary'] ?? '#d9c4b3')) . ';
       --max:1200px;
+      --site-surface-radius:' . ccms_h($theme['surface_radius']) . ';
+      --site-button-radius:' . ccms_h($theme['button_radius']) . ';
+      --site-shadow:' . ccms_h($theme['shadow']) . ';
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:' . ccms_h($theme['font_body']) . '}
     a{color:inherit}
     .shell{width:min(var(--max),calc(100% - 28px));margin:0 auto}
-    .site-header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)}
+    .site-header{position:sticky;top:0;z-index:30;background:' . ccms_h($theme['header_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid ' . ccms_h($theme['header_border']) . '}
     .site-header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px}
-    .brand{font-weight:800;font-size:20px;text-decoration:none}
+    .brand{font-weight:800;font-size:20px;text-decoration:none;font-family:' . ccms_h($theme['font_heading']) . '}
     .menu{display:flex;flex-wrap:wrap;gap:14px}
     .menu a{text-decoration:none;color:var(--muted);font-weight:700}
     .menu a:hover{color:var(--text)}
     .page-shell{padding:32px 0 48px}
-    .page-surface{background:var(--surface);border-radius:28px;box-shadow:0 30px 60px -35px rgba(0,0,0,.22);overflow:hidden}
+    .page-surface{background:var(--surface);border-radius:var(--site-surface-radius);box-shadow:var(--site-shadow);overflow:hidden}
     .page-content{padding:0}
     .site-footer{padding:22px 0 42px;color:var(--muted);font-size:14px;text-align:center}
     .site-footer a{text-decoration:none;color:var(--text)}
+    .ccms-btn{border-radius:var(--site-button-radius)}
+    h1,h2,h3,h4,h5,h6,.ccms-title,.ccms-section-title{font-family:' . ccms_h($theme['font_heading']) . '}
     @media (max-width:800px){
       .site-header-inner{display:block;padding:12px 0}
       .brand{display:block;margin-bottom:10px}
       .menu{gap:10px}
     }
-  </style>
+  </style>' . ($customCss !== '' ? '
+  <style id="ccms-custom-css">
+' . $customCss . '
+  </style>' : '') . '
 </head>
 <body>
   ' . $outerHeader . '
@@ -522,6 +588,7 @@ function ccms_admin_preview_html(string $html): string
                     newHref: String(hrefPrompt).trim().slice(0, 500),
                     buttonBg: String(bgPrompt).trim().slice(0, 120),
                     buttonTextColor: String(colorPrompt).trim().slice(0, 120),
+                    ghost: el.classList.contains("ccms-btn--ghost") ? 1 : 0,
                     blockType: node.dataset.ccmsBlockType || "",
                     blockId: node.dataset.ccmsBlockId || ""
                   });
@@ -705,14 +772,14 @@ function ccms_render_capsule_block(array $block, array $style): string
             }
             $ctaHref = (string) ($props['cta_href'] ?? '#');
             $ctaText = (string) ($props['cta_text'] ?? 'Contactar');
-            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:40;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="ccms-btn" href="' . ccms_h($ctaHref) . '">' . ccms_h($ctaText) . '</a></nav></div></section>';
+            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:40;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h($ctaHref) . '">' . ccms_h($ctaText) . '</a></nav></div></section>';
 
         case 'sticky_header':
             $links = '';
             foreach (($props['links'] ?? []) as $link) {
                 $links .= '<a href="' . ccms_h((string) ($link['href'] ?? '#')) . '" style="text-decoration:none;color:' . ccms_h($style['text_secondary']) . ';font-weight:700">' . ccms_h(ccms_capsule_link_text($link)) . '</a>';
             }
-            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:45"><div style="background:' . ccms_h($style['text_primary']) . ';color:#fff;padding:10px 0;font-size:14px;text-align:center">' . ccms_h((string) ($props['announcement'] ?? '')) . '</div><div style="background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="ccms-btn" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_text'] ?? 'Contactar')) . '</a></nav></div></div></section>';
+            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:45"><div style="background:' . ccms_h($style['text_primary']) . ';color:#fff;padding:10px 0;font-size:14px;text-align:center">' . ccms_h((string) ($props['announcement'] ?? '')) . '</div><div style="background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_text'] ?? 'Contactar')) . '</a></nav></div></div></section>';
 
         case 'offcanvas_menu':
             $uid = preg_replace('/[^a-z0-9_-]+/i', '-', $blockId) ?: 'offcanvas-menu';
@@ -736,7 +803,7 @@ function ccms_render_capsule_block(array $block, array $style): string
                     : (string) ($props['cta_secondary_href'] ?? '#');
                 $secondary = '<a class="ccms-btn ccms-btn--ghost" href="' . ccms_h($secondaryHref) . '">' . ccms_h((string) $props['cta_secondary']) . '</a>';
             }
-            return '<section id="' . ccms_h($sectionId) . '" style="padding:96px 0;' . $styleAttr . '"><div class="ccms-c-inner"><div style="max-width:820px;padding:26px 0"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? '')) . '</span><h1 class="ccms-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? 'Hero title')) . '</h1><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p><div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:28px"><a class="ccms-btn" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_primary'] ?? 'Empezar')) . '</a>' . $secondary . '</div></div></div></section>';
+            return '<section id="' . ccms_h($sectionId) . '" style="padding:96px 0;' . $styleAttr . '"><div class="ccms-c-inner"><div style="max-width:820px;padding:26px 0"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? '')) . '</span><h1 class="ccms-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? 'Hero title')) . '</h1><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p><div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:28px"><a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_primary'] ?? 'Empezar')) . '</a>' . $secondary . '</div></div></div></section>';
 
         case 'hero_video':
             $videoUrl = trim((string) ($props['video_url'] ?? ''));

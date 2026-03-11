@@ -69,6 +69,7 @@ LinuxCMS already includes:
 - inline text editing inside the preview for selected blocks, synced back to the builder
 - double-click visible links in the selected preview block to edit both label and URL
 - double-click visible buttons in the selected preview block to edit label, URL and basic button colors
+- lightweight site themes with presets and optional custom CSS
 - page revisions and restore
 - page duplication
 - media library

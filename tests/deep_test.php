@@ -68,6 +68,8 @@ lc_assert(str_contains(ccms_root_path('data'), 'linuxcms_deep_test_runtime'), 'r
 lc_assert(is_array(ccms_default_data()), 'default data returns array');
 $defaults = ccms_default_data();
 lc_assert(($defaults['site']['title'] ?? '') === 'LinuxCMS', 'default site title is LinuxCMS');
+lc_assert(($defaults['site']['theme_preset'] ?? '') === 'warm', 'default site theme preset is warm');
+lc_assert(array_key_exists('custom_css', $defaults['site']), 'default site includes custom css');
 lc_assert(isset($defaults['local_ai']['endpoint']), 'default data includes local_ai settings');
 lc_assert(ccms_storage_runtime_info()['driver'] === 'json', 'default storage driver is json');
 lc_assert(is_bool(ccms_storage_runtime_info()['sqlite_available'] ?? null), 'storage runtime exposes sqlite availability flag');
@@ -292,6 +294,9 @@ foreach ($data['pages'] as $idx => $page) {
 ccms_save_data($data);
 $data = ccms_load_data();
 $homepage = ccms_homepage($data);
+$data['site']['theme_preset'] = 'editorial';
+$data['site']['custom_css'] = 'body[data-test-theme="1"]{outline:0}';
+$homepage = $homepage ?? $pageRecord;
 ccms_push_audit_log($data, 'test.event', 'Synthetic audit entry', ccms_current_admin(), ['source' => 'deep_test']);
 ccms_save_data($data);
 $data = ccms_load_data();
@@ -338,6 +343,8 @@ lc_assert(str_contains($publicHtml, '<!doctype html>'), 'public page is full htm
 lc_assert(str_contains($publicHtml, 'Corporate Law for fast-moving businesses'), 'public page contains generated title');
 lc_assert(str_contains($publicHtml, 'OTM Lawyers'), 'public page contains business name');
 lc_assert(str_contains($publicHtml, 'Book a consultation'), 'public page contains CTA text');
+lc_assert(str_contains($publicHtml, '--site-surface-radius:16px'), 'public page includes editorial theme radius');
+lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includes custom css block');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
 
 // Site wrapper logic
@@ -393,6 +400,15 @@ lc_assert(str_contains($adminHtml, 'Crea una web completa desde un brief'), 'stu
 lc_assert(str_contains($adminHtml, 'Guardar configuración'), 'studio settings form rendered');
 lc_assert(str_contains($adminHtml, 'Generar borrador con LM Studio'), 'studio generate button rendered');
 lc_assert(str_contains($adminHtml, 'Cómo funciona LinuxCMS'), 'admin renders LinuxCMS guidance copy');
+
+// Include site settings screen
+$_GET = ['tab' => 'site'];
+$_SERVER['REQUEST_METHOD'] = 'GET';
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$siteHtml = ob_get_clean();
+lc_assert(str_contains($siteHtml, 'Tema visual'), 'site settings render theme preset selector');
+lc_assert(str_contains($siteHtml, 'CSS personalizado del sitio'), 'site settings render custom css editor');
 
 // Include login screen in pending 2FA mode
 $_GET = ['step' => '2fa'];
@@ -504,6 +520,8 @@ lc_assert(str_contains($styleAttr, 'background:#fff'), 'section style attr inclu
 $buttonStyleAttr = ccms_capsule_section_style_attr(['style' => ['button_bg' => '#112233', 'button_text_color' => '#ffffff']], '');
 lc_assert(str_contains($buttonStyleAttr, '--ccms-button-bg:#112233'), 'section style attr includes button background var');
 lc_assert(str_contains($buttonStyleAttr, '--ccms-button-color:#ffffff'), 'section style attr includes button text color var');
+lc_assert(ccms_capsule_button_classes(['style' => []], false) === 'ccms-btn', 'button classes default to primary');
+lc_assert(ccms_capsule_button_classes(['style' => ['button_variant' => 'ghost']], false) === 'ccms-btn ccms-btn--ghost', 'button classes support ghost variant');
 $innerAttr = ccms_capsule_inner_style_attr(['style' => ['content_width' => 900]]);
 lc_assert(str_contains($innerAttr, '900px'), 'inner style attr includes content width');
 

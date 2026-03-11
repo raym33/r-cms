@@ -90,6 +90,8 @@ function ccms_default_data(): array
             'tagline' => 'A local website studio with capsules, builder and CMS in one place.',
             'footer_text' => 'Powered by LinuxCMS',
             'contact_email' => '',
+            'theme_preset' => 'warm',
+            'custom_css' => '',
             'colors' => [
                 'bg' => '#f7f4ee',
                 'surface' => '#ffffff',
