@@ -127,6 +127,7 @@ The current builder already supports:
 - block-aware preview selection synced with the builder
 - contextual active-block actions for content/style focus and quick duplication/removal
 - inline preview action pills inside selected blocks
+- direct link jump from preview to the first matching URL field in the builder
 - direct media jump from preview to the first matching image field in the builder
 - double-click text in preview to jump to the closest matching text field in the builder
 - double-click images in preview to jump to the closest matching media field in the builder

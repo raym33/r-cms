@@ -2039,6 +2039,12 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       return false;
     }
 
+    function isLinkLikeKey(key, parentKey = "") {
+      const haystack = `${parentKey} ${key}`.toLowerCase();
+      if (isImageLikeKey(key, parentKey)) return false;
+      return /href|url|link|cta_href|button_href|button_url|profile_url|instagram|youtube|facebook|linkedin|tiktok|whatsapp|telegram/.test(haystack);
+    }
+
     function renderMediaPicker(scope, attributes) {
       if (!Array.isArray(mediaItems) || !mediaItems.length) {
         return `<div class="builder-media-picker"><div class="builder-media-empty">Todavía no hay archivos en la biblioteca media. Sube imágenes en la pestaña <strong>Media</strong> y volverán a aparecer aquí.</div></div>`;
@@ -2189,6 +2195,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           </div>
           <div class="builder-context-actions">
             <button class="btn btn-secondary" type="button" data-builder-context="content">Editar contenido</button>
+            <button class="btn btn-secondary" type="button" data-builder-context="link">Editar enlace</button>
             <button class="btn btn-secondary" type="button" data-builder-context="media">Editar imágenes</button>
             <button class="btn btn-secondary" type="button" data-builder-context="style">Editar estilo</button>
             <button class="btn btn-secondary" type="button" data-builder-context="duplicate">Duplicar</button>
@@ -2303,6 +2310,39 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       } else {
         blockEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
+    }
+
+    function focusSelectedBlockLinkField(preferredHref = "", preferredText = "") {
+      const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
+      if (!blockEl) return;
+      const candidates = Array.from(blockEl.querySelectorAll("[data-builder-field][data-mode='string'],[data-builder-object-field][data-mode='string'],[data-builder-nested-object-field][data-mode='string']"));
+      const preferred = (preferredHref || "").trim();
+      const preferredLabel = (preferredText || "").trim().toLowerCase();
+      let target = null;
+      if (preferred) {
+        target = candidates.find((field) => String(field.value || "").trim() === preferred) || null;
+      }
+      if (!target && preferredLabel) {
+        target = candidates.find((field) => {
+          const wrapper = field.closest(".builder-field, .builder-object-field, .builder-nested-object-field");
+          const label = String(wrapper?.querySelector("label, strong")?.textContent || "").trim().toLowerCase();
+          return label && (label.includes(preferredLabel) || preferredLabel.includes(label));
+        }) || null;
+      }
+      if (!target) {
+        target = candidates.find((field) => {
+          const key = field.dataset.deepKey || field.dataset.nestedKey || field.dataset.key || "";
+          const parentKey = field.dataset.nestedKey || field.dataset.key || "";
+          return isLinkLikeKey(key, parentKey);
+        }) || null;
+      }
+      if (target) {
+        target.focus({ preventScroll: false });
+        if (typeof target.select === "function") target.select();
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+      focusSelectedBlockField("content");
     }
 
     function renderBlockStyleField(index, field, value) {
@@ -3316,6 +3356,11 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           focusSelectedBlockField("content");
           return;
         }
+        if (action === "link") {
+          selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
+          focusSelectedBlockLinkField();
+          return;
+        }
         if (action === "media") {
           selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
           focusSelectedBlockMediaField();
@@ -3406,6 +3451,10 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         const action = payload.action || "";
         if (action === "content") {
           focusSelectedBlockField("content");
+          return;
+        }
+        if (action === "link") {
+          focusSelectedBlockLinkField(String(payload.href || ""), String(payload.text || ""));
           return;
         }
         if (action === "media") {

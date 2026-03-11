@@ -318,6 +318,7 @@ lc_assert(str_contains($previewHtml, 'ccms-preview-quick-text'), 'admin preview 
 lc_assert(str_contains($previewHtml, 'ccms-preview-apply-text'), 'admin preview includes inline text apply hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-quick-media'), 'admin preview includes quick media hook');
 lc_assert(str_contains($previewHtml, 'Edit content'), 'admin preview includes edit content action');
+lc_assert(str_contains($previewHtml, 'Edit link'), 'admin preview includes edit link action');
 lc_assert(str_contains($previewHtml, 'Edit media'), 'admin preview includes edit media action');
 lc_assert(str_contains($previewHtml, 'Edit style'), 'admin preview includes edit style action');
 $publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data));

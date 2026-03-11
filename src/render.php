@@ -538,6 +538,7 @@ function ccms_admin_preview_html(string $html): string
           toolbar.className = "ccms-block-toolbar";
           [
             ["content", "Edit content"],
+            ["link", "Edit link"],
             ["media", "Edit media"],
             ["style", "Edit style"],
             ["duplicate", "Duplicate"],
