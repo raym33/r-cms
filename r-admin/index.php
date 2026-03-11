@@ -3275,6 +3275,37 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         if (index >= 0) {
           selectBuilderBlock(index, { scroll: true, syncPreview: false });
         }
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-action") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        const action = payload.action || "";
+        if (action === "content") {
+          focusSelectedBlockField("content");
+          return;
+        }
+        if (action === "style") {
+          focusSelectedBlockField("style");
+          return;
+        }
+        if (action === "duplicate") {
+          const copy = deepClone(capsuleState.blocks[index]);
+          copy.id = createBlockId();
+          capsuleState.blocks.splice(index + 1, 0, copy);
+          selectBuilderBlock(index + 1, { scroll: true, syncPreview: true });
+          return;
+        }
+        if (action === "remove") {
+          capsuleState.blocks.splice(index, 1);
+          if (capsuleState.blocks.length) {
+            selectBuilderBlock(Math.max(0, Math.min(index, capsuleState.blocks.length - 1)), { scroll: true, syncPreview: true });
+          } else {
+            renderBuilderBlocks();
+          }
+        }
       }
     });
 

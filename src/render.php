@@ -364,6 +364,39 @@ function ccms_admin_preview_html(string $html): string
         text-transform:uppercase;
         pointer-events:none
       }
+      .ccms-block-toolbar{
+        position:absolute;
+        right:16px;
+        top:16px;
+        z-index:121;
+        display:none;
+        align-items:center;
+        gap:8px;
+        flex-wrap:wrap;
+        max-width:min(100% - 32px, 520px)
+      }
+      .ccms-block-shell.is-ccms-selected .ccms-block-toolbar{display:flex}
+      .ccms-block-toolbar button{
+        appearance:none;
+        border:1px solid rgba(0,0,0,.08);
+        background:rgba(255,255,255,.96);
+        color:#2f241f;
+        border-radius:999px;
+        padding:9px 12px;
+        font:700 12px/1 Arial,Helvetica,sans-serif;
+        cursor:pointer;
+        box-shadow:0 14px 28px -20px rgba(0,0,0,.28)
+      }
+      .ccms-block-toolbar button[data-ccms-action="remove"]{
+        background:rgba(200,111,92,.14);
+        color:#8a4638;
+        border-color:rgba(200,111,92,.18)
+      }
+      @media (max-width:800px){
+        .ccms-block-shell.is-ccms-selected::after{left:12px;top:12px}
+        .ccms-block-toolbar{left:12px;right:12px;top:44px;max-width:none}
+        .ccms-block-toolbar button{padding:8px 10px;font-size:11px}
+      }
     </style>
     <script>
       (function(){
@@ -371,21 +404,56 @@ function ccms_admin_preview_html(string $html): string
         function setSelected(index){
           blocks.forEach((node) => node.classList.toggle("is-ccms-selected", Number(node.dataset.ccmsBlockIndex) === index));
         }
+        function postToParent(payload){
+          try {
+            window.parent.postMessage(payload, "*");
+          } catch (error) {}
+        }
+        function attachToolbar(node){
+          const toolbar = document.createElement("div");
+          toolbar.className = "ccms-block-toolbar";
+          [
+            ["content", "Edit content"],
+            ["style", "Edit style"],
+            ["duplicate", "Duplicate"],
+            ["remove", "Delete"]
+          ].forEach(([action, label]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.ccmsAction = action;
+            button.textContent = label;
+            button.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const index = Number(node.dataset.ccmsBlockIndex || -1);
+              if (index < 0) return;
+              setSelected(index);
+              postToParent({
+                type: "ccms-preview-action",
+                action,
+                index,
+                blockType: node.dataset.ccmsBlockType || "",
+                blockId: node.dataset.ccmsBlockId || ""
+              });
+            }, true);
+            toolbar.appendChild(button);
+          });
+          node.appendChild(toolbar);
+        }
         blocks.forEach((node) => {
+          attachToolbar(node);
           node.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
             const index = Number(node.dataset.ccmsBlockIndex || -1);
             if (index < 0) return;
             setSelected(index);
-            try {
-              window.parent.postMessage({
-                type: "ccms-preview-select-block",
-                index,
-                blockType: node.dataset.ccmsBlockType || "",
-                blockId: node.dataset.ccmsBlockId || ""
-              }, "*");
-            } catch (error) {}
+            postToParent({
+              type: "ccms-preview-select-block",
+              index,
+              blockType: node.dataset.ccmsBlockType || "",
+              blockId: node.dataset.ccmsBlockId || ""
+            });
           }, true);
         });
         window.addEventListener("message", (event) => {

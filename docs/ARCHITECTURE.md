@@ -126,6 +126,7 @@ The current builder already supports:
 - live preview iframe from current form state
 - block-aware preview selection synced with the builder
 - contextual active-block actions for content/style focus and quick duplication/removal
+- inline preview action pills inside selected blocks
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 
