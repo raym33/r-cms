@@ -937,6 +937,11 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .builder-context-title .small strong{font-size:inherit}
     .builder-context-actions{display:flex;flex-wrap:wrap;gap:8px}
     .builder-list{display:grid;gap:14px}
+    .builder-insert-slot{display:grid;justify-items:center;gap:8px;padding:6px 0}
+    .builder-insert-slot button{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px dashed var(--line);background:#fffaf7;color:var(--muted);font:inherit;font-weight:800;cursor:pointer;transition:.18s ease}
+    .builder-insert-slot button:hover{border-color:rgba(200,111,92,.45);background:#fff2ec;color:var(--ink)}
+    .builder-insert-slot.is-active button{border-style:solid;border-color:rgba(200,111,92,.65);background:#fff0e9;color:var(--ink);box-shadow:0 12px 24px -20px rgba(200,111,92,.5)}
+    .builder-insert-slot .small{font-size:12px;color:var(--muted)}
     .builder-block{padding:18px;border-radius:22px;border:1px solid var(--line);background:#fff;display:grid;gap:14px}
     .builder-block.is-selected{border-color:rgba(200,111,92,.55);box-shadow:0 20px 40px -30px rgba(200,111,92,.45)}
     .builder-block-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
@@ -1871,7 +1876,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                             <div class="builder-library">
                               <div>
                                 <h3 style="margin:0 0 8px">Añadir bloque</h3>
-                                <p class="small" style="margin:0">Elige una plantilla base y el CMS la añadirá al final de la cápsula.</p>
+                                <p class="small" id="builderInsertHint" style="margin:0">Elige una plantilla base y el CMS la insertará en la posición seleccionada.</p>
                               </div>
                               <div class="builder-library-grid" id="builderTemplateGrid"></div>
                             </div>
@@ -2177,6 +2182,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     const pageEditorForm = document.getElementById("pageEditorForm");
     const builderList = document.getElementById("builderList");
     const builderTemplateGrid = document.getElementById("builderTemplateGrid");
+    const builderInsertHint = document.getElementById("builderInsertHint");
     const builderBlockCount = document.getElementById("builderBlockCount");
     const builderSyncButton = document.getElementById("builderSyncJson");
     const builderContext = document.getElementById("builderContext");
@@ -2331,6 +2337,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     let capsuleState = normalizeCapsule(initialCapsuleState);
     let builderDragState = null;
     let activeBuilderBlockIndex = capsuleState.blocks.length ? 0 : -1;
+    let pendingInsertIndex = capsuleState.blocks.length;
     let mediaModalState = null;
 
     function isLongTextField(key, value) {
@@ -2366,11 +2373,13 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       const { scroll = true, syncPreview = true } = options;
       if (!Array.isArray(capsuleState.blocks) || !capsuleState.blocks.length) {
         activeBuilderBlockIndex = -1;
+        pendingInsertIndex = 0;
         renderBuilderBlocks();
         return;
       }
       const normalizedIndex = Math.max(0, Math.min(index, capsuleState.blocks.length - 1));
       activeBuilderBlockIndex = normalizedIndex;
+      pendingInsertIndex = normalizeInsertIndex(normalizedIndex + 1);
       renderBuilderBlocks();
       renderBuilderContext();
       const selected = builderList?.querySelector(`[data-builder-block="${normalizedIndex}"]`);
@@ -2430,18 +2439,25 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         return;
       }
       const block = capsuleState.blocks[activeBuilderBlockIndex];
+      const insertLabel = pendingInsertIndex <= 0
+        ? "al principio"
+        : pendingInsertIndex >= capsuleState.blocks.length
+          ? "al final"
+          : `después del bloque ${pendingInsertIndex}`;
       builderContext.innerHTML = `
         <div class="builder-context-head">
           <div class="builder-context-title">
             <span class="chip">Bloque activo · ${activeBuilderBlockIndex + 1}</span>
             <strong>${escapeHtml(blockDisplayName(block))}</strong>
             <div class="small"><strong>${escapeHtml(block.type || "block")}</strong> · ID ${escapeHtml(block.id || "")}</div>
+            <div class="small">La siguiente inserción irá <strong>${escapeHtml(insertLabel)}</strong>.</div>
           </div>
           <div class="builder-context-actions">
             <button class="btn btn-secondary" type="button" data-builder-context="content">Editar contenido</button>
             <button class="btn btn-secondary" type="button" data-builder-context="link">Editar enlace</button>
             <button class="btn btn-secondary" type="button" data-builder-context="media">Editar imágenes</button>
             <button class="btn btn-secondary" type="button" data-builder-context="style">Editar estilo</button>
+            <button class="btn btn-secondary" type="button" data-builder-context="insert">Insertar después</button>
             <button class="btn btn-secondary" type="button" data-builder-context="duplicate">Duplicar</button>
             <button class="btn btn-danger" type="button" data-builder-context="remove">Eliminar</button>
           </div>
@@ -3087,12 +3103,20 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
 
     function renderBuilderTemplateLibrary() {
       if (!builderTemplateGrid) return;
+      if (builderInsertHint) {
+        const insertLabel = pendingInsertIndex <= 0
+          ? "al principio de la página"
+          : pendingInsertIndex >= capsuleState.blocks.length
+            ? "al final de la cápsula"
+            : `después del bloque ${pendingInsertIndex}`;
+        builderInsertHint.textContent = `Elige una plantilla base y el CMS la insertará ${insertLabel}.`;
+      }
       builderTemplateGrid.innerHTML = capsuleBuilderTemplates.map((template, index) => `
         <article class="builder-template">
           <span>${escapeHtml(template.category || "Bloque")}</span>
           <strong>${escapeHtml(template.label || template.type || "Block")}</strong>
           <div class="small">${escapeHtml(template.type || "")}</div>
-          <button class="btn btn-secondary" type="button" data-builder-add="${index}">Añadir bloque</button>
+          <button class="btn btn-secondary" type="button" data-builder-add="${index}">Insertar aquí</button>
         </article>
       `).join("");
     }
@@ -3109,7 +3133,15 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       if (activeBuilderBlockIndex < 0 || activeBuilderBlockIndex >= capsuleState.blocks.length) {
         activeBuilderBlockIndex = 0;
       }
-      builderList.innerHTML = capsuleState.blocks.map((block, index) => {
+      const pieces = [];
+      const renderInsertSlot = (slotIndex) => `
+        <div class="builder-insert-slot ${pendingInsertIndex === slotIndex ? "is-active" : ""}">
+          <button class="btn btn-secondary" type="button" data-builder-insert-slot="${slotIndex}">+ Insertar aquí</button>
+          <div class="small">${slotIndex === 0 ? "Antes del primer bloque" : slotIndex >= capsuleState.blocks.length ? "Después del último bloque" : `Entre ${slotIndex} y ${slotIndex + 1}`}</div>
+        </div>
+      `;
+      pieces.push(renderInsertSlot(0));
+      capsuleState.blocks.forEach((block, index) => {
         const scalarFields = [];
         const complexFields = [];
         const styleFields = blockStyleFields.map((field) => renderBlockStyleField(index, field, block.style?.[field.key] ?? ""));
@@ -3175,7 +3207,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         const summaryText = scalarFields.length || complexFields.length
           ? "Haz clic para desplegar y editar contenido, listas, imágenes y estilo."
           : "Este bloque no tiene campos visuales detectados. Puedes seguir editándolo desde el JSON de la cápsula.";
-        return `
+        pieces.push(`
           <article class="builder-block ${activeBuilderBlockIndex === index ? "is-selected" : ""}" data-builder-block="${index}">
             <div class="builder-block-header">
               <div class="builder-block-title">
@@ -3205,8 +3237,10 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
               </div>
             </div>
           </article>
-        `;
-      }).join("");
+        `);
+        pieces.push(renderInsertSlot(index + 1));
+      });
+      builderList.innerHTML = pieces.join("");
       renderBuilderContext();
       syncCapsuleTextarea();
     }
@@ -3215,13 +3249,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       if (builderReadOnly) return;
       const template = capsuleBuilderTemplates[templateIndex];
       if (!template) return;
-      capsuleState.blocks.push({
+      const insertAt = normalizeInsertIndex(pendingInsertIndex);
+      capsuleState.blocks.splice(insertAt, 0, {
         id: createBlockId(),
         type: template.type,
         props: deepClone(template.props || {}),
         style: {},
       });
-      selectBuilderBlock(capsuleState.blocks.length - 1, { scroll: true, syncPreview: true });
+      selectBuilderBlock(insertAt, { scroll: true, syncPreview: true });
     }
 
     function ensureArrayProp(blockIndex, key) {
@@ -3386,6 +3421,15 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
 
     if (builderList) {
       builderList.addEventListener("click", (event) => {
+        const insertSlot = event.target.closest("[data-builder-insert-slot]");
+        if (insertSlot) {
+          if (builderReadOnly) return;
+          const slotIndex = Number(insertSlot.dataset.builderInsertSlot || -1);
+          if (slotIndex >= 0) {
+            setPendingInsertIndex(slotIndex);
+          }
+          return;
+        }
         const block = event.target.closest("[data-builder-block]");
         const actionButton = event.target.closest("[data-builder-action],[data-builder-array-action],[data-builder-nested-action],[data-builder-pick-media]");
         if (!block || actionButton) return;
@@ -3804,6 +3848,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           focusSelectedBlockField("style");
           return;
         }
+        if (action === "insert") {
+          setPendingInsertIndex(activeBuilderBlockIndex + 1, { render: false });
+          renderBuilderTemplateLibrary();
+          renderBuilderContext();
+          renderBuilderBlocks();
+          builderTemplateGrid?.scrollIntoView({ block: "center", behavior: "smooth" });
+          return;
+        }
         if (action === "duplicate") {
           const copy = deepClone(capsuleState.blocks[activeBuilderBlockIndex]);
           copy.id = createBlockId();
@@ -3935,6 +3987,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           focusSelectedBlockField("style");
           return;
         }
+        if (action === "insert") {
+          setPendingInsertIndex(index + 1, { render: false });
+          renderBuilderTemplateLibrary();
+          renderBuilderContext();
+          renderBuilderBlocks();
+          builderTemplateGrid?.scrollIntoView({ block: "center", behavior: "smooth" });
+          return;
+        }
         if (action === "duplicate") {
           const copy = deepClone(capsuleState.blocks[index]);
           copy.id = createBlockId();
@@ -3964,3 +4024,18 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
   <?php endif; ?>
 </body>
 </html>
+    function normalizeInsertIndex(index) {
+      const max = Array.isArray(capsuleState.blocks) ? capsuleState.blocks.length : 0;
+      if (!Number.isFinite(index)) return max;
+      return Math.max(0, Math.min(Number(index), max));
+    }
+
+    function setPendingInsertIndex(index, options = {}) {
+      const { render = true } = options;
+      pendingInsertIndex = normalizeInsertIndex(index);
+      if (render) {
+        renderBuilderTemplateLibrary();
+        renderBuilderContext();
+        renderBuilderBlocks();
+      }
+    }

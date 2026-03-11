@@ -342,6 +342,7 @@ lc_assert(str_contains($previewHtml, 'Edit content'), 'admin preview includes ed
 lc_assert(str_contains($previewHtml, 'Edit link'), 'admin preview includes edit link action');
 lc_assert(str_contains($previewHtml, 'Edit media'), 'admin preview includes edit media action');
 lc_assert(str_contains($previewHtml, 'Edit style'), 'admin preview includes edit style action');
+lc_assert(str_contains($previewHtml, 'Insert after'), 'admin preview includes insert action');
 $adminHtml = ob_get_clean();
 ob_start();
 $_GET = ['tab' => 'pages'];

@@ -711,6 +711,7 @@ function ccms_admin_preview_html(string $html): string
             ["link", "Edit link"],
             ["media", "Edit media"],
             ["style", "Edit style"],
+            ["insert", "Insert after"],
             ["duplicate", "Duplicate"],
             ["remove", "Delete"]
           ].forEach(([action, label]) => {
