@@ -124,6 +124,8 @@ The current builder already supports:
 - drag-and-drop of repeater cards
 - direct media picker in image fields
 - live preview iframe from current form state
+- block-aware preview selection synced with the builder
+- contextual active-block actions for content/style focus and quick duplication/removal
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 

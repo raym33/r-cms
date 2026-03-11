@@ -851,6 +851,12 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .builder-layout{display:grid;gap:16px}
     .builder-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
     .builder-stats{display:flex;flex-wrap:wrap;gap:8px}
+    .builder-context{display:grid;gap:12px;padding:18px;border-radius:22px;border:1px solid var(--line);background:#fff7f4}
+    .builder-context-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px}
+    .builder-context-title{display:grid;gap:6px}
+    .builder-context-title strong{font-size:20px}
+    .builder-context-title .small strong{font-size:inherit}
+    .builder-context-actions{display:flex;flex-wrap:wrap;gap:8px}
     .builder-list{display:grid;gap:14px}
     .builder-block{padding:18px;border-radius:22px;border:1px solid var(--line);background:#fff;display:grid;gap:14px}
     .builder-block.is-selected{border-color:rgba(200,111,92,.55);box-shadow:0 20px 40px -30px rgba(200,111,92,.45)}
@@ -858,6 +864,10 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .builder-block-title{display:grid;gap:6px}
     .builder-block-title strong{font-size:18px}
     .builder-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .builder-block-body{display:none;gap:14px}
+    .builder-block.is-selected .builder-block-body{display:grid}
+    .builder-block-summary{display:grid;gap:6px;padding:12px 14px;border-radius:16px;background:#fcfaf7;color:var(--muted);font-size:14px;line-height:1.65}
+    .builder-block.is-selected .builder-block-summary{display:none}
     .builder-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .builder-fields .field{margin:0}
     .builder-full{grid-column:1 / -1}
@@ -1613,6 +1623,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                                 <button class="btn btn-secondary" type="button" id="builderSyncJson">Sincronizar JSON</button>
                               </div>
                             </div>
+                            <div class="builder-context" id="builderContext"></div>
                             <div class="builder-surface">
                               <div>
                                 <h3>Marca y estilo de la cápsula</h3>
@@ -1931,6 +1942,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     const builderTemplateGrid = document.getElementById("builderTemplateGrid");
     const builderBlockCount = document.getElementById("builderBlockCount");
     const builderSyncButton = document.getElementById("builderSyncJson");
+    const builderContext = document.getElementById("builderContext");
     const builderGlobalStyle = document.getElementById("builderGlobalStyle");
     const previewEndpoint = "/r-admin/preview.php";
     const builderReadOnly = <?= $builderReadOnly ? 'true' : 'false' ?>;
@@ -2110,6 +2122,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       const normalizedIndex = Math.max(0, Math.min(index, capsuleState.blocks.length - 1));
       activeBuilderBlockIndex = normalizedIndex;
       renderBuilderBlocks();
+      renderBuilderContext();
       const selected = builderList?.querySelector(`[data-builder-block="${normalizedIndex}"]`);
       if (scroll && selected) {
         selected.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -2149,6 +2162,55 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           </div>
         `;
       }).join("");
+    }
+
+    function blockDisplayName(block) {
+      return (block?.props && (block.props.title || block.props.brand || block.props.badge || block.props.name)) || block?.type || "Bloque";
+    }
+
+    function renderBuilderContext() {
+      if (!builderContext) return;
+      if (!Array.isArray(capsuleState.blocks) || !capsuleState.blocks.length || activeBuilderBlockIndex < 0) {
+        builderContext.innerHTML = `
+          <div class="builder-context-title">
+            <strong>No hay bloque seleccionado</strong>
+            <div class="small">Haz clic en un bloque del builder o en una sección dentro de la preview para empezar a editarla.</div>
+          </div>
+        `;
+        return;
+      }
+      const block = capsuleState.blocks[activeBuilderBlockIndex];
+      builderContext.innerHTML = `
+        <div class="builder-context-head">
+          <div class="builder-context-title">
+            <span class="chip">Bloque activo · ${activeBuilderBlockIndex + 1}</span>
+            <strong>${escapeHtml(blockDisplayName(block))}</strong>
+            <div class="small"><strong>${escapeHtml(block.type || "block")}</strong> · ID ${escapeHtml(block.id || "")}</div>
+          </div>
+          <div class="builder-context-actions">
+            <button class="btn btn-secondary" type="button" data-builder-context="content">Editar contenido</button>
+            <button class="btn btn-secondary" type="button" data-builder-context="style">Editar estilo</button>
+            <button class="btn btn-secondary" type="button" data-builder-context="duplicate">Duplicar</button>
+            <button class="btn btn-danger" type="button" data-builder-context="remove">Eliminar</button>
+          </div>
+        </div>
+        <div class="small">La preview y el builder están sincronizados. Haz clic en una sección de la preview para saltar directamente a su bloque editable.</div>
+      `;
+    }
+
+    function focusSelectedBlockField(kind = "content") {
+      const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
+      if (!blockEl) return;
+      const selector = kind === "style"
+        ? ".builder-subsection [data-builder-style-field]"
+        : ".builder-fields [data-builder-field], .builder-fields [data-builder-object-field], .builder-fields [data-builder-scalar-item], .builder-fields textarea, .builder-fields input";
+      const target = blockEl.querySelector(selector);
+      if (target) {
+        target.focus({ preventScroll: false });
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+      } else {
+        blockEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
     }
 
     function renderBlockStyleField(index, field, value) {
@@ -2475,6 +2537,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       if (!capsuleState.blocks.length) {
         activeBuilderBlockIndex = -1;
         builderList.innerHTML = '<div class="builder-empty">Todavía no hay bloques en la cápsula. Usa la biblioteca de arriba para añadir uno.</div>';
+        renderBuilderContext();
         syncCapsuleTextarea();
         return;
       }
@@ -2544,6 +2607,9 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
             `);
           }
         });
+        const summaryText = scalarFields.length || complexFields.length
+          ? "Haz clic para desplegar y editar contenido, listas, imágenes y estilo."
+          : "Este bloque no tiene campos visuales detectados. Puedes seguir editándolo desde el JSON de la cápsula.";
         return `
           <article class="builder-block ${activeBuilderBlockIndex === index ? "is-selected" : ""}" data-builder-block="${index}">
             <div class="builder-block-header">
@@ -2553,25 +2619,30 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                 <div class="small">${escapeHtml(block.id || "")}</div>
               </div>
               <div class="builder-actions">
+                <button class="btn btn-secondary" type="button" data-builder-action="select" data-index="${index}">${activeBuilderBlockIndex === index ? "Editando" : "Editar"}</button>
                 <button class="btn btn-secondary" type="button" data-builder-action="up" data-index="${index}">Subir</button>
                 <button class="btn btn-secondary" type="button" data-builder-action="down" data-index="${index}">Bajar</button>
                 <button class="btn btn-secondary" type="button" data-builder-action="duplicate" data-index="${index}">Duplicar</button>
                 <button class="btn btn-danger" type="button" data-builder-action="remove" data-index="${index}">Eliminar</button>
               </div>
             </div>
-            <div class="builder-fields">
-              ${scalarFields.join("")}
-              ${complexFields.length ? `<div class="builder-full builder-note">Las listas y cards del bloque ya se editan de forma visual. El JSON queda como fallback solo para estructuras especiales.</div>${complexFields.join("")}` : ""}
-              <div class="builder-full builder-subsection">
-                <h4>Layout y estilo del bloque</h4>
-                <div class="builder-style-grid">
-                  ${styleFields.join("")}
+            <div class="builder-block-summary">${escapeHtml(summaryText)}</div>
+            <div class="builder-block-body">
+              <div class="builder-fields">
+                ${scalarFields.join("")}
+                ${complexFields.length ? `<div class="builder-full builder-note">Las listas y cards del bloque ya se editan de forma visual. El JSON queda como fallback solo para estructuras especiales.</div>${complexFields.join("")}` : ""}
+                <div class="builder-full builder-subsection">
+                  <h4>Layout y estilo del bloque</h4>
+                  <div class="builder-style-grid">
+                    ${styleFields.join("")}
+                  </div>
                 </div>
               </div>
             </div>
           </article>
         `;
       }).join("");
+      renderBuilderContext();
       syncCapsuleTextarea();
     }
 
@@ -2683,7 +2754,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         builderSyncButton.disabled = true;
         builderSyncButton.textContent = "Solo lectura";
       }
-      [builderTemplateGrid, builderGlobalStyle, builderList].forEach((container) => {
+      [builderTemplateGrid, builderGlobalStyle, builderList, builderContext].forEach((container) => {
         if (!container) return;
         container.querySelectorAll("button, input, select, textarea").forEach((element) => {
           element.disabled = true;
@@ -2836,7 +2907,10 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         const index = Number(button.dataset.index || -1);
         if (index < 0 || index >= capsuleState.blocks.length) return;
         const action = button.dataset.builderAction;
-        if (action === "up" && index > 0) {
+        if (action === "select") {
+          selectBuilderBlock(index, { scroll: true, syncPreview: true });
+          return;
+        } else if (action === "up" && index > 0) {
           [capsuleState.blocks[index - 1], capsuleState.blocks[index]] = [capsuleState.blocks[index], capsuleState.blocks[index - 1]];
           activeBuilderBlockIndex = index - 1;
         } else if (action === "down" && index < capsuleState.blocks.length - 1) {
@@ -3136,6 +3210,40 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         if (builderReadOnly) return;
         syncCapsuleTextarea();
         window.alert("Capsule JSON sincronizado con el builder.");
+      });
+    }
+
+    if (builderContext) {
+      builderContext.addEventListener("click", (event) => {
+        if (builderReadOnly) return;
+        const button = event.target.closest("[data-builder-context]");
+        if (!button || activeBuilderBlockIndex < 0) return;
+        const action = button.dataset.builderContext || "";
+        if (action === "content") {
+          selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
+          focusSelectedBlockField("content");
+          return;
+        }
+        if (action === "style") {
+          selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
+          focusSelectedBlockField("style");
+          return;
+        }
+        if (action === "duplicate") {
+          const copy = deepClone(capsuleState.blocks[activeBuilderBlockIndex]);
+          copy.id = createBlockId();
+          capsuleState.blocks.splice(activeBuilderBlockIndex + 1, 0, copy);
+          selectBuilderBlock(activeBuilderBlockIndex + 1, { scroll: true, syncPreview: true });
+          return;
+        }
+        if (action === "remove") {
+          capsuleState.blocks.splice(activeBuilderBlockIndex, 1);
+          if (capsuleState.blocks.length) {
+            selectBuilderBlock(Math.max(0, Math.min(activeBuilderBlockIndex, capsuleState.blocks.length - 1)), { scroll: true, syncPreview: true });
+          } else {
+            renderBuilderBlocks();
+          }
+        }
       });
     }
 

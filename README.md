@@ -58,6 +58,8 @@ LinuxCMS already includes:
 - direct media pickers inside image fields
 - drag and drop for repeater cards
 - live preview rendered from the current form state
+- block-aware preview: click a section in preview to jump to the matching builder block
+- contextual active-block toolbar for content/style/duplicate/delete
 - page revisions and restore
 - page duplication
 - media library
