@@ -63,6 +63,8 @@ Main structures:
   - pages, media, imports, AI generation
 - `viewer`
   - read-only admin review mode
+- newly created users can be forced to change their temporary password on first login
+- sensitive actions are recorded in `audit_logs`
 
 ## Page model
 

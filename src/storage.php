@@ -116,6 +116,7 @@ function ccms_default_data(): array
         'users' => [],
         'pages' => [],
         'media' => [],
+        'audit_logs' => [],
     ];
 }
 
@@ -131,6 +132,8 @@ function ccms_normalize_users(array $data): array
             'email' => trim((string) ($user['email'] ?? '')),
             'password_hash' => (string) ($user['password_hash'] ?? ''),
             'role' => in_array(($user['role'] ?? 'editor'), ['owner', 'editor', 'viewer'], true) ? (string) $user['role'] : 'editor',
+            'must_change_password' => !empty($user['must_change_password']),
+            'last_login_at' => ($user['last_login_at'] ?? null) ? (string) $user['last_login_at'] : null,
             'created_at' => (string) ($user['created_at'] ?? ccms_now_iso()),
             'updated_at' => (string) ($user['updated_at'] ?? ccms_now_iso()),
         ];
@@ -145,6 +148,8 @@ function ccms_normalize_users(array $data): array
             'email' => trim((string) ($data['admin']['email'] ?? '')),
             'password_hash' => (string) ($data['admin']['password_hash'] ?? ''),
             'role' => 'owner',
+            'must_change_password' => false,
+            'last_login_at' => null,
             'created_at' => (string) ($data['admin']['created_at'] ?? ccms_now_iso()),
             'updated_at' => (string) ($data['admin']['created_at'] ?? ccms_now_iso()),
         ];
@@ -171,6 +176,31 @@ function ccms_normalize_users(array $data): array
     }
 
     return $data;
+}
+
+function ccms_audit_log_entry(string $action, string $label, ?array $user = null, array $meta = []): array
+{
+    return [
+        'id' => ccms_next_id('audit'),
+        'action' => $action,
+        'label' => $label,
+        'created_at' => ccms_now_iso(),
+        'user' => [
+            'id' => (string) ($user['id'] ?? ''),
+            'username' => (string) ($user['username'] ?? ''),
+            'role' => (string) ($user['role'] ?? ''),
+        ],
+        'meta' => $meta,
+    ];
+}
+
+function ccms_push_audit_log(array &$data, string $action, string $label, ?array $user = null, array $meta = [], int $max = 250): void
+{
+    $data['audit_logs'] ??= [];
+    array_unshift($data['audit_logs'], ccms_audit_log_entry($action, $label, $user, $meta));
+    if (count($data['audit_logs']) > $max) {
+        $data['audit_logs'] = array_slice($data['audit_logs'], 0, $max);
+    }
 }
 
 function ccms_page_snapshot(array $page, string $label = 'Manual save'): array

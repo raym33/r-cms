@@ -19,6 +19,8 @@ It is security-conscious by default, but it is not presented as a formally audit
   - `owner`
   - `editor`
   - `viewer`
+- forced password change for newly created or reset user accounts
+- audit log for sensitive admin actions
 - `HttpOnly` + `SameSite=Lax` session cookies
 - session rotation on successful login
 - basic idle session expiry handling

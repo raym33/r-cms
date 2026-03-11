@@ -24,6 +24,14 @@ try {
             if (!ccms_login($username, $password)) {
                 throw new RuntimeException('Usuario o contraseña incorrectos.');
             }
+            $freshData = ccms_load_data();
+            $loggedUser = ccms_current_admin();
+            if ($loggedUser) {
+                ccms_push_audit_log($freshData, 'auth.login', 'User logged in', $loggedUser, [
+                    'ip' => ccms_client_ip(),
+                ]);
+                ccms_save_data($freshData);
+            }
             ccms_flash('success', 'Sesión iniciada.');
             ccms_redirect('/r-admin/');
         }
@@ -32,6 +40,36 @@ try {
         ccms_verify_same_origin_request();
         ccms_verify_csrf();
         $data = ccms_load_data();
+        $mustChangePassword = !empty($currentAdmin['must_change_password']);
+
+        if ($mustChangePassword && $action !== 'change_own_password') {
+            throw new RuntimeException('Debes cambiar tu contraseña temporal antes de continuar.');
+        }
+
+        if ($action === 'change_own_password') {
+            $newPassword = (string) ($_POST['new_password'] ?? '');
+            $confirmPassword = (string) ($_POST['confirm_new_password'] ?? '');
+            if (strlen($newPassword) < 10) {
+                throw new RuntimeException('La nueva contraseña debe tener al menos 10 caracteres.');
+            }
+            if ($newPassword !== $confirmPassword) {
+                throw new RuntimeException('Las contraseñas no coinciden.');
+            }
+            $selfIndex = ccms_find_user_index($data, (string) ($currentAdmin['id'] ?? ''));
+            if ($selfIndex === null) {
+                throw new RuntimeException('Usuario no encontrado.');
+            }
+            $data['users'][$selfIndex]['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+            $data['users'][$selfIndex]['must_change_password'] = false;
+            $data['users'][$selfIndex]['updated_at'] = ccms_now_iso();
+            ccms_push_audit_log($data, 'auth.password_changed', 'Password changed', $data['users'][$selfIndex], [
+                'forced' => true,
+            ]);
+            ccms_save_data($data);
+            $_SESSION['ccms_admin']['must_change_password'] = false;
+            ccms_flash('success', 'Contraseña actualizada.');
+            ccms_redirect('/r-admin/?tab=account');
+        }
 
         if ($action === 'save_site') {
             ccms_require_capability('site_manage');
@@ -47,6 +85,9 @@ try {
                 'primary' => trim((string) ($_POST['color_primary'] ?? '#c86f5c')),
                 'secondary' => trim((string) ($_POST['color_secondary'] ?? '#d9c4b3')),
             ];
+            ccms_push_audit_log($data, 'site.updated', 'Site settings updated', $currentAdmin, [
+                'contact_email' => $data['site']['contact_email'],
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Configuración del sitio guardada.');
             ccms_redirect('/r-admin/?tab=site');
@@ -55,6 +96,10 @@ try {
         if ($action === 'save_ai_settings') {
             ccms_require_capability('ai_generate');
             $data['local_ai'] = ccms_ai_settings_input($_POST);
+            ccms_push_audit_log($data, 'ai.settings_updated', 'LM Studio settings updated', $currentAdmin, [
+                'endpoint' => $data['local_ai']['endpoint'] ?? '',
+                'model' => $data['local_ai']['model'] ?? '',
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Configuración local de LM Studio guardada.');
             ccms_redirect('/r-admin/?tab=studio');
@@ -111,8 +156,12 @@ try {
                     }
                 }
             }
-            ccms_save_data($data);
             $modeLabel = (($payload['_meta']['mode'] ?? '') === 'lm_studio') ? 'LM Studio' : 'fallback local';
+            ccms_push_audit_log($data, 'ai.page_generated', 'Page generated from Studio', $currentAdmin, [
+                'page_slug' => $pageRecord['slug'] ?? '',
+                'mode' => $payload['_meta']['mode'] ?? '',
+            ]);
+            ccms_save_data($data);
             ccms_flash('success', 'Página generada con ' . $modeLabel . '. Ya puedes pulirla desde Páginas.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode((string) $pageRecord['slug']));
         }
@@ -142,6 +191,9 @@ try {
             ];
             ccms_push_page_revision($newPage, 'Initial page');
             $data['pages'][] = $newPage;
+            ccms_push_audit_log($data, 'page.created', 'Page created', $currentAdmin, [
+                'page_slug' => $slug,
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Página creada.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode($slug));
@@ -178,6 +230,10 @@ try {
                     }
                 }
             }
+            ccms_push_audit_log($data, 'page.saved', 'Page saved', $currentAdmin, [
+                'page_slug' => $slug,
+                'status' => $data['pages'][$index]['status'],
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Página guardada.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode($slug));
@@ -202,6 +258,10 @@ try {
             $copy['revisions'] = [];
             ccms_push_page_revision($copy, 'Duplicated from ' . (string) ($source['slug'] ?? 'page'));
             $data['pages'][] = $copy;
+            ccms_push_audit_log($data, 'page.duplicated', 'Page duplicated', $currentAdmin, [
+                'page_slug' => $copy['slug'],
+                'source_slug' => $source['slug'] ?? '',
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Página duplicada.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode((string) $copy['slug']));
@@ -234,6 +294,10 @@ try {
             $restored['updated_at'] = ccms_now_iso();
             $restored['revisions'] = $data['pages'][$index]['revisions'] ?? [];
             $data['pages'][$index] = $restored;
+            ccms_push_audit_log($data, 'page.restored', 'Revision restored', $currentAdmin, [
+                'page_slug' => $restored['slug'] ?? '',
+                'revision_id' => $revisionId,
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Revisión restaurada.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode((string) $restored['slug']));
@@ -246,7 +310,11 @@ try {
             if ($index === null) {
                 throw new RuntimeException('Página no encontrada.');
             }
+            $deletedSlug = (string) ($data['pages'][$index]['slug'] ?? '');
             array_splice($data['pages'], $index, 1);
+            ccms_push_audit_log($data, 'page.deleted', 'Page deleted', $currentAdmin, [
+                'page_slug' => $deletedSlug,
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Página eliminada.');
             ccms_redirect('/r-admin/?tab=pages');
@@ -278,6 +346,9 @@ try {
                 'url' => ccms_public_upload_url($safeFile),
                 'uploaded_at' => ccms_now_iso(),
             ];
+            ccms_push_audit_log($data, 'media.uploaded', 'Media uploaded', $currentAdmin, [
+                'filename' => $safeFile,
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Imagen subida.');
             ccms_redirect('/r-admin/?tab=media');
@@ -310,6 +381,9 @@ try {
             ];
             ccms_push_page_revision($importedPage, 'Imported page');
             $data['pages'][] = $importedPage;
+            ccms_push_audit_log($data, 'page.imported', 'Page imported', $currentAdmin, [
+                'page_slug' => $importedPage['slug'] ?? '',
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Página importada.');
             ccms_redirect('/r-admin/?tab=pages');
@@ -344,9 +418,15 @@ try {
                 'email' => $email,
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                 'role' => $role,
+                'must_change_password' => true,
+                'last_login_at' => null,
                 'created_at' => ccms_now_iso(),
                 'updated_at' => ccms_now_iso(),
             ];
+            ccms_push_audit_log($data, 'user.created', 'User created', $currentAdmin, [
+                'username' => $username,
+                'role' => $role,
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Usuario creado.');
             ccms_redirect('/r-admin/?tab=users');
@@ -392,8 +472,14 @@ try {
                     throw new RuntimeException('La nueva contraseña debe tener al menos 10 caracteres.');
                 }
                 $data['users'][$index]['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+                $data['users'][$index]['must_change_password'] = true;
             }
             $data['users'][$index]['updated_at'] = ccms_now_iso();
+            ccms_push_audit_log($data, 'user.updated', 'User updated', $currentAdmin, [
+                'username' => $username,
+                'role' => $role,
+                'password_reset' => $password !== '',
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Usuario actualizado.');
             ccms_redirect('/r-admin/?tab=users');
@@ -413,7 +499,11 @@ try {
             if (($data['users'][$index]['role'] ?? '') === 'owner' && $ownerCount <= 1) {
                 throw new RuntimeException('No puedes borrar el último owner.');
             }
+            $deletedUsername = (string) ($data['users'][$index]['username'] ?? '');
             array_splice($data['users'], $index, 1);
+            ccms_push_audit_log($data, 'user.deleted', 'User deleted', $currentAdmin, [
+                'username' => $deletedUsername,
+            ]);
             ccms_save_data($data);
             ccms_flash('success', 'Usuario eliminado.');
             ccms_redirect('/r-admin/?tab=users');
@@ -433,14 +523,20 @@ $canManagePages = ccms_user_can('pages_manage');
 $canManageMedia = ccms_user_can('media_manage');
 $canImportCapsules = ccms_user_can('import_capsules');
 $canGenerateAi = ccms_user_can('ai_generate');
+$canViewAudit = $canManageUsers;
 $builderReadOnly = !$canManagePages;
 $tab = (string) ($_GET['tab'] ?? ($canGenerateAi ? 'studio' : 'pages'));
 if (($tab === 'users' && !$canManageUsers)
     || ($tab === 'site' && !$canManageSite)
     || ($tab === 'media' && !$canManageMedia)
     || ($tab === 'import' && !$canImportCapsules)
-    || ($tab === 'studio' && !$canGenerateAi)) {
+    || ($tab === 'studio' && !$canGenerateAi)
+    || ($tab === 'audit' && !$canViewAudit)) {
     $tab = 'pages';
+}
+$mustChangePassword = !empty($currentAdmin['must_change_password']);
+if ($mustChangePassword) {
+    $tab = 'account';
 }
 $selectedPage = null;
 $selectedSlug = trim((string) ($_GET['page'] ?? ''));
@@ -461,6 +557,7 @@ $previewHtml = $selectedPage ? ccms_render_public_page($data['site'], $selectedP
 $selectedRevisions = $selectedPage && is_array($selectedPage['revisions'] ?? null) ? $selectedPage['revisions'] : [];
 $storageInfo = ccms_storage_runtime_info();
 $aiSettings = ccms_ai_settings($data);
+$auditLogs = array_slice(is_array($data['audit_logs'] ?? null) ? $data['audit_logs'] : [], 0, 80);
 $sectionTemplates = [
     [
         'id' => 'hero',
@@ -748,13 +845,52 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       <nav class="nav-tabs">
         <?php if ($canGenerateAi): ?><a class="<?= $tab === 'studio' ? 'active' : '' ?>" href="/r-admin/?tab=studio"><span class="icon-dot"></span>Studio</a><?php endif; ?>
         <a class="<?= $tab === 'pages' ? 'active' : '' ?>" href="/r-admin/?tab=pages"><span class="icon-dot"></span>Páginas</a>
+        <a class="<?= $tab === 'account' ? 'active' : '' ?>" href="/r-admin/?tab=account"><span class="icon-dot"></span>Cuenta</a>
         <?php if ($canManageSite): ?><a class="<?= $tab === 'site' ? 'active' : '' ?>" href="/r-admin/?tab=site"><span class="icon-dot"></span>Sitio</a><?php endif; ?>
         <?php if ($canManageMedia): ?><a class="<?= $tab === 'media' ? 'active' : '' ?>" href="/r-admin/?tab=media"><span class="icon-dot"></span>Media</a><?php endif; ?>
         <?php if ($canImportCapsules): ?><a class="<?= $tab === 'import' ? 'active' : '' ?>" href="/r-admin/?tab=import"><span class="icon-dot"></span>Importar cápsula</a><?php endif; ?>
         <?php if ($canManageUsers): ?><a class="<?= $tab === 'users' ? 'active' : '' ?>" href="/r-admin/?tab=users"><span class="icon-dot"></span>Usuarios</a><?php endif; ?>
+        <?php if ($canViewAudit): ?><a class="<?= $tab === 'audit' ? 'active' : '' ?>" href="/r-admin/?tab=audit"><span class="icon-dot"></span>Auditoría</a><?php endif; ?>
       </nav>
 
-      <?php if ($tab === 'studio'): ?>
+      <?php if ($mustChangePassword): ?>
+        <div class="flash error">Tu cuenta usa una contraseña temporal. Debes cambiarla ahora antes de editar páginas o configuración.</div>
+      <?php endif; ?>
+
+      <?php if ($tab === 'account'): ?>
+        <div class="pages-layout">
+          <aside class="stack">
+            <div class="card sidebar-card">
+              <h2>Tu cuenta</h2>
+              <p class="small">Gestiona tu acceso al panel. Si acabas de recibir una contraseña temporal, cámbiala aquí primero.</p>
+              <div class="small"><strong>Usuario:</strong> <?= ccms_h((string) ($currentAdmin['username'] ?? '')) ?></div>
+              <div class="small"><strong>Email:</strong> <?= ccms_h((string) ($currentAdmin['email'] ?? '')) ?></div>
+              <div class="small"><strong>Rol:</strong> <?= ccms_h((string) ($currentAdmin['role'] ?? '')) ?></div>
+              <div class="small"><strong>Último acceso:</strong> <?= ccms_h((string) ($currentAdmin['last_login_at'] ?? 'Sin registrar')) ?></div>
+            </div>
+          </aside>
+          <section class="workspace">
+            <div class="card editor-card">
+              <div class="editor-header">
+                <div class="editor-title">
+                  <div class="chip">Cuenta</div>
+                  <h2>Cambiar contraseña</h2>
+                  <p class="muted" style="margin:0">Usa una contraseña fuerte. Si tu cuenta fue creada por otra persona, esta es la primera acción que deberías hacer.</p>
+                </div>
+              </div>
+              <form method="post" class="stack" style="max-width:560px">
+                <input type="hidden" name="action" value="change_own_password">
+                <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                <div class="field"><label>Nueva contraseña</label><input name="new_password" type="password" required></div>
+                <div class="field"><label>Repite la nueva contraseña</label><input name="confirm_new_password" type="password" required></div>
+                <div class="toolbar">
+                  <button class="btn" type="submit">Guardar nueva contraseña</button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </div>
+      <?php elseif ($tab === 'studio'): ?>
         <div class="pages-layout">
           <aside class="stack">
             <div class="card sidebar-card">
@@ -984,6 +1120,51 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
             <p class="small">También puedes usar el script CLI <code>php tools/import-from-aivoiceweb.php</code>.</p>
           </div>
         </div>
+      <?php elseif ($tab === 'audit'): ?>
+        <div class="pages-layout">
+          <aside class="stack">
+            <div class="card sidebar-card">
+              <h2>Auditoría</h2>
+              <p class="small">Este registro resume acciones sensibles del panel: inicios de sesión, cambios de sitio, usuarios, páginas, media e importaciones.</p>
+            </div>
+          </aside>
+          <section class="workspace">
+            <div class="card editor-card">
+              <div class="editor-header">
+                <div class="editor-title">
+                  <div class="chip">Audit log</div>
+                  <h2>Actividad reciente</h2>
+                  <p class="muted" style="margin:0">Útil para soporte, control de cambios y revisión rápida de lo ocurrido en `/r-admin`.</p>
+                </div>
+              </div>
+              <div class="stack">
+                <?php foreach ($auditLogs as $entry): ?>
+                  <div class="help-box" style="background:#fff">
+                    <div class="split-2">
+                      <div>
+                        <strong><?= ccms_h((string) ($entry['label'] ?? 'Audit entry')) ?></strong>
+                        <div class="small"><?= ccms_h((string) ($entry['action'] ?? '')) ?></div>
+                      </div>
+                      <div class="small" style="text-align:right"><?= ccms_h((string) ($entry['created_at'] ?? '')) ?></div>
+                    </div>
+                    <div class="small" style="margin-top:8px">
+                      Usuario: <strong><?= ccms_h((string) ($entry['user']['username'] ?? 'system')) ?></strong>
+                      <?php if (!empty($entry['user']['role'])): ?>
+                        · Rol: <?= ccms_h((string) $entry['user']['role']) ?>
+                      <?php endif; ?>
+                    </div>
+                    <?php if (!empty($entry['meta']) && is_array($entry['meta'])): ?>
+                      <pre class="builder-json" style="margin-top:10px;min-height:auto"><?= ccms_h(json_encode($entry['meta'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></pre>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+                <?php if (empty($auditLogs)): ?>
+                  <p class="muted">Todavía no hay actividad registrada.</p>
+                <?php endif; ?>
+              </div>
+            </div>
+          </section>
+        </div>
       <?php elseif ($tab === 'users'): ?>
         <div class="pages-layout">
           <aside class="stack">
@@ -1003,6 +1184,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                     <option value="owner">Owner</option>
                   </select>
                 </div>
+                <p class="small">Los usuarios nuevos deberán cambiar esta contraseña al entrar por primera vez.</p>
                 <button class="btn" type="submit">Crear usuario</button>
               </form>
             </div>
@@ -1046,6 +1228,10 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                       <div class="split-2">
                         <div class="field"><label>Nueva contraseña (opcional)</label><input name="user_password" type="password" placeholder="Déjalo vacío para mantenerla"></div>
                         <div class="field"><label>Creado</label><input value="<?= ccms_h((string) ($user['created_at'] ?? '')) ?>" disabled></div>
+                      </div>
+                      <div class="small">
+                        Último acceso: <?= ccms_h((string) (($user['last_login_at'] ?? null) ?: 'Sin registrar')) ?>
+                        · Cambio obligatorio de contraseña: <?= !empty($user['must_change_password']) ? 'Sí' : 'No' ?>
                       </div>
                       <div class="toolbar">
                         <button class="btn" type="submit">Guardar usuario</button>

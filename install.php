@@ -75,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'email' => $adminEmail,
             'password_hash' => $data['admin']['password_hash'],
             'role' => 'owner',
+            'must_change_password' => false,
+            'last_login_at' => null,
             'created_at' => $data['admin']['created_at'],
             'updated_at' => ccms_now_iso(),
         ]];
@@ -90,9 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'meta_description' => $data['site']['tagline'],
             'capsule_json' => "{\n  \"meta\": {\n    \"business_name\": \"" . addslashes($siteTitle) . "\"\n  },\n  \"blocks\": []\n}",
             'html_content' => '<section style="padding:72px 32px;text-align:center"><p style="display:inline-block;padding:8px 12px;border-radius:999px;background:#f1ece4;font-weight:700;margin:0 0 14px">Starter page</p><h1 style="font-size:48px;line-height:1.05;margin:0 0 14px">' . ccms_h($siteTitle) . '</h1><p style="max-width:720px;margin:0 auto;color:#6b5b53;font-size:18px;line-height:1.7">' . ccms_h($data['site']['tagline']) . '</p><div style="margin-top:24px"><a href="/r-admin/" style="display:inline-flex;padding:14px 20px;border-radius:999px;background:#c86f5c;color:#fff;font-weight:700;text-decoration:none">Open admin</a></div></section>',
-            'created_at' => ccms_now_iso(),
-            'updated_at' => ccms_now_iso(),
-        ];
+                'created_at' => ccms_now_iso(),
+                'updated_at' => ccms_now_iso(),
+            ];
+        ccms_push_audit_log($data, 'install.completed', 'LinuxCMS installed', $data['users'][0], [
+            'storage_driver' => $storageDriver,
+            'site_title' => $siteTitle,
+        ]);
         ccms_set_storage_driver($storageDriver);
         ccms_save_data($data);
         ccms_flash('success', 'Instalación completada. Ya puedes entrar al panel.');

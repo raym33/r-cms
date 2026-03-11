@@ -191,6 +191,8 @@ function ccms_current_admin(): ?array
             'username' => $current['username'] ?? '',
             'email' => $current['email'] ?? '',
             'role' => $current['role'] ?? 'owner',
+            'must_change_password' => !empty($current['must_change_password']),
+            'last_login_at' => $current['last_login_at'] ?? null,
         ];
         return $_SESSION['ccms_admin'];
     }
@@ -268,10 +270,12 @@ function ccms_login(string $username, string $password): bool
 {
     ccms_assert_login_allowed($username, ccms_client_ip());
     $data = ccms_load_data();
+    $matchedIndex = null;
     $matchedUser = null;
-    foreach (($data['users'] ?? []) as $user) {
+    foreach (($data['users'] ?? []) as $index => $user) {
         if (($user['username'] ?? '') === $username || ($user['email'] ?? '') === $username) {
             $matchedUser = $user;
+            $matchedIndex = $index;
             break;
         }
     }
@@ -290,11 +294,19 @@ function ccms_login(string $username, string $password): bool
         session_regenerate_id(true);
     }
     ccms_clear_login_attempts($username, ccms_client_ip());
+    if ($matchedIndex !== null) {
+        $data['users'][$matchedIndex]['last_login_at'] = ccms_now_iso();
+        $data['users'][$matchedIndex]['updated_at'] = ccms_now_iso();
+        ccms_save_data($data);
+        $matchedUser = $data['users'][$matchedIndex];
+    }
     $_SESSION['ccms_admin'] = [
         'id' => $matchedUser['id'] ?? '',
         'username' => $matchedUser['username'] ?? '',
         'email' => $matchedUser['email'] ?? '',
         'role' => $matchedUser['role'] ?? 'owner',
+        'must_change_password' => !empty($matchedUser['must_change_password']),
+        'last_login_at' => $matchedUser['last_login_at'] ?? null,
     ];
     ccms_csrf_token();
     return true;

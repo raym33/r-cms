@@ -69,6 +69,8 @@ LinuxCMS already includes:
   - login throttling and temporary lockout
   - `HttpOnly` session cookies with `SameSite=Lax`
   - security headers and admin no-cache headers
+  - audit log for sensitive admin actions
+  - forced password change for temporary user credentials
 
 ## Local development
 

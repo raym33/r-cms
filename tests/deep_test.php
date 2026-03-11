@@ -183,6 +183,7 @@ $data['users'][] = [
     'email' => 'editor@example.com',
     'password_hash' => password_hash('EditorPass2026!', PASSWORD_DEFAULT),
     'role' => 'editor',
+    'must_change_password' => true,
     'created_at' => ccms_now_iso(),
     'updated_at' => ccms_now_iso(),
 ];
@@ -198,6 +199,7 @@ $data['users'][] = [
 ccms_save_data($data);
 ccms_logout();
 lc_assert(ccms_login('editor-user', 'EditorPass2026!') === true, 'editor login works');
+lc_assert(!empty(ccms_current_admin()['must_change_password']), 'editor is flagged for forced password change');
 lc_assert(ccms_user_can('pages_manage') === true, 'editor can manage pages');
 lc_assert(ccms_user_can('media_manage') === true, 'editor can manage media');
 lc_assert(ccms_user_can('users_manage') === false, 'editor cannot manage users');
@@ -250,9 +252,14 @@ foreach ($data['pages'] as $idx => $page) {
 ccms_save_data($data);
 $data = ccms_load_data();
 $homepage = ccms_homepage($data);
+ccms_push_audit_log($data, 'test.event', 'Synthetic audit entry', ccms_current_admin(), ['source' => 'deep_test']);
+ccms_save_data($data);
+$data = ccms_load_data();
 lc_assert(($homepage['slug'] ?? '') === ($pageRecord['slug'] ?? ''), 'homepage resolves generated page');
 lc_assert(ccms_page_by_slug($data, (string) $pageRecord['slug']) !== null, 'page by slug works');
 lc_assert(count(ccms_menu_pages($data)) >= 1, 'menu pages list contains published page');
+lc_assert(count($data['audit_logs'] ?? []) >= 1, 'audit log entries can be stored');
+lc_assert(($data['audit_logs'][0]['action'] ?? '') === 'test.event', 'audit log preserves latest action');
 
 // Block render coverage
 $capsule = $fallback['page']['capsule'];
@@ -315,6 +322,7 @@ $_SESSION['ccms_admin'] = [
     'username' => $data['users'][0]['username'],
     'email' => $data['users'][0]['email'],
     'role' => 'owner',
+    'must_change_password' => false,
 ];
 ob_start();
 include $sourceRoot . '/r-admin/index.php';
@@ -332,6 +340,7 @@ $_SESSION['ccms_admin'] = [
     'username' => $data['users'][2]['username'],
     'email' => $data['users'][2]['email'],
     'role' => 'viewer',
+    'must_change_password' => false,
 ];
 ob_start();
 include $sourceRoot . '/r-admin/index.php';
@@ -339,6 +348,37 @@ $viewerHtml = ob_get_clean();
 lc_assert(str_contains($viewerHtml, 'Modo solo lectura'), 'viewer sees read-only banner');
 lc_assert(!str_contains($viewerHtml, 'Generar borrador con LM Studio'), 'viewer does not see studio generate form');
 lc_assert(!str_contains($viewerHtml, 'Guardar página'), 'viewer does not see save page button');
+
+// Include admin as forced-password user
+$_GET = ['tab' => 'pages'];
+$_SESSION['ccms_admin'] = [
+    'id' => $data['users'][1]['id'],
+    'username' => $data['users'][1]['username'],
+    'email' => $data['users'][1]['email'],
+    'role' => 'editor',
+    'must_change_password' => true,
+];
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$forcedHtml = ob_get_clean();
+lc_assert(str_contains($forcedHtml, 'Tu cuenta usa una contraseña temporal'), 'forced-password banner is visible');
+lc_assert(str_contains($forcedHtml, 'Guardar nueva contraseña'), 'forced-password form is rendered');
+lc_assert(!str_contains($forcedHtml, 'Generar borrador con LM Studio'), 'forced-password mode hides the studio view');
+
+// Include admin audit tab as owner
+$_GET = ['tab' => 'audit'];
+$_SESSION['ccms_admin'] = [
+    'id' => $data['users'][0]['id'],
+    'username' => $data['users'][0]['username'],
+    'email' => $data['users'][0]['email'],
+    'role' => 'owner',
+    'must_change_password' => false,
+];
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$auditHtml = ob_get_clean();
+lc_assert(str_contains($auditHtml, 'Actividad reciente'), 'audit tab renders for owner');
+lc_assert(str_contains($auditHtml, 'Synthetic audit entry'), 'audit tab includes stored entries');
 
 // Media path helpers
 lc_assert(ccms_public_upload_url('demo.png') === '/uploads/demo.png', 'public upload url helper works');
