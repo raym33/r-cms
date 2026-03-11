@@ -65,7 +65,7 @@ try {
     }
 
     header('Content-Type: text/html; charset=utf-8');
-    echo ccms_render_public_page($data['site'], $page, ccms_menu_pages($data));
+    echo ccms_admin_preview_html(ccms_render_public_page($data['site'], $page, ccms_menu_pages($data)));
 } catch (Throwable $e) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');

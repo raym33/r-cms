@@ -330,11 +330,78 @@ function ccms_render_capsule_body(array $capsule): string
       }
     </style>';
     $html .= '<div class="ccms-capsule">';
-    foreach (($capsule['blocks'] ?? []) as $block) {
+    foreach (($capsule['blocks'] ?? []) as $index => $block) {
+        $blockType = (string) ($block['type'] ?? 'block');
+        $blockId = (string) ($block['id'] ?? ($blockType . '_' . $index));
+        $html .= '<div class="ccms-block-shell" data-ccms-block-index="' . $index . '" data-ccms-block-type="' . ccms_h($blockType) . '" data-ccms-block-id="' . ccms_h($blockId) . '">';
         $html .= ccms_render_capsule_block($block, $style);
+        $html .= '</div>';
     }
     $html .= '</div>';
     return $html;
+}
+
+function ccms_admin_preview_html(string $html): string
+{
+    $injected = '<style>
+      .ccms-block-shell{position:relative}
+      .ccms-block-shell[data-ccms-block-index]{cursor:pointer}
+      .ccms-block-shell.is-ccms-selected{outline:3px solid rgba(200,111,92,.72);outline-offset:-3px}
+      .ccms-block-shell.is-ccms-selected::after{
+        content:attr(data-ccms-block-type);
+        position:absolute;
+        left:16px;
+        top:16px;
+        z-index:120;
+        display:inline-flex;
+        align-items:center;
+        padding:8px 12px;
+        border-radius:999px;
+        background:rgba(47,36,31,.92);
+        color:#fff;
+        font:700 11px/1.1 Arial,Helvetica,sans-serif;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+        pointer-events:none
+      }
+    </style>
+    <script>
+      (function(){
+        const blocks = Array.from(document.querySelectorAll("[data-ccms-block-index]"));
+        function setSelected(index){
+          blocks.forEach((node) => node.classList.toggle("is-ccms-selected", Number(node.dataset.ccmsBlockIndex) === index));
+        }
+        blocks.forEach((node) => {
+          node.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const index = Number(node.dataset.ccmsBlockIndex || -1);
+            if (index < 0) return;
+            setSelected(index);
+            try {
+              window.parent.postMessage({
+                type: "ccms-preview-select-block",
+                index,
+                blockType: node.dataset.ccmsBlockType || "",
+                blockId: node.dataset.ccmsBlockId || ""
+              }, "*");
+            } catch (error) {}
+          }, true);
+        });
+        window.addEventListener("message", (event) => {
+          const data = event.data || {};
+          if (data && data.type === "ccms-parent-highlight-block") {
+            const index = Number(data.index || -1);
+            if (index >= 0) setSelected(index);
+          }
+        });
+      }());
+    </script>';
+
+    if (str_contains($html, '</body>')) {
+        return str_replace('</body>', $injected . '</body>', $html);
+    }
+    return $html . $injected;
 }
 
 function ccms_render_capsule_block(array $block, array $style): string

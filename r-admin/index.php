@@ -680,7 +680,7 @@ if (!$selectedPage && !empty($data['pages'])) {
 }
 $csrfToken = ccms_csrf_token();
 $menuPages = ccms_menu_pages($data);
-$previewHtml = $selectedPage ? ccms_render_public_page($data['site'], $selectedPage, $menuPages) : '';
+$previewHtml = $selectedPage ? ccms_admin_preview_html(ccms_render_public_page($data['site'], $selectedPage, $menuPages)) : '';
 $selectedRevisions = $selectedPage && is_array($selectedPage['revisions'] ?? null) ? $selectedPage['revisions'] : [];
 $storageInfo = ccms_storage_runtime_info();
 $aiSettings = ccms_ai_settings($data);
@@ -853,6 +853,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .builder-stats{display:flex;flex-wrap:wrap;gap:8px}
     .builder-list{display:grid;gap:14px}
     .builder-block{padding:18px;border-radius:22px;border:1px solid var(--line);background:#fff;display:grid;gap:14px}
+    .builder-block.is-selected{border-color:rgba(200,111,92,.55);box-shadow:0 20px 40px -30px rgba(200,111,92,.45)}
     .builder-block-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
     .builder-block-title{display:grid;gap:6px}
     .builder-block-title strong{font-size:18px}
@@ -2068,6 +2069,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
 
     let capsuleState = normalizeCapsule(initialCapsuleState);
     let builderDragState = null;
+    let activeBuilderBlockIndex = capsuleState.blocks.length ? 0 : -1;
 
     function isLongTextField(key, value) {
       return ["subtitle", "text", "quote", "description", "privacy_text", "info", "copyright"].includes(key)
@@ -2087,6 +2089,34 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         builderBlockCount.textContent = `${count} bloque${count === 1 ? "" : "s"}`;
       }
       schedulePreviewRefresh();
+    }
+
+    function highlightPreviewBlock(index) {
+      if (!preview || !preview.contentWindow || index < 0) return;
+      try {
+        preview.contentWindow.postMessage({ type: "ccms-parent-highlight-block", index }, "*");
+      } catch (error) {
+        console.warn("Preview highlight failed:", error);
+      }
+    }
+
+    function selectBuilderBlock(index, options = {}) {
+      const { scroll = true, syncPreview = true } = options;
+      if (!Array.isArray(capsuleState.blocks) || !capsuleState.blocks.length) {
+        activeBuilderBlockIndex = -1;
+        renderBuilderBlocks();
+        return;
+      }
+      const normalizedIndex = Math.max(0, Math.min(index, capsuleState.blocks.length - 1));
+      activeBuilderBlockIndex = normalizedIndex;
+      renderBuilderBlocks();
+      const selected = builderList?.querySelector(`[data-builder-block="${normalizedIndex}"]`);
+      if (scroll && selected) {
+        selected.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+      if (syncPreview) {
+        highlightPreviewBlock(normalizedIndex);
+      }
     }
 
     function schedulePreviewRefresh(delay = 220) {
@@ -2443,9 +2473,13 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     function renderBuilderBlocks() {
       if (!builderList) return;
       if (!capsuleState.blocks.length) {
+        activeBuilderBlockIndex = -1;
         builderList.innerHTML = '<div class="builder-empty">Todavía no hay bloques en la cápsula. Usa la biblioteca de arriba para añadir uno.</div>';
         syncCapsuleTextarea();
         return;
+      }
+      if (activeBuilderBlockIndex < 0 || activeBuilderBlockIndex >= capsuleState.blocks.length) {
+        activeBuilderBlockIndex = 0;
       }
       builderList.innerHTML = capsuleState.blocks.map((block, index) => {
         const scalarFields = [];
@@ -2511,7 +2545,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           }
         });
         return `
-          <article class="builder-block" data-builder-block="${index}">
+          <article class="builder-block ${activeBuilderBlockIndex === index ? "is-selected" : ""}" data-builder-block="${index}">
             <div class="builder-block-header">
               <div class="builder-block-title">
                 <span class="chip">${index + 1} · ${escapeHtml(block.type)}</span>
@@ -2551,7 +2585,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         props: deepClone(template.props || {}),
         style: {},
       });
-      renderBuilderBlocks();
+      selectBuilderBlock(capsuleState.blocks.length - 1, { scroll: true, syncPreview: true });
     }
 
     function ensureArrayProp(blockIndex, key) {
@@ -2715,6 +2749,16 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     }
 
     if (builderList) {
+      builderList.addEventListener("click", (event) => {
+        const block = event.target.closest("[data-builder-block]");
+        const actionButton = event.target.closest("[data-builder-action],[data-builder-array-action],[data-builder-nested-action],[data-builder-pick-media]");
+        if (!block || actionButton) return;
+        const index = Number(block.dataset.builderBlock || -1);
+        if (index >= 0) {
+          selectBuilderBlock(index, { scroll: false, syncPreview: true });
+        }
+      });
+
       builderList.addEventListener("dragstart", (event) => {
         if (builderReadOnly) return;
         const card = event.target.closest(".builder-repeater-card[draggable='true']");
@@ -2794,16 +2838,24 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         const action = button.dataset.builderAction;
         if (action === "up" && index > 0) {
           [capsuleState.blocks[index - 1], capsuleState.blocks[index]] = [capsuleState.blocks[index], capsuleState.blocks[index - 1]];
+          activeBuilderBlockIndex = index - 1;
         } else if (action === "down" && index < capsuleState.blocks.length - 1) {
           [capsuleState.blocks[index + 1], capsuleState.blocks[index]] = [capsuleState.blocks[index], capsuleState.blocks[index + 1]];
+          activeBuilderBlockIndex = index + 1;
         } else if (action === "duplicate") {
           const copy = deepClone(capsuleState.blocks[index]);
           copy.id = createBlockId();
           capsuleState.blocks.splice(index + 1, 0, copy);
+          activeBuilderBlockIndex = index + 1;
         } else if (action === "remove") {
           capsuleState.blocks.splice(index, 1);
+          activeBuilderBlockIndex = capsuleState.blocks.length ? Math.max(0, Math.min(index, capsuleState.blocks.length - 1)) : -1;
         }
-        renderBuilderBlocks();
+        if (activeBuilderBlockIndex >= 0) {
+          selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
+        } else {
+          renderBuilderBlocks();
+        }
       });
 
       builderList.addEventListener("click", (event) => {
@@ -3100,10 +3152,31 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       });
     }
 
+    if (preview) {
+      preview.addEventListener("load", () => {
+        if (activeBuilderBlockIndex >= 0) {
+          window.setTimeout(() => highlightPreviewBlock(activeBuilderBlockIndex), 40);
+        }
+      });
+    }
+
+    window.addEventListener("message", (event) => {
+      const payload = event.data || {};
+      if (payload && payload.type === "ccms-preview-select-block") {
+        const index = Number(payload.index || -1);
+        if (index >= 0) {
+          selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        }
+      }
+    });
+
     renderBuilderTemplateLibrary();
     renderBuilderGlobalStyle();
     renderBuilderBlocks();
     applyBuilderReadOnlyState();
+    if (activeBuilderBlockIndex >= 0) {
+      highlightPreviewBlock(activeBuilderBlockIndex);
+    }
   </script>
   <?php endif; ?>
 </body>
