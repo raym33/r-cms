@@ -92,6 +92,7 @@ function ccms_default_data(): array
             'contact_email' => '',
             'theme_preset' => 'warm',
             'custom_css' => '',
+            'enabled_plugins' => [],
             'colors' => [
                 'bg' => '#f7f4ee',
                 'surface' => '#ffffff',

@@ -70,6 +70,7 @@ $defaults = ccms_default_data();
 lc_assert(($defaults['site']['title'] ?? '') === 'LinuxCMS', 'default site title is LinuxCMS');
 lc_assert(($defaults['site']['theme_preset'] ?? '') === 'warm', 'default site theme preset is warm');
 lc_assert(array_key_exists('custom_css', $defaults['site']), 'default site includes custom css');
+lc_assert(is_array($defaults['site']['enabled_plugins'] ?? null), 'default site includes enabled plugins array');
 lc_assert(isset($defaults['local_ai']['endpoint']), 'default data includes local_ai settings');
 lc_assert(ccms_storage_runtime_info()['driver'] === 'json', 'default storage driver is json');
 lc_assert(is_bool(ccms_storage_runtime_info()['sqlite_available'] ?? null), 'storage runtime exposes sqlite availability flag');
@@ -296,6 +297,9 @@ $data = ccms_load_data();
 $homepage = ccms_homepage($data);
 $data['site']['theme_preset'] = 'editorial';
 $data['site']['custom_css'] = 'body[data-test-theme="1"]{outline:0}';
+$plugins = ccms_discover_plugins();
+lc_assert(isset($plugins['announcement-chip']), 'plugin discovery finds announcement chip');
+$data['site']['enabled_plugins'] = ['announcement-chip'];
 $homepage = $homepage ?? $pageRecord;
 ccms_push_audit_log($data, 'test.event', 'Synthetic audit entry', ccms_current_admin(), ['source' => 'deep_test']);
 ccms_save_data($data);
@@ -345,6 +349,7 @@ lc_assert(str_contains($publicHtml, 'OTM Lawyers'), 'public page contains busine
 lc_assert(str_contains($publicHtml, 'Book a consultation'), 'public page contains CTA text');
 lc_assert(str_contains($publicHtml, '--site-surface-radius:16px'), 'public page includes editorial theme radius');
 lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includes custom css block');
+lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'public page includes enabled plugin markup');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
 
 // Site wrapper logic
@@ -409,6 +414,13 @@ include $sourceRoot . '/r-admin/index.php';
 $siteHtml = ob_get_clean();
 lc_assert(str_contains($siteHtml, 'Tema visual'), 'site settings render theme preset selector');
 lc_assert(str_contains($siteHtml, 'CSS personalizado del sitio'), 'site settings render custom css editor');
+$_GET = ['tab' => 'extensions'];
+$_SERVER['REQUEST_METHOD'] = 'GET';
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$extensionsHtml = ob_get_clean();
+lc_assert(str_contains($extensionsHtml, 'Extensiones ligeras del sitio'), 'extensions tab renders');
+lc_assert(str_contains($extensionsHtml, 'Announcement Chip'), 'extensions view shows available plugin');
 
 // Include login screen in pending 2FA mode
 $_GET = ['step' => '2fa'];

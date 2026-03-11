@@ -270,9 +270,20 @@ function ccms_page_body_html(array $page): string
 
 function ccms_render_public_page(array $site, array $page, array $menuPages): string
 {
+    ccms_load_enabled_plugins($site);
     $colors = $site['colors'] ?? [];
     $theme = ccms_site_theme_preset($site);
     $customCss = trim((string) ($site['custom_css'] ?? ''));
+    $pluginHead = ccms_render_plugin_fragments('public_head_end', [
+        'site' => $site,
+        'page' => $page,
+        'menu_pages' => $menuPages,
+    ]);
+    $pluginBodyEnd = ccms_render_plugin_fragments('public_body_end', [
+        'site' => $site,
+        'page' => $page,
+        'menu_pages' => $menuPages,
+    ]);
     $pageTitle = trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? ''));
     $metaDescription = trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? ''));
     $capsule = ccms_capsule_decode($page);
@@ -365,12 +376,14 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
   </style>' . ($customCss !== '' ? '
   <style id="ccms-custom-css">
 ' . $customCss . '
-  </style>' : '') . '
+  </style>' : '') . ($pluginHead !== '' ? '
+' . $pluginHead : '') . '
 </head>
 <body>
   ' . $outerHeader . '
   ' . $mainHtml . '
   ' . $outerFooter . '
+  ' . $pluginBodyEnd . '
 </body>
 </html>';
 }

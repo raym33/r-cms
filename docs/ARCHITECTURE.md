@@ -136,6 +136,7 @@ The current builder already supports:
 - double-click links in preview to edit both the visible label and the URL, then sync them back to capsule-backed fields
 - double-click buttons in preview to edit label, URL and basic colors, then persist them through capsule-backed fields and block style
 - lightweight site themes with preset styling and optional custom CSS at the site level
+- lightweight plugins/extensions discovered from `plugins/` and enabled from the admin
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 

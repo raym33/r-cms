@@ -207,6 +207,21 @@ try {
             ccms_redirect('/r-admin/?tab=site');
         }
 
+        if ($action === 'save_plugins') {
+            ccms_require_capability('site_manage');
+            $availablePlugins = ccms_discover_plugins();
+            $requestedPlugins = array_values(array_filter(array_map('strval', is_array($_POST['enabled_plugins'] ?? null) ? $_POST['enabled_plugins'] : [])));
+            $data['site']['enabled_plugins'] = array_values(array_filter($requestedPlugins, static function (string $slug) use ($availablePlugins): bool {
+                return isset($availablePlugins[$slug]);
+            }));
+            ccms_push_audit_log($data, 'site.plugins_updated', 'Site plugins updated', $currentAdmin, [
+                'enabled_plugins' => $data['site']['enabled_plugins'],
+            ]);
+            ccms_save_data($data);
+            ccms_flash('success', 'Extensiones guardadas.');
+            ccms_redirect('/r-admin/?tab=extensions');
+        }
+
         if ($action === 'save_ai_settings') {
             ccms_require_capability('ai_generate');
             $data['local_ai'] = ccms_ai_settings_input($_POST);
@@ -662,6 +677,7 @@ $builderReadOnly = !$canManagePages;
 $tab = (string) ($_GET['tab'] ?? ($canGenerateAi ? 'studio' : 'pages'));
 if (($tab === 'users' && !$canManageUsers)
     || ($tab === 'site' && !$canManageSite)
+    || ($tab === 'extensions' && !$canManageSite)
     || ($tab === 'media' && !$canManageMedia)
     || ($tab === 'import' && !$canImportCapsules)
     || ($tab === 'studio' && !$canGenerateAi)
@@ -687,6 +703,7 @@ if (!$selectedPage && !empty($data['pages'])) {
 }
 $csrfToken = ccms_csrf_token();
 $menuPages = ccms_menu_pages($data);
+$availablePlugins = ccms_discover_plugins();
 $previewHtml = $selectedPage ? ccms_admin_preview_html(ccms_render_public_page($data['site'], $selectedPage, $menuPages)) : '';
 $selectedRevisions = $selectedPage && is_array($selectedPage['revisions'] ?? null) ? $selectedPage['revisions'] : [];
 $storageInfo = ccms_storage_runtime_info();
@@ -1034,6 +1051,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         <div class="toolbar">
           <a class="btn btn-secondary" href="/">Abrir web</a>
           <?php if ($canGenerateAi): ?><a class="btn btn-secondary" href="?tab=studio">Studio local</a><?php endif; ?>
+          <?php if ($canManageSite): ?><a class="btn btn-secondary" href="?tab=extensions">Extensiones</a><?php endif; ?>
           <?php if ($canManageMedia): ?><a class="btn btn-secondary" href="?tab=media">Media</a><?php endif; ?>
           <?php if ($canImportCapsules): ?><a class="btn btn-secondary" href="?tab=import">Importar</a><?php endif; ?>
           <?php if ($canManageUsers): ?><a class="btn btn-secondary" href="?tab=users">Usuarios</a><?php endif; ?>
@@ -1049,6 +1067,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         <a class="<?= $tab === 'pages' ? 'active' : '' ?>" href="/r-admin/?tab=pages"><span class="icon-dot"></span>Páginas</a>
         <a class="<?= $tab === 'account' ? 'active' : '' ?>" href="/r-admin/?tab=account"><span class="icon-dot"></span>Cuenta</a>
         <?php if ($canManageSite): ?><a class="<?= $tab === 'site' ? 'active' : '' ?>" href="/r-admin/?tab=site"><span class="icon-dot"></span>Sitio</a><?php endif; ?>
+        <?php if ($canManageSite): ?><a class="<?= $tab === 'extensions' ? 'active' : '' ?>" href="/r-admin/?tab=extensions"><span class="icon-dot"></span>Extensiones</a><?php endif; ?>
         <?php if ($canManageMedia): ?><a class="<?= $tab === 'media' ? 'active' : '' ?>" href="/r-admin/?tab=media"><span class="icon-dot"></span>Media</a><?php endif; ?>
         <?php if ($canImportCapsules): ?><a class="<?= $tab === 'import' ? 'active' : '' ?>" href="/r-admin/?tab=import"><span class="icon-dot"></span>Importar cápsula</a><?php endif; ?>
         <?php if ($canManageUsers): ?><a class="<?= $tab === 'users' ? 'active' : '' ?>" href="/r-admin/?tab=users"><span class="icon-dot"></span>Usuarios</a><?php endif; ?>
@@ -1331,6 +1350,54 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
               <li>El email de contacto se puede reutilizar luego en formularios y páginas.</li>
             </ul>
             <p class="small" style="margin:14px 0 0"><strong>Storage actual:</strong> <?= ccms_h(strtoupper((string) $storageInfo['driver'])) ?><?php if (($storageInfo['driver'] ?? '') === 'sqlite'): ?> · <?= ccms_h((string) $storageInfo['sqlite_file']) ?><?php else: ?> · <?= ccms_h((string) $storageInfo['json_file']) ?><?php endif; ?></p>
+          </div>
+        </div>
+      <?php elseif ($tab === 'extensions'): ?>
+        <div class="site-layout">
+          <div class="card editor-card">
+            <div class="editor-header">
+              <div class="editor-title">
+                <div class="chip">Plugins</div>
+                <h2>Extensiones ligeras del sitio</h2>
+                <p class="muted" style="margin:0">Activa o desactiva plugins sencillos para añadir comportamiento o HTML adicional sin tocar el núcleo.</p>
+              </div>
+            </div>
+            <form method="post" class="stack">
+              <input type="hidden" name="action" value="save_plugins">
+              <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+              <div class="check-grid">
+                <?php if ($availablePlugins === []): ?>
+                  <div class="help-box">
+                    <h4 style="margin:0 0 8px">No hay plugins instalados</h4>
+                    <p class="small" style="margin:0">Añade carpetas dentro de <code>plugins/</code> con un <code>manifest.json</code> y un <code>plugin.php</code> para ampliar el sitio.</p>
+                  </div>
+                <?php else: ?>
+                  <?php foreach ($availablePlugins as $pluginSlug => $pluginManifest): ?>
+                    <?php $isEnabled = in_array($pluginSlug, array_map('strval', is_array($data['site']['enabled_plugins'] ?? null) ? $data['site']['enabled_plugins'] : []), true); ?>
+                    <label class="check">
+                      <input type="checkbox" name="enabled_plugins[]" value="<?= ccms_h($pluginSlug) ?>" <?= $isEnabled ? 'checked' : '' ?>>
+                      <span>
+                        <strong><?= ccms_h((string) ($pluginManifest['name'] ?? $pluginSlug)) ?></strong>
+                        <span class="small" style="display:block;margin-top:4px">
+                          v<?= ccms_h((string) ($pluginManifest['version'] ?? '1.0.0')) ?> · <?= ccms_h((string) ($pluginManifest['description'] ?? 'No description')) ?>
+                        </span>
+                      </span>
+                    </label>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </div>
+              <div class="toolbar">
+                <button class="btn" type="submit">Guardar extensiones</button>
+              </div>
+            </form>
+          </div>
+          <div class="help-box">
+            <h4>Cómo usar esta sección</h4>
+            <ul>
+              <li>Piensa en esto como una primera capa de plugins tipo WordPress, pero más ligera.</li>
+              <li>Los plugins activos pueden inyectar CSS, HTML o pequeños componentes en la web pública.</li>
+              <li>Empieza activando solo una extensión cada vez para validar el efecto visual.</li>
+            </ul>
           </div>
         </div>
       <?php elseif ($tab === 'media'): ?>
