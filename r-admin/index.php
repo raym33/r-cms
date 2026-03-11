@@ -2189,6 +2189,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           </div>
           <div class="builder-context-actions">
             <button class="btn btn-secondary" type="button" data-builder-context="content">Editar contenido</button>
+            <button class="btn btn-secondary" type="button" data-builder-context="media">Editar imágenes</button>
             <button class="btn btn-secondary" type="button" data-builder-context="style">Editar estilo</button>
             <button class="btn btn-secondary" type="button" data-builder-context="duplicate">Duplicar</button>
             <button class="btn btn-danger" type="button" data-builder-context="remove">Eliminar</button>
@@ -2208,6 +2209,28 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       if (target) {
         target.focus({ preventScroll: false });
         target.scrollIntoView({ block: "center", behavior: "smooth" });
+      } else {
+        blockEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+
+    function focusSelectedBlockMediaField() {
+      const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
+      if (!blockEl) return;
+      const candidates = Array.from(blockEl.querySelectorAll("[data-builder-field],[data-builder-object-field],[data-builder-nested-object-field]"));
+      const target = candidates.find((field) => {
+        const key = field.dataset.key || field.dataset.nestedKey || field.dataset.deepKey || "";
+        const parentKey = field.dataset.nestedKey || field.dataset.key || "";
+        return isImageLikeKey(key, parentKey);
+      });
+      if (target) {
+        target.focus({ preventScroll: false });
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+      const mediaButton = blockEl.querySelector("[data-builder-pick-media]");
+      if (mediaButton) {
+        mediaButton.scrollIntoView({ block: "center", behavior: "smooth" });
       } else {
         blockEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
@@ -3224,6 +3247,11 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           focusSelectedBlockField("content");
           return;
         }
+        if (action === "media") {
+          selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
+          focusSelectedBlockMediaField();
+          return;
+        }
         if (action === "style") {
           selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
           focusSelectedBlockField("style");
@@ -3285,6 +3313,10 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         const action = payload.action || "";
         if (action === "content") {
           focusSelectedBlockField("content");
+          return;
+        }
+        if (action === "media") {
+          focusSelectedBlockMediaField();
           return;
         }
         if (action === "style") {

@@ -127,6 +127,7 @@ The current builder already supports:
 - block-aware preview selection synced with the builder
 - contextual active-block actions for content/style focus and quick duplication/removal
 - inline preview action pills inside selected blocks
+- direct media jump from preview to the first matching image field in the builder
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 

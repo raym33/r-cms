@@ -315,6 +315,7 @@ lc_assert(str_contains($bodyHtml, 'Start the conversation'), 'render body contai
 $previewHtml = ccms_admin_preview_html($publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data)));
 lc_assert(str_contains($previewHtml, 'ccms-preview-action'), 'admin preview includes inline action hook');
 lc_assert(str_contains($previewHtml, 'Edit content'), 'admin preview includes edit content action');
+lc_assert(str_contains($previewHtml, 'Edit media'), 'admin preview includes edit media action');
 lc_assert(str_contains($previewHtml, 'Edit style'), 'admin preview includes edit style action');
 $publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($publicHtml, '<!doctype html>'), 'public page is full html');
