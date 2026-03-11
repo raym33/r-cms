@@ -471,6 +471,39 @@ function ccms_admin_preview_html(string $html): string
               setSelected(index);
               const originalText = (el.textContent || "").trim();
               const tag = (el.tagName || "").toLowerCase();
+              if (tag === "a") {
+                const originalHref = String(el.getAttribute("href") || "").trim();
+                postToParent({
+                  type: "ccms-preview-quick-link",
+                  index,
+                  href: originalHref,
+                  text: originalText.slice(0, 220),
+                  blockType: node.dataset.ccmsBlockType || "",
+                  blockId: node.dataset.ccmsBlockId || ""
+                });
+                const newText = window.prompt("Edit link text", originalText);
+                if (newText === null) {
+                  return;
+                }
+                const newHref = window.prompt("Edit link URL", originalHref);
+                if (newHref === null) {
+                  return;
+                }
+                if (newText.trim() !== originalText || newHref.trim() !== originalHref) {
+                  postToParent({
+                    type: "ccms-preview-apply-link",
+                    index,
+                    tag,
+                    oldText: originalText.slice(0, 220),
+                    newText: newText.trim().slice(0, 220),
+                    oldHref: originalHref,
+                    newHref: newHref.trim().slice(0, 500),
+                    blockType: node.dataset.ccmsBlockType || "",
+                    blockId: node.dataset.ccmsBlockId || ""
+                  });
+                }
+                return;
+              }
               if (el.dataset.ccmsInlineEditing === "1") return;
               el.dataset.ccmsInlineEditing = "1";
               el.classList.add("ccms-inline-editing");

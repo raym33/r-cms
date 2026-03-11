@@ -132,6 +132,7 @@ The current builder already supports:
 - double-click text in preview to jump to the closest matching text field in the builder
 - double-click images in preview to jump to the closest matching media field in the builder
 - inline text editing in preview with save-on-enter/blur back into capsule-backed fields
+- double-click links in preview to edit both the visible label and the URL, then sync them back to capsule-backed fields
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 

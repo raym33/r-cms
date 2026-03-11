@@ -2345,6 +2345,43 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       focusSelectedBlockField("content");
     }
 
+    function applySelectedBlockLinkField(oldHref = "", newHref = "", preferredText = "") {
+      const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
+      if (!blockEl) return false;
+      const candidates = Array.from(blockEl.querySelectorAll("[data-builder-field][data-mode='string'],[data-builder-object-field][data-mode='string'],[data-builder-nested-object-field][data-mode='string']"));
+      const previousHref = (oldHref || "").trim();
+      const nextHref = (newHref || "").trim();
+      const preferredLabel = (preferredText || "").trim().toLowerCase();
+      let target = null;
+      if (previousHref) {
+        target = candidates.find((field) => String(field.value || "").trim() === previousHref) || null;
+      }
+      if (!target && preferredLabel) {
+        target = candidates.find((field) => {
+          const wrapper = field.closest(".builder-field, .builder-object-field, .builder-nested-object-field");
+          const label = String(wrapper?.querySelector("label, strong")?.textContent || "").trim().toLowerCase();
+          return label && (label.includes(preferredLabel) || preferredLabel.includes(label));
+        }) || null;
+      }
+      if (!target) {
+        target = candidates.find((field) => {
+          const key = field.dataset.deepKey || field.dataset.nestedKey || field.dataset.key || "";
+          const parentKey = field.dataset.nestedKey || field.dataset.key || "";
+          return isLinkLikeKey(key, parentKey);
+        }) || null;
+      }
+      if (!target) {
+        focusSelectedBlockLinkField(previousHref, preferredText);
+        return false;
+      }
+      target.value = nextHref;
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+      target.focus({ preventScroll: false });
+      if (typeof target.select === "function") target.select();
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      return true;
+    }
+
     function renderBlockStyleField(index, field, value) {
       const safeKey = escapeHtml(field.key);
       const safeLabel = escapeHtml(field.label);
@@ -3441,6 +3478,25 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         selectBuilderBlock(index, { scroll: true, syncPreview: false });
         if (builderReadOnly) return;
         focusSelectedBlockMediaField(String(payload.src || ""));
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-quick-link") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        focusSelectedBlockLinkField(String(payload.href || ""), String(payload.text || ""));
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-apply-link") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        applySelectedBlockLinkField(String(payload.oldHref || ""), String(payload.newHref || ""), String(payload.text || payload.oldText || ""));
+        if (String(payload.oldText || "") !== String(payload.newText || "")) {
+          applySelectedBlockTextField(String(payload.oldText || ""), String(payload.newText || ""), String(payload.tag || "a"));
+        }
         return;
       }
       if (payload && payload.type === "ccms-preview-action") {
