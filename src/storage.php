@@ -107,7 +107,7 @@ function ccms_default_data(): array
             'model' => '',
             'temperature' => 0.2,
             'max_tokens' => 2800,
-            'timeout' => 45,
+            'timeout' => 20,
         ],
         'admin' => [
             'id' => null,

@@ -44,7 +44,7 @@ function ccms_ai_http_json(string $method, string $url, ?array $payload = null, 
 {
     $headers = ['Content-Type: application/json'];
     $body = $payload !== null ? json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
-    $connectTimeout = max(3, min(8, $timeout));
+    $connectTimeout = max(2, min(5, $timeout));
 
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
@@ -89,13 +89,26 @@ function ccms_ai_http_json(string $method, string $url, ?array $payload = null, 
     ];
 }
 
+function ccms_ai_prepare_runtime(int $timeout): void
+{
+    $target = max(20, min(180, $timeout + 15));
+    if (function_exists('ignore_user_abort')) {
+        @ignore_user_abort(true);
+    }
+    if (function_exists('set_time_limit')) {
+        @set_time_limit($target);
+    }
+    @ini_set('max_execution_time', (string) $target);
+}
+
 function ccms_ai_probe(array $settings): array
 {
     $endpoint = rtrim((string) ($settings['endpoint'] ?? ''), '/');
     if ($endpoint === '') {
         throw new RuntimeException('Define primero el endpoint de LM Studio.');
     }
-    $response = ccms_ai_http_json('GET', $endpoint . '/models', null, (int) ($settings['timeout'] ?? 20));
+    $probeTimeout = max(3, min(6, (int) ($settings['timeout'] ?? 20)));
+    $response = ccms_ai_http_json('GET', $endpoint . '/models', null, $probeTimeout);
     if ($response['status'] >= 400) {
         throw new RuntimeException('LM Studio devolvió HTTP ' . $response['status'] . ' al consultar modelos.');
     }
@@ -380,6 +393,9 @@ function ccms_ai_prompt(array $brief): string
 
 function ccms_ai_generate_payload(array $brief, array $settings): array
 {
+    $requestTimeout = (int) ($settings['timeout'] ?? 20);
+    ccms_ai_prepare_runtime($requestTimeout);
+
     $endpoint = rtrim((string) ($settings['endpoint'] ?? ''), '/');
     $model = trim((string) ($settings['model'] ?? ''));
     if ($model === '' && $endpoint !== '') {
@@ -405,7 +421,7 @@ function ccms_ai_generate_payload(array $brief, array $settings): array
                 ['role' => 'system', 'content' => 'You generate structured website capsules for a local CMS. Return valid JSON only.'],
                 ['role' => 'user', 'content' => ccms_ai_prompt($brief)],
             ],
-        ], (int) ($settings['timeout'] ?? 45));
+        ], $requestTimeout);
         if ($response['status'] >= 400) {
             throw new RuntimeException('LM Studio devolvió HTTP ' . $response['status']);
         }
