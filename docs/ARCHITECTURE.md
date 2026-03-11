@@ -129,6 +129,7 @@ The current builder already supports:
 - inline preview action pills inside selected blocks
 - direct link jump from preview to the first matching URL field in the builder
 - direct media jump from preview to the first matching image field in the builder
+- direct media modal from preview to choose an asset from the library and write it back into the selected block
 - double-click text in preview to jump to the closest matching text field in the builder
 - double-click images in preview to jump to the closest matching media field in the builder
 - inline text editing in preview with save-on-enter/blur back into capsule-backed fields

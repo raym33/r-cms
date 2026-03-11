@@ -907,6 +907,19 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .builder-media-option img{width:100%;height:72px;object-fit:cover;border-radius:10px;background:#efe7de}
     .builder-media-option span{font-size:11px;line-height:1.35;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
     .builder-media-empty{font-size:13px;color:var(--muted);line-height:1.6}
+    .media-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;z-index:2000}
+    .media-modal-backdrop.is-open{display:flex}
+    .media-modal{width:min(920px,100%);max-height:min(82vh,900px);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:16px;padding:20px;border-radius:24px;border:1px solid var(--line);background:#fff;box-shadow:0 26px 80px rgba(15,23,42,.22)}
+    .media-modal-head{display:flex;align-items:start;justify-content:space-between;gap:16px}
+    .media-modal-head h3{margin:0;font-size:24px}
+    .media-modal-head p{margin:6px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+    .media-modal-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+    .media-modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;overflow:auto;padding-right:4px}
+    .media-modal-card{display:grid;gap:10px;padding:10px;border-radius:18px;border:1px solid var(--line);background:#fcfaf7;text-align:left;cursor:pointer}
+    .media-modal-card img{width:100%;height:112px;object-fit:cover;border-radius:12px;background:#efe7de}
+    .media-modal-card span{font-size:12px;line-height:1.45;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .media-modal-empty{padding:24px;border-radius:18px;border:1px dashed var(--line);background:#fcfaf7;color:var(--muted);line-height:1.7}
+    .media-modal-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
     .html-editor{min-height:520px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.6}
     .preview-frame{width:100%;min-height:760px;border:1px solid var(--line);border-radius:22px;background:#fff}
     .preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
@@ -935,6 +948,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       .builder-repeater-fields{grid-template-columns:1fr}
       .topbar,.editor-header{flex-direction:column}
       .preview-frame{min-height:520px}
+      .media-modal-toolbar{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -2088,6 +2102,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     let capsuleState = normalizeCapsule(initialCapsuleState);
     let builderDragState = null;
     let activeBuilderBlockIndex = capsuleState.blocks.length ? 0 : -1;
+    let mediaModalState = null;
 
     function isLongTextField(key, value) {
       return ["subtitle", "text", "quote", "description", "privacy_text", "info", "copyright"].includes(key)
@@ -2280,9 +2295,9 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       return true;
     }
 
-    function focusSelectedBlockMediaField(preferredSrc = "") {
+    function findSelectedBlockMediaField(preferredSrc = "") {
       const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
-      if (!blockEl) return;
+      if (!blockEl) return null;
       const candidates = Array.from(blockEl.querySelectorAll("[data-builder-field],[data-builder-object-field],[data-builder-nested-object-field]"));
       const preferred = (preferredSrc || "").trim();
       let target = null;
@@ -2296,6 +2311,13 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         return isImageLikeKey(key, parentKey);
         }) || null;
       }
+      return target;
+    }
+
+    function focusSelectedBlockMediaField(preferredSrc = "") {
+      const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
+      if (!blockEl) return;
+      const target = findSelectedBlockMediaField(preferredSrc);
       if (target) {
         target.focus({ preventScroll: false });
         if (typeof target.select === "function") {
@@ -2343,6 +2365,127 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         return;
       }
       focusSelectedBlockField("content");
+    }
+
+    function ensureMediaModal() {
+      let backdrop = document.getElementById("media-modal-backdrop");
+      if (backdrop) return backdrop;
+      backdrop = document.createElement("div");
+      backdrop.id = "media-modal-backdrop";
+      backdrop.className = "media-modal-backdrop";
+      backdrop.innerHTML = `
+        <div class="media-modal" role="dialog" aria-modal="true" aria-labelledby="media-modal-title">
+          <div class="media-modal-head">
+            <div>
+              <h3 id="media-modal-title">Seleccionar imagen</h3>
+              <p>Elige una imagen de la biblioteca para aplicarla directamente al bloque seleccionado.</p>
+            </div>
+            <button class="btn btn-secondary" type="button" data-media-modal-close>Cerrar</button>
+          </div>
+          <div class="media-modal-toolbar">
+            <input type="search" id="media-modal-search" placeholder="Buscar por nombre o URL">
+            <button class="btn btn-secondary" type="button" data-media-modal-fallback>Ir al campo del builder</button>
+          </div>
+          <div class="media-modal-grid" id="media-modal-grid"></div>
+          <div class="media-modal-footer">
+            <div class="small" id="media-modal-status">Elige una imagen o pega una URL directamente en el builder.</div>
+            <button class="btn btn-secondary" type="button" data-media-modal-close>Cerrar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(backdrop);
+      backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop || event.target.closest("[data-media-modal-close]")) {
+          closeMediaModal();
+        }
+      });
+      backdrop.querySelector("#media-modal-search")?.addEventListener("input", () => {
+        renderMediaModalGrid();
+      });
+      backdrop.querySelector("[data-media-modal-fallback]")?.addEventListener("click", () => {
+        if (mediaModalState?.preferredSrc) {
+          focusSelectedBlockMediaField(mediaModalState.preferredSrc);
+        } else {
+          focusSelectedBlockMediaField();
+        }
+        closeMediaModal();
+      });
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && backdrop.classList.contains("is-open")) {
+          closeMediaModal();
+        }
+      });
+      return backdrop;
+    }
+
+    function renderMediaModalGrid() {
+      const backdrop = ensureMediaModal();
+      const grid = backdrop.querySelector("#media-modal-grid");
+      const status = backdrop.querySelector("#media-modal-status");
+      const search = String(backdrop.querySelector("#media-modal-search")?.value || "").trim().toLowerCase();
+      if (!grid) return;
+      if (!Array.isArray(mediaItems) || !mediaItems.length) {
+        grid.innerHTML = `<div class="media-modal-empty">Todavía no hay imágenes en la biblioteca. Sube imágenes en la pestaña <strong>Media</strong> y vuelve a intentarlo.</div>`;
+        if (status) status.textContent = "No hay archivos disponibles en la biblioteca media.";
+        return;
+      }
+      const items = mediaItems.filter((asset) => {
+        if (!search) return true;
+        const haystack = `${asset.name || ""} ${asset.original_name || ""} ${asset.url || ""}`.toLowerCase();
+        return haystack.includes(search);
+      });
+      if (!items.length) {
+        grid.innerHTML = `<div class="media-modal-empty">No hay resultados para esa búsqueda.</div>`;
+        if (status) status.textContent = "No se han encontrado imágenes con ese criterio.";
+        return;
+      }
+      grid.innerHTML = items.map((asset) => `
+        <button class="media-modal-card" type="button" data-media-modal-select="${escapeHtml(asset.url || "")}">
+          <img src="${escapeHtml(asset.url || "")}" alt="${escapeHtml(asset.name || "Media")}">
+          <span>${escapeHtml(asset.name || asset.original_name || asset.url || "Imagen")}</span>
+        </button>
+      `).join("");
+      grid.querySelectorAll("[data-media-modal-select]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!mediaModalState?.target) {
+            focusSelectedBlockMediaField(mediaModalState?.preferredSrc || "");
+            closeMediaModal();
+            return;
+          }
+          mediaModalState.target.value = button.dataset.mediaModalSelect || "";
+          mediaModalState.target.dispatchEvent(new Event("input", { bubbles: true }));
+          mediaModalState.target.focus({ preventScroll: false });
+          mediaModalState.target.scrollIntoView({ block: "center", behavior: "smooth" });
+          if (status) status.textContent = "Imagen aplicada al bloque seleccionado.";
+          closeMediaModal();
+        });
+      });
+      if (status) status.textContent = `${items.length} imagen${items.length === 1 ? "" : "es"} disponible${items.length === 1 ? "" : "s"} para aplicar.`;
+    }
+
+    function openPreviewMediaPicker(preferredSrc = "") {
+      const target = findSelectedBlockMediaField(preferredSrc);
+      if (!target) {
+        focusSelectedBlockMediaField(preferredSrc);
+        return;
+      }
+      const backdrop = ensureMediaModal();
+      mediaModalState = {
+        target,
+        preferredSrc: String(preferredSrc || "").trim(),
+      };
+      backdrop.classList.add("is-open");
+      const search = backdrop.querySelector("#media-modal-search");
+      if (search) search.value = "";
+      renderMediaModalGrid();
+      search?.focus({ preventScroll: true });
+    }
+
+    function closeMediaModal() {
+      const backdrop = document.getElementById("media-modal-backdrop");
+      if (!backdrop) return;
+      backdrop.classList.remove("is-open");
+      mediaModalState = null;
     }
 
     function applySelectedBlockLinkField(oldHref = "", newHref = "", preferredText = "") {
@@ -3400,7 +3543,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         }
         if (action === "media") {
           selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
-          focusSelectedBlockMediaField();
+          openPreviewMediaPicker();
           return;
         }
         if (action === "style") {
@@ -3477,7 +3620,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         if (index < 0) return;
         selectBuilderBlock(index, { scroll: true, syncPreview: false });
         if (builderReadOnly) return;
-        focusSelectedBlockMediaField(String(payload.src || ""));
+        openPreviewMediaPicker(String(payload.src || ""));
         return;
       }
       if (payload && payload.type === "ccms-preview-quick-link") {
@@ -3514,7 +3657,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           return;
         }
         if (action === "media") {
-          focusSelectedBlockMediaField();
+          openPreviewMediaPicker(String(payload.src || ""));
           return;
         }
         if (action === "style") {

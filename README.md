@@ -63,6 +63,7 @@ LinuxCMS already includes:
 - inline preview actions on selected blocks for edit content, edit style, duplicate and delete
 - direct link-focused action from the preview for button and URL fields
 - direct media-focused action from the preview for image-bearing blocks
+- direct media selection modal from the preview, applying library images back into the matching block field
 - double-click visible text inside the selected preview block to jump to the most likely text field
 - double-click visible images in the selected preview block to jump to the matching media field
 - inline text editing inside the preview for selected blocks, synced back to the builder

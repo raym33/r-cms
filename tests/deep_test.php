@@ -323,6 +323,15 @@ lc_assert(str_contains($previewHtml, 'Edit content'), 'admin preview includes ed
 lc_assert(str_contains($previewHtml, 'Edit link'), 'admin preview includes edit link action');
 lc_assert(str_contains($previewHtml, 'Edit media'), 'admin preview includes edit media action');
 lc_assert(str_contains($previewHtml, 'Edit style'), 'admin preview includes edit style action');
+$adminHtml = ob_get_clean();
+ob_start();
+$_GET = ['tab' => 'pages'];
+$_SERVER['REQUEST_METHOD'] = 'GET';
+require $sourceRoot . '/r-admin/index.php';
+$adminPagesHtml = ob_get_clean();
+ob_start();
+lc_assert(str_contains($adminPagesHtml, 'media-modal-backdrop'), 'admin pages view includes media modal');
+lc_assert(str_contains($adminPagesHtml, 'Seleccionar imagen'), 'admin pages view includes media modal heading');
 $publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($publicHtml, '<!doctype html>'), 'public page is full html');
 lc_assert(str_contains($publicHtml, 'Corporate Law for fast-moving businesses'), 'public page contains generated title');
