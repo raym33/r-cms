@@ -417,6 +417,12 @@ function ccms_admin_preview_html(string $html): string
         box-shadow:0 0 0 2px rgba(200,111,92,.16);
         background:rgba(200,111,92,.06)
       }
+      .ccms-inline-editing{
+        outline:2px dashed rgba(200,111,92,.55)!important;
+        outline-offset:3px;
+        background:rgba(255,255,255,.92)!important;
+        cursor:text!important
+      }
       @media (max-width:800px){
         .ccms-block-shell.is-ccms-selected::after{left:12px;top:12px}
         .ccms-block-toolbar{left:12px;right:12px;top:44px;max-width:none}
@@ -463,14 +469,67 @@ function ccms_admin_preview_html(string $html): string
               const index = Number(node.dataset.ccmsBlockIndex || -1);
               if (index < 0) return;
               setSelected(index);
-              postToParent({
-                type: "ccms-preview-quick-text",
-                index,
-                tag: (el.tagName || "").toLowerCase(),
-                text: (el.textContent || "").trim().slice(0, 220),
-                blockType: node.dataset.ccmsBlockType || "",
-                blockId: node.dataset.ccmsBlockId || ""
-              });
+              const originalText = (el.textContent || "").trim();
+              const tag = (el.tagName || "").toLowerCase();
+              if (el.dataset.ccmsInlineEditing === "1") return;
+              el.dataset.ccmsInlineEditing = "1";
+              el.classList.add("ccms-inline-editing");
+              el.setAttribute("contenteditable", "true");
+              el.focus();
+              try {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                selection.removeAllRanges();
+                selection.addRange(range);
+              } catch (error) {}
+              const finish = (save) => {
+                const newText = (el.textContent || "").trim();
+                el.removeAttribute("contenteditable");
+                el.classList.remove("ccms-inline-editing");
+                delete el.dataset.ccmsInlineEditing;
+                if (save && newText !== originalText) {
+                  postToParent({
+                    type: "ccms-preview-apply-text",
+                    index,
+                    tag,
+                    oldText: originalText.slice(0, 220),
+                    newText: newText.slice(0, 220),
+                    blockType: node.dataset.ccmsBlockType || "",
+                    blockId: node.dataset.ccmsBlockId || ""
+                  });
+                } else {
+                  el.textContent = originalText;
+                  postToParent({
+                    type: "ccms-preview-quick-text",
+                    index,
+                    tag,
+                    text: originalText.slice(0, 220),
+                    blockType: node.dataset.ccmsBlockType || "",
+                    blockId: node.dataset.ccmsBlockId || ""
+                  });
+                }
+              };
+              const onKeyDown = (keyEvent) => {
+                if (keyEvent.key === "Escape") {
+                  keyEvent.preventDefault();
+                  el.removeEventListener("keydown", onKeyDown, true);
+                  el.removeEventListener("blur", onBlur, true);
+                  finish(false);
+                } else if (keyEvent.key === "Enter" && tag !== "li") {
+                  keyEvent.preventDefault();
+                  el.removeEventListener("keydown", onKeyDown, true);
+                  el.removeEventListener("blur", onBlur, true);
+                  finish(true);
+                }
+              };
+              const onBlur = () => {
+                el.removeEventListener("keydown", onKeyDown, true);
+                el.removeEventListener("blur", onBlur, true);
+                finish(true);
+              };
+              el.addEventListener("keydown", onKeyDown, true);
+              el.addEventListener("blur", onBlur, true);
             }, true);
           });
         }

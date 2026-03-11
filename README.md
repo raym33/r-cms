@@ -64,6 +64,7 @@ LinuxCMS already includes:
 - direct media-focused action from the preview for image-bearing blocks
 - double-click visible text inside the selected preview block to jump to the most likely text field
 - double-click visible images in the selected preview block to jump to the matching media field
+- inline text editing inside the preview for selected blocks, synced back to the builder
 - page revisions and restore
 - page duplication
 - media library

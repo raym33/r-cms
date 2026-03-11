@@ -2214,9 +2214,9 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       }
     }
 
-    function focusSelectedBlockTextField(preferredText = "", tag = "") {
+    function findSelectedBlockTextField(preferredText = "", tag = "") {
       const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
-      if (!blockEl) return;
+      if (!blockEl) return null;
       const textFields = Array.from(blockEl.querySelectorAll("[data-builder-field][data-mode='string'],[data-builder-object-field][data-mode='string'],[data-builder-nested-object-field][data-mode='string'],[data-builder-scalar-item],[data-builder-nested-scalar]"))
         .filter((field) => {
           const key = field.dataset.key || field.dataset.nestedKey || field.dataset.deepKey || "";
@@ -2224,8 +2224,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           return !isImageLikeKey(key, parentKey);
         });
       if (!textFields.length) {
-        focusSelectedBlockField("content");
-        return;
+        return null;
       }
       const preferred = (preferredText || "").trim().toLowerCase();
       let target = null;
@@ -2242,13 +2241,36 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           || textFields.find((field) => wantShort && field.tagName !== "TEXTAREA")
           || textFields[0];
       }
-      if (target) {
-        target.focus({ preventScroll: false });
-        if (typeof target.select === "function") {
-          target.select();
-        }
-        target.scrollIntoView({ block: "center", behavior: "smooth" });
+      return target;
+    }
+
+    function focusSelectedBlockTextField(preferredText = "", tag = "") {
+      const target = findSelectedBlockTextField(preferredText, tag);
+      if (!target) {
+        focusSelectedBlockField("content");
+        return;
       }
+      target.focus({ preventScroll: false });
+      if (typeof target.select === "function") {
+        target.select();
+      }
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+
+    function applySelectedBlockTextField(oldText = "", newText = "", tag = "") {
+      const target = findSelectedBlockTextField(oldText, tag);
+      if (!target) {
+        focusSelectedBlockField("content");
+        return false;
+      }
+      target.value = newText;
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+      target.focus({ preventScroll: false });
+      if (typeof target.select === "function") {
+        target.select();
+      }
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      return true;
     }
 
     function focusSelectedBlockMediaField(preferredSrc = "") {
@@ -3358,6 +3380,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         selectBuilderBlock(index, { scroll: true, syncPreview: false });
         if (builderReadOnly) return;
         focusSelectedBlockTextField(String(payload.text || ""), String(payload.tag || ""));
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-apply-text") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        applySelectedBlockTextField(String(payload.oldText || ""), String(payload.newText || ""), String(payload.tag || ""));
         return;
       }
       if (payload && payload.type === "ccms-preview-quick-media") {
