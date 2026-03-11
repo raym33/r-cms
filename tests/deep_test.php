@@ -376,6 +376,16 @@ lc_assert(is_file(ccms_uploads_dir() . '/restored-upload.txt'), 'backup import r
 ccms_save_data($restoredData);
 $data = ccms_load_data();
 lc_assert(($data['site']['title'] ?? '') === 'Restored Test Site', 'restored data can be saved and reloaded');
+$staticBuild = ccms_static_export_build($data);
+lc_assert(is_dir((string) ($staticBuild['dir'] ?? '')), 'static export creates export directory');
+lc_assert(is_file($staticBuild['dir'] . '/index.html'), 'static export creates root index.html');
+lc_assert(is_file($staticBuild['dir'] . '/' . $pageRecord['slug'] . '/index.html'), 'static export creates slug folder index');
+lc_assert(is_file($staticBuild['dir'] . '/uploads/restored-upload.txt'), 'static export copies uploads');
+lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/index.html'), 'Corporate Law for fast-moving businesses'), 'static export root html contains page title');
+if (class_exists(ZipArchive::class)) {
+    $staticZip = ccms_static_export_zip($staticBuild);
+    lc_assert(is_file($staticZip), 'static export creates zip when ZipArchive exists');
+}
 
 // Site wrapper logic
 $simplePage = [

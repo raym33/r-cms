@@ -138,6 +138,7 @@ The current builder already supports:
 - lightweight site themes with preset styling and optional custom CSS at the site level
 - lightweight plugins/extensions discovered from `plugins/` and enabled from the admin
 - full-site backup export/import with JSON payloads that also carry uploaded files
+- static export packaging that writes a hosting-ready site with `index.html`, slug folders and `uploads/`
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 

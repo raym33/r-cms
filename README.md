@@ -72,6 +72,7 @@ LinuxCMS already includes:
 - lightweight site themes with presets and optional custom CSS
 - lightweight plugins/extensions with activation from the admin
 - full site backup export/import from the admin, including uploads
+- static hosting package export from the admin for basic hosting without PHP
 - page revisions and restore
 - page duplication
 - media library

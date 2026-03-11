@@ -529,6 +529,23 @@ try {
             exit;
         }
 
+        if ($action === 'export_static_site') {
+            ccms_require_capability('pages_manage');
+            $build = ccms_static_export_build($data);
+            $zipPath = ccms_static_export_zip($build);
+            ccms_push_audit_log($data, 'site.static_exported', 'Static hosting package exported', $currentAdmin, [
+                'pages' => count($build['pages'] ?? []),
+                'homepage' => $build['homepage'] ?? '',
+            ]);
+            ccms_save_data($data);
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="' . basename($zipPath) . '"');
+            header('Content-Length: ' . filesize($zipPath));
+            header('X-Content-Type-Options: nosniff');
+            readfile($zipPath);
+            exit;
+        }
+
         if ($action === 'import_backup') {
             ccms_require_capability('users_manage');
             $rawBackup = trim((string) ($_POST['backup_json'] ?? ''));
@@ -1461,6 +1478,17 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                 </form>
               </div>
               <div class="metabox">
+                <h3>Exportar paquete estático</h3>
+                <p class="small">Genera un ZIP listo para hosting básico, con <code>index.html</code>, carpetas por slug y la carpeta <code>uploads</code>.</p>
+                <form method="post" class="stack">
+                  <input type="hidden" name="action" value="export_static_site">
+                  <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                  <button class="btn" type="submit">Descargar paquete para hosting</button>
+                </form>
+              </div>
+            </div>
+            <div class="split-2">
+              <div class="metabox">
                 <h3>Importar backup</h3>
                 <p class="small">Restaura un backup completo. Esto sustituye el estado actual del sitio y te pedirá volver a iniciar sesión.</p>
                 <form method="post" enctype="multipart/form-data" class="stack">
@@ -1486,6 +1514,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
               <li>Páginas, cápsulas, HTML guardado y revisiones.</li>
               <li>Usuarios y ajustes de acceso.</li>
               <li>Biblioteca media y archivos subidos.</li>
+              <li>El paquete estático crea una versión sin PHP lista para hosting básico.</li>
             </ul>
             <p class="small" style="margin-top:12px"><strong>Consejo:</strong> descarga un backup antes de grandes cambios o antes de mover el sitio a otro hosting.</p>
           </div>
