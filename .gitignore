@@ -5,3 +5,5 @@
 !/uploads/.htaccess
 *.log
 .DS_Store
+
+.linuxcms-runtime/
