@@ -62,6 +62,7 @@ LinuxCMS already includes:
 - contextual active-block toolbar for content/style/duplicate/delete
 - inline preview actions on selected blocks for edit content, edit style, duplicate and delete
 - direct media-focused action from the preview for image-bearing blocks
+- double-click visible text inside the selected preview block to jump to the most likely text field
 - page revisions and restore
 - page duplication
 - media library

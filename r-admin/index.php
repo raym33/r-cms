@@ -2214,6 +2214,43 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       }
     }
 
+    function focusSelectedBlockTextField(preferredText = "", tag = "") {
+      const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
+      if (!blockEl) return;
+      const textFields = Array.from(blockEl.querySelectorAll("[data-builder-field][data-mode='string'],[data-builder-object-field][data-mode='string'],[data-builder-nested-object-field][data-mode='string'],[data-builder-scalar-item],[data-builder-nested-scalar]"))
+        .filter((field) => {
+          const key = field.dataset.key || field.dataset.nestedKey || field.dataset.deepKey || "";
+          const parentKey = field.dataset.nestedKey || field.dataset.key || "";
+          return !isImageLikeKey(key, parentKey);
+        });
+      if (!textFields.length) {
+        focusSelectedBlockField("content");
+        return;
+      }
+      const preferred = (preferredText || "").trim().toLowerCase();
+      let target = null;
+      if (preferred) {
+        target = textFields.find((field) => {
+          const value = String(field.value || "").trim().toLowerCase();
+          return value && (value.includes(preferred) || preferred.includes(value.slice(0, Math.min(value.length, 40))));
+        }) || null;
+      }
+      if (!target) {
+        const wantLong = tag === "p" || tag === "li";
+        const wantShort = tag === "a" || tag === "button" || /^h[1-6]$/.test(tag);
+        target = textFields.find((field) => wantLong && field.tagName === "TEXTAREA")
+          || textFields.find((field) => wantShort && field.tagName !== "TEXTAREA")
+          || textFields[0];
+      }
+      if (target) {
+        target.focus({ preventScroll: false });
+        if (typeof target.select === "function") {
+          target.select();
+        }
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+
     function focusSelectedBlockMediaField() {
       const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
       if (!blockEl) return;
@@ -3303,6 +3340,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         if (index >= 0) {
           selectBuilderBlock(index, { scroll: true, syncPreview: false });
         }
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-quick-text") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        focusSelectedBlockTextField(String(payload.text || ""), String(payload.tag || ""));
         return;
       }
       if (payload && payload.type === "ccms-preview-action") {

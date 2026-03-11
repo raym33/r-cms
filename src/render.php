@@ -392,6 +392,31 @@ function ccms_admin_preview_html(string $html): string
         color:#8a4638;
         border-color:rgba(200,111,92,.18)
       }
+      .ccms-block-shell.is-ccms-selected h1,
+      .ccms-block-shell.is-ccms-selected h2,
+      .ccms-block-shell.is-ccms-selected h3,
+      .ccms-block-shell.is-ccms-selected h4,
+      .ccms-block-shell.is-ccms-selected h5,
+      .ccms-block-shell.is-ccms-selected h6,
+      .ccms-block-shell.is-ccms-selected p,
+      .ccms-block-shell.is-ccms-selected li,
+      .ccms-block-shell.is-ccms-selected a,
+      .ccms-block-shell.is-ccms-selected button{
+        transition:box-shadow .18s ease, background-color .18s ease
+      }
+      .ccms-block-shell.is-ccms-selected h1:hover,
+      .ccms-block-shell.is-ccms-selected h2:hover,
+      .ccms-block-shell.is-ccms-selected h3:hover,
+      .ccms-block-shell.is-ccms-selected h4:hover,
+      .ccms-block-shell.is-ccms-selected h5:hover,
+      .ccms-block-shell.is-ccms-selected h6:hover,
+      .ccms-block-shell.is-ccms-selected p:hover,
+      .ccms-block-shell.is-ccms-selected li:hover,
+      .ccms-block-shell.is-ccms-selected a:hover,
+      .ccms-block-shell.is-ccms-selected button:hover{
+        box-shadow:0 0 0 2px rgba(200,111,92,.16);
+        background:rgba(200,111,92,.06)
+      }
       @media (max-width:800px){
         .ccms-block-shell.is-ccms-selected::after{left:12px;top:12px}
         .ccms-block-toolbar{left:12px;right:12px;top:44px;max-width:none}
@@ -408,6 +433,26 @@ function ccms_admin_preview_html(string $html): string
           try {
             window.parent.postMessage(payload, "*");
           } catch (error) {}
+        }
+        function attachQuickTextTargets(node){
+          node.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,a,button").forEach((el) => {
+            if (el.closest(".ccms-block-toolbar")) return;
+            el.addEventListener("dblclick", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const index = Number(node.dataset.ccmsBlockIndex || -1);
+              if (index < 0) return;
+              setSelected(index);
+              postToParent({
+                type: "ccms-preview-quick-text",
+                index,
+                tag: (el.tagName || "").toLowerCase(),
+                text: (el.textContent || "").trim().slice(0, 220),
+                blockType: node.dataset.ccmsBlockType || "",
+                blockId: node.dataset.ccmsBlockId || ""
+              });
+            }, true);
+          });
         }
         function attachToolbar(node){
           const toolbar = document.createElement("div");
@@ -443,6 +488,7 @@ function ccms_admin_preview_html(string $html): string
         }
         blocks.forEach((node) => {
           attachToolbar(node);
+          attachQuickTextTargets(node);
           node.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
