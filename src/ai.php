@@ -11,7 +11,7 @@ function ccms_ai_defaults(): array
         'model' => '',
         'temperature' => 0.2,
         'max_tokens' => 2800,
-        'timeout' => 45,
+        'timeout' => 20,
     ];
 }
 
@@ -44,12 +44,15 @@ function ccms_ai_http_json(string $method, string $url, ?array $payload = null, 
 {
     $headers = ['Content-Type: application/json'];
     $body = $payload !== null ? json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
+    $connectTimeout = max(3, min(8, $timeout));
 
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connectTimeout);
+        curl_setopt($ch, CURLOPT_NOSIGNAL, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         if ($body !== null) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $body);

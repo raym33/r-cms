@@ -92,8 +92,10 @@ LinuxCMS already includes:
 ## Local development
 
 ```bash
-php -S 127.0.0.1:8088 router.php
+bash start-local.sh
 ```
+
+This launcher starts LinuxCMS in the background, stores a PID file, and writes logs to `.linuxcms-runtime/server.log`.
 
 Then open:
 

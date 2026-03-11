@@ -1,5 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")"
-php -S 127.0.0.1:8088 router.php
-
+./start-local.sh --open
+echo
+echo "LinuxCMS is running."
+echo "You can close this window after the browser opens."
+read -r -p "Press Enter to close..."
