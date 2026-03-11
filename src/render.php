@@ -434,6 +434,26 @@ function ccms_admin_preview_html(string $html): string
             window.parent.postMessage(payload, "*");
           } catch (error) {}
         }
+        function attachQuickMediaTargets(node){
+          node.querySelectorAll("img,video").forEach((el) => {
+            el.addEventListener("dblclick", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const index = Number(node.dataset.ccmsBlockIndex || -1);
+              if (index < 0) return;
+              setSelected(index);
+              const src = (el.currentSrc || el.getAttribute("src") || "").trim();
+              postToParent({
+                type: "ccms-preview-quick-media",
+                index,
+                src,
+                tag: (el.tagName || "").toLowerCase(),
+                blockType: node.dataset.ccmsBlockType || "",
+                blockId: node.dataset.ccmsBlockId || ""
+              });
+            }, true);
+          });
+        }
         function attachQuickTextTargets(node){
           node.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,a,button").forEach((el) => {
             if (el.closest(".ccms-block-toolbar")) return;
@@ -488,6 +508,7 @@ function ccms_admin_preview_html(string $html): string
         }
         blocks.forEach((node) => {
           attachToolbar(node);
+          attachQuickMediaTargets(node);
           attachQuickTextTargets(node);
           node.addEventListener("click", (event) => {
             event.preventDefault();

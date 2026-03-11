@@ -2251,17 +2251,27 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       }
     }
 
-    function focusSelectedBlockMediaField() {
+    function focusSelectedBlockMediaField(preferredSrc = "") {
       const blockEl = builderList?.querySelector(`[data-builder-block="${activeBuilderBlockIndex}"]`);
       if (!blockEl) return;
       const candidates = Array.from(blockEl.querySelectorAll("[data-builder-field],[data-builder-object-field],[data-builder-nested-object-field]"));
-      const target = candidates.find((field) => {
+      const preferred = (preferredSrc || "").trim();
+      let target = null;
+      if (preferred) {
+        target = candidates.find((field) => String(field.value || "").trim() === preferred) || null;
+      }
+      if (!target) {
+        target = candidates.find((field) => {
         const key = field.dataset.key || field.dataset.nestedKey || field.dataset.deepKey || "";
         const parentKey = field.dataset.nestedKey || field.dataset.key || "";
         return isImageLikeKey(key, parentKey);
-      });
+        }) || null;
+      }
       if (target) {
         target.focus({ preventScroll: false });
+        if (typeof target.select === "function") {
+          target.select();
+        }
         target.scrollIntoView({ block: "center", behavior: "smooth" });
         return;
       }
@@ -3348,6 +3358,14 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         selectBuilderBlock(index, { scroll: true, syncPreview: false });
         if (builderReadOnly) return;
         focusSelectedBlockTextField(String(payload.text || ""), String(payload.tag || ""));
+        return;
+      }
+      if (payload && payload.type === "ccms-preview-quick-media") {
+        const index = Number(payload.index || -1);
+        if (index < 0) return;
+        selectBuilderBlock(index, { scroll: true, syncPreview: false });
+        if (builderReadOnly) return;
+        focusSelectedBlockMediaField(String(payload.src || ""));
         return;
       }
       if (payload && payload.type === "ccms-preview-action") {

@@ -129,6 +129,7 @@ The current builder already supports:
 - inline preview action pills inside selected blocks
 - direct media jump from preview to the first matching image field in the builder
 - double-click text in preview to jump to the closest matching text field in the builder
+- double-click images in preview to jump to the closest matching media field in the builder
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 
