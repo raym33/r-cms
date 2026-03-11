@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/src/bootstrap.php';
+ccms_send_admin_headers();
 
 $admin = ccms_require_admin();
 unset($admin);
@@ -14,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
+    ccms_verify_same_origin_request();
     ccms_verify_csrf();
     $data = ccms_load_data();
     $pageId = trim((string) ($_POST['page_id'] ?? ''));

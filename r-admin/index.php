@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/src/bootstrap.php';
+ccms_send_admin_headers();
 
 if (!ccms_is_installed()) {
     ccms_redirect('/install.php');
@@ -17,6 +18,7 @@ try {
         $action = (string) ($_POST['action'] ?? '');
 
         if ($action === 'login') {
+            ccms_verify_same_origin_request();
             $username = trim((string) ($_POST['username'] ?? ''));
             $password = (string) ($_POST['password'] ?? '');
             if (!ccms_login($username, $password)) {
@@ -27,6 +29,7 @@ try {
         }
 
         $currentAdmin = ccms_require_admin();
+        ccms_verify_same_origin_request();
         ccms_verify_csrf();
         $data = ccms_load_data();
 

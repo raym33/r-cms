@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/src/bootstrap.php';
+ccms_send_common_security_headers();
 
 if (ccms_is_installed()) {
     ccms_redirect('/r-admin/');
@@ -20,6 +21,7 @@ $submitted = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        ccms_verify_same_origin_request();
         $siteTitle = trim((string) ($_POST['site_title'] ?? ''));
         $tagline = trim((string) ($_POST['tagline'] ?? ''));
         $adminEmail = trim((string) ($_POST['admin_email'] ?? ''));

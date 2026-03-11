@@ -9,3 +9,6 @@ require_once __DIR__ . '/ai.php';
 
 ccms_start_session();
 ccms_ensure_runtime_dirs();
+if (PHP_SAPI !== 'cli') {
+    ccms_send_common_security_headers();
+}

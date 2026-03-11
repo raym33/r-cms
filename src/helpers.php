@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 function ccms_root_path(string $relative = ''): string
 {
-    $root = dirname(__DIR__);
+    $root = trim((string) getenv('CCMS_ROOT'));
+    if ($root === '') {
+        $root = dirname(__DIR__);
+    }
     if ($relative === '') {
         return $root;
     }
@@ -48,6 +51,30 @@ function ccms_base_url(): string
     return $scheme . '://' . $host;
 }
 
+function ccms_send_common_security_headers(): void
+{
+    if (headers_sent()) {
+        return;
+    }
+    @header_remove('X-Powered-By');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: same-origin');
+    header("Permissions-Policy: camera=(), microphone=(), geolocation=()");
+    header("Content-Security-Policy: default-src 'self' https: data: blob: 'unsafe-inline'; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-src 'self'; connect-src 'self' http://127.0.0.1:1234 http://localhost:1234 https:;");
+}
+
+function ccms_send_admin_headers(): void
+{
+    ccms_send_common_security_headers();
+    if (headers_sent()) {
+        return;
+    }
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
+
 function ccms_flash(string $type, string $message): void
 {
     $_SESSION['ccms_flash'] = ['type' => $type, 'message' => $message];
@@ -67,4 +94,3 @@ function ccms_public_upload_url(string $filename): string
 {
     return '/uploads/' . rawurlencode($filename);
 }
-

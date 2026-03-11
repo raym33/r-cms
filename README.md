@@ -63,6 +63,12 @@ LinuxCMS already includes:
 - media library
 - capsule import from the older aivoiceweb tools
 - PHP-native rendering for a large set of capsule blocks
+- admin hardening for `/r-admin`:
+  - CSRF protection
+  - same-origin POST enforcement
+  - login throttling and temporary lockout
+  - `HttpOnly` session cookies with `SameSite=Lax`
+  - security headers and admin no-cache headers
 
 ## Local development
 
@@ -100,6 +106,57 @@ If LM Studio is not available, LinuxCMS can still create a structured fallback d
 6. Enter `/r-admin`.
 7. The final client edits the website there manually.
 
+## `/r-admin` security model
+
+LinuxCMS is designed so the public website can live on cheap hosting while the admin stays reasonably hardened by default.
+
+Current protections include:
+
+- CSRF validation on admin writes
+- same-origin validation for admin POST requests
+- login throttling with temporary lockout after repeated failures
+- role-based access control:
+  - `owner`
+  - `editor`
+  - `viewer`
+- `HttpOnly` session cookies
+- `SameSite=Lax` cookies
+- `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
+- Content Security Policy headers
+- admin no-cache headers
+
+Recommended hosting-side protections:
+
+- protect `/r-admin` with HTTPS only
+- keep `data/` and `uploads/` writable but not directory-listable
+- use strong admin passwords
+- restrict PHP execution to the project only
+- if possible, add IP restriction or basic auth in front of `/r-admin`
+
+LinuxCMS is safer than a raw PHP admin prototype, but it is still an early product and should be treated as a hardened lightweight CMS, not as a fully audited enterprise platform.
+
+## Testing
+
+LinuxCMS includes a deep CLI regression script:
+
+```bash
+php tests/deep_test.php
+```
+
+This test exercises more than 100 checks, including:
+
+- JSON and SQLite storage
+- CSRF and same-origin checks
+- login, logout and throttling
+- role permissions
+- LM Studio fallback generation
+- capsule rendering
+- install page rendering
+- admin view rendering for `owner` and `viewer`
+- revisions and helper coverage
+
+Use it before shipping a client build or before pushing changes.
+
 ## Import from the older builder
 
 ```bash
@@ -118,6 +175,11 @@ php tools/import-from-aivoiceweb.php \
 - theme marketplace
 - plugin system
 - advanced client-safe simplified mode
+
+## Docs
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security notes](SECURITY.md)
 
 LinuxCMS is now the base for the product you described:
 
