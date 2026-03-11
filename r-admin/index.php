@@ -518,6 +518,42 @@ try {
             ccms_redirect('/r-admin/?tab=pages');
         }
 
+        if ($action === 'export_backup') {
+            ccms_require_capability('users_manage');
+            $payload = ccms_export_backup_payload($data);
+            $filename = 'linuxcms-backup-' . date('Y-m-d-His') . '.json';
+            header('Content-Type: application/json; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('X-Content-Type-Options: nosniff');
+            echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+
+        if ($action === 'import_backup') {
+            ccms_require_capability('users_manage');
+            $rawBackup = trim((string) ($_POST['backup_json'] ?? ''));
+            if ($rawBackup === '' && isset($_FILES['backup_file']) && is_array($_FILES['backup_file']) && (int) ($_FILES['backup_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                $rawBackup = (string) file_get_contents((string) $_FILES['backup_file']['tmp_name']);
+            }
+            if ($rawBackup === '') {
+                throw new RuntimeException('Sube un backup JSON o pega su contenido.');
+            }
+            $payload = json_decode($rawBackup, true);
+            if (!is_array($payload)) {
+                throw new RuntimeException('El backup no es un JSON válido.');
+            }
+            $restoredData = ccms_import_backup_payload($payload);
+            ccms_push_audit_log($restoredData, 'site.backup_imported', 'Backup imported', $currentAdmin, [
+                'pages' => count($restoredData['pages'] ?? []),
+                'media' => count($restoredData['media'] ?? []),
+                'users' => count($restoredData['users'] ?? []),
+            ]);
+            ccms_save_data($restoredData);
+            unset($_SESSION['ccms_admin']);
+            ccms_flash('success', 'Backup importado. Vuelve a iniciar sesión.');
+            ccms_redirect('/r-admin/');
+        }
+
         if ($action === 'create_user') {
             ccms_require_capability('users_manage');
             $username = trim((string) ($_POST['user_username'] ?? ''));
@@ -673,11 +709,13 @@ $canManageMedia = ccms_user_can('media_manage');
 $canImportCapsules = ccms_user_can('import_capsules');
 $canGenerateAi = ccms_user_can('ai_generate');
 $canViewAudit = $canManageUsers;
+$canManageBackups = $canManageUsers;
 $builderReadOnly = !$canManagePages;
 $tab = (string) ($_GET['tab'] ?? ($canGenerateAi ? 'studio' : 'pages'));
 if (($tab === 'users' && !$canManageUsers)
     || ($tab === 'site' && !$canManageSite)
     || ($tab === 'extensions' && !$canManageSite)
+    || ($tab === 'backups' && !$canManageBackups)
     || ($tab === 'media' && !$canManageMedia)
     || ($tab === 'import' && !$canImportCapsules)
     || ($tab === 'studio' && !$canGenerateAi)
@@ -1052,6 +1090,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
           <a class="btn btn-secondary" href="/">Abrir web</a>
           <?php if ($canGenerateAi): ?><a class="btn btn-secondary" href="?tab=studio">Studio local</a><?php endif; ?>
           <?php if ($canManageSite): ?><a class="btn btn-secondary" href="?tab=extensions">Extensiones</a><?php endif; ?>
+          <?php if ($canManageBackups): ?><a class="btn btn-secondary" href="?tab=backups">Backups</a><?php endif; ?>
           <?php if ($canManageMedia): ?><a class="btn btn-secondary" href="?tab=media">Media</a><?php endif; ?>
           <?php if ($canImportCapsules): ?><a class="btn btn-secondary" href="?tab=import">Importar</a><?php endif; ?>
           <?php if ($canManageUsers): ?><a class="btn btn-secondary" href="?tab=users">Usuarios</a><?php endif; ?>
@@ -1068,6 +1107,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         <a class="<?= $tab === 'account' ? 'active' : '' ?>" href="/r-admin/?tab=account"><span class="icon-dot"></span>Cuenta</a>
         <?php if ($canManageSite): ?><a class="<?= $tab === 'site' ? 'active' : '' ?>" href="/r-admin/?tab=site"><span class="icon-dot"></span>Sitio</a><?php endif; ?>
         <?php if ($canManageSite): ?><a class="<?= $tab === 'extensions' ? 'active' : '' ?>" href="/r-admin/?tab=extensions"><span class="icon-dot"></span>Extensiones</a><?php endif; ?>
+        <?php if ($canManageBackups): ?><a class="<?= $tab === 'backups' ? 'active' : '' ?>" href="/r-admin/?tab=backups"><span class="icon-dot"></span>Backups</a><?php endif; ?>
         <?php if ($canManageMedia): ?><a class="<?= $tab === 'media' ? 'active' : '' ?>" href="/r-admin/?tab=media"><span class="icon-dot"></span>Media</a><?php endif; ?>
         <?php if ($canImportCapsules): ?><a class="<?= $tab === 'import' ? 'active' : '' ?>" href="/r-admin/?tab=import"><span class="icon-dot"></span>Importar cápsula</a><?php endif; ?>
         <?php if ($canManageUsers): ?><a class="<?= $tab === 'users' ? 'active' : '' ?>" href="/r-admin/?tab=users"><span class="icon-dot"></span>Usuarios</a><?php endif; ?>
@@ -1398,6 +1438,56 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
               <li>Los plugins activos pueden inyectar CSS, HTML o pequeños componentes en la web pública.</li>
               <li>Empieza activando solo una extensión cada vez para validar el efecto visual.</li>
             </ul>
+          </div>
+        </div>
+      <?php elseif ($tab === 'backups'): ?>
+        <div class="import-layout">
+          <div class="card editor-card">
+            <div class="editor-header">
+              <div class="editor-title">
+                <div class="chip">Backups</div>
+                <h2>Exporta o restaura el sitio completo</h2>
+                <p class="muted" style="margin:0">Descarga una copia completa del contenido, usuarios, configuración y biblioteca media, o restaura una copia anterior.</p>
+              </div>
+            </div>
+            <div class="split-2">
+              <div class="metabox">
+                <h3>Exportar backup</h3>
+                <p class="small">Genera un archivo JSON portable con la configuración del sitio, páginas, revisiones, usuarios y archivos de subida.</p>
+                <form method="post" class="stack">
+                  <input type="hidden" name="action" value="export_backup">
+                  <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                  <button class="btn" type="submit">Descargar backup del sitio</button>
+                </form>
+              </div>
+              <div class="metabox">
+                <h3>Importar backup</h3>
+                <p class="small">Restaura un backup completo. Esto sustituye el estado actual del sitio y te pedirá volver a iniciar sesión.</p>
+                <form method="post" enctype="multipart/form-data" class="stack">
+                  <input type="hidden" name="action" value="import_backup">
+                  <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
+                  <div class="field">
+                    <label>Archivo backup JSON</label>
+                    <input type="file" name="backup_file" accept=".json,application/json">
+                  </div>
+                  <div class="field">
+                    <label>O pega aquí el JSON del backup</label>
+                    <textarea name="backup_json" style="min-height:220px" placeholder="{ ... }"></textarea>
+                  </div>
+                  <button class="btn btn-secondary" type="submit">Restaurar backup</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="help-box">
+            <h4>Qué incluye el backup</h4>
+            <ul>
+              <li>Configuración del sitio y tema.</li>
+              <li>Páginas, cápsulas, HTML guardado y revisiones.</li>
+              <li>Usuarios y ajustes de acceso.</li>
+              <li>Biblioteca media y archivos subidos.</li>
+            </ul>
+            <p class="small" style="margin-top:12px"><strong>Consejo:</strong> descarga un backup antes de grandes cambios o antes de mover el sitio a otro hosting.</p>
           </div>
         </div>
       <?php elseif ($tab === 'media'): ?>

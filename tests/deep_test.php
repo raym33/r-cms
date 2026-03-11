@@ -300,6 +300,15 @@ $data['site']['custom_css'] = 'body[data-test-theme="1"]{outline:0}';
 $plugins = ccms_discover_plugins();
 lc_assert(isset($plugins['announcement-chip']), 'plugin discovery finds announcement chip');
 $data['site']['enabled_plugins'] = ['announcement-chip'];
+$backupFixtureFile = ccms_uploads_dir() . '/deep-test-upload.txt';
+file_put_contents($backupFixtureFile, 'deep test upload');
+$data['media'][] = [
+    'id' => ccms_next_id('media'),
+    'filename' => 'deep-test-upload.txt',
+    'original_name' => 'deep-test-upload.txt',
+    'url' => ccms_public_upload_url('deep-test-upload.txt'),
+    'uploaded_at' => ccms_now_iso(),
+];
 $homepage = $homepage ?? $pageRecord;
 ccms_push_audit_log($data, 'test.event', 'Synthetic audit entry', ccms_current_admin(), ['source' => 'deep_test']);
 ccms_save_data($data);
@@ -351,6 +360,22 @@ lc_assert(str_contains($publicHtml, '--site-surface-radius:16px'), 'public page 
 lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includes custom css block');
 lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'public page includes enabled plugin markup');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
+
+$backupPayload = ccms_export_backup_payload($data);
+lc_assert(($backupPayload['format'] ?? '') === 'linuxcms-backup', 'backup payload uses linuxcms format');
+lc_assert(count($backupPayload['uploads'] ?? []) >= 1, 'backup payload includes uploaded files');
+$mutatedPayload = $backupPayload;
+$mutatedPayload['data']['site']['title'] = 'Restored Test Site';
+$mutatedPayload['uploads'][] = [
+    'filename' => 'restored-upload.txt',
+    'content_base64' => base64_encode('restored upload'),
+];
+$restoredData = ccms_import_backup_payload($mutatedPayload);
+lc_assert(($restoredData['site']['title'] ?? '') === 'Restored Test Site', 'backup import restores mutated site title');
+lc_assert(is_file(ccms_uploads_dir() . '/restored-upload.txt'), 'backup import restores uploaded files');
+ccms_save_data($restoredData);
+$data = ccms_load_data();
+lc_assert(($data['site']['title'] ?? '') === 'Restored Test Site', 'restored data can be saved and reloaded');
 
 // Site wrapper logic
 $simplePage = [

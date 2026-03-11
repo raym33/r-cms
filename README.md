@@ -71,6 +71,7 @@ LinuxCMS already includes:
 - double-click visible buttons in the selected preview block to edit label, URL and basic button colors
 - lightweight site themes with presets and optional custom CSS
 - lightweight plugins/extensions with activation from the admin
+- full site backup export/import from the admin, including uploads
 - page revisions and restore
 - page duplication
 - media library

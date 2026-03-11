@@ -409,6 +409,80 @@ function ccms_storage_runtime_info(): array
     ];
 }
 
+function ccms_export_backup_payload(array $data): array
+{
+    $files = [];
+    $uploadsDir = ccms_uploads_dir();
+    if (is_dir($uploadsDir)) {
+        foreach (scandir($uploadsDir) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $uploadsDir . DIRECTORY_SEPARATOR . $entry;
+            if (!is_file($path)) {
+                continue;
+            }
+            $content = file_get_contents($path);
+            if ($content === false) {
+                continue;
+            }
+            $files[] = [
+                'filename' => $entry,
+                'content_base64' => base64_encode($content),
+            ];
+        }
+    }
+
+    return [
+        'format' => 'linuxcms-backup',
+        'version' => 1,
+        'exported_at' => ccms_now_iso(),
+        'storage_driver' => ccms_storage_driver(),
+        'data' => $data,
+        'uploads' => $files,
+    ];
+}
+
+function ccms_import_backup_payload(array $payload): array
+{
+    if (($payload['format'] ?? '') !== 'linuxcms-backup') {
+        throw new RuntimeException('Backup format not supported.');
+    }
+    if (!is_array($payload['data'] ?? null)) {
+        throw new RuntimeException('Backup payload is missing site data.');
+    }
+
+    $data = ccms_normalize_users(array_replace_recursive(ccms_default_data(), $payload['data']));
+
+    foreach (scandir(ccms_uploads_dir()) ?: [] as $entry) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+        $path = ccms_uploads_dir() . DIRECTORY_SEPARATOR . $entry;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+
+    foreach (($payload['uploads'] ?? []) as $file) {
+        if (!is_array($file)) {
+            continue;
+        }
+        $filename = basename((string) ($file['filename'] ?? ''));
+        $encoded = (string) ($file['content_base64'] ?? '');
+        if ($filename === '' || $encoded === '') {
+            continue;
+        }
+        $decoded = base64_decode($encoded, true);
+        if ($decoded === false) {
+            continue;
+        }
+        file_put_contents(ccms_uploads_dir() . DIRECTORY_SEPARATOR . $filename, $decoded);
+    }
+
+    return $data;
+}
+
 function ccms_next_id(string $prefix): string
 {
     return $prefix . '_' . bin2hex(random_bytes(6));

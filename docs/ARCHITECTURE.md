@@ -137,6 +137,7 @@ The current builder already supports:
 - double-click buttons in preview to edit label, URL and basic colors, then persist them through capsule-backed fields and block style
 - lightweight site themes with preset styling and optional custom CSS at the site level
 - lightweight plugins/extensions discovered from `plugins/` and enabled from the admin
+- full-site backup export/import with JSON payloads that also carry uploaded files
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 
