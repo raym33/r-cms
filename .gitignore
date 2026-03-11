@@ -1,0 +1,7 @@
+/data/app.json
+/data/app.sqlite
+/data/storage.json
+/uploads/*
+!/uploads/.htaccess
+*.log
+.DS_Store

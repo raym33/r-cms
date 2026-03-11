@@ -1,0 +1,12 @@
+RewriteEngine On
+
+RewriteRule ^r-admin/?$ r-admin/index.php [L]
+RewriteRule ^r-admin/logout/?$ r-admin/logout.php [L]
+RewriteRule ^r_admin/?$ r-admin/index.php [L]
+RewriteRule ^r_admin/logout/?$ r-admin/logout.php [L]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^(.+)$ index.php?path=$1 [QSA,L]
