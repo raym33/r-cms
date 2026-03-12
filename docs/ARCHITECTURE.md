@@ -135,6 +135,8 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - dedicated view module for the `Account` tab, including password change and TOTP 2FA setup/disable flows
 - `r-admin/views/studio.php`
   - dedicated view module for the `Studio` tab, including LM Studio settings, connectivity probe, and brief-driven first-draft generation
+- `r-admin/views/import.php`
+  - dedicated view module for the `Import` tab, including quick HTML/capsule import into a new page
 - `src/admin_actions.php`
   - centralizes admin `POST` action handling
   - separates write-side request logic from the view-heavy `r-admin/index.php`
