@@ -574,19 +574,19 @@ function ccms_admin_preview_html(string $html): string
                 const currentStyle = window.getComputedStyle(el);
                 const currentBg = currentStyle.backgroundColor || "";
                 const currentColor = currentStyle.color || "";
-                const newText = window.prompt("Edit button text", originalText);
+                const newText = window.prompt("Editar texto del botón", originalText);
                 if (newText === null) {
                   return;
                 }
-                const hrefPrompt = tag === "a" ? window.prompt("Edit button URL", originalHref) : originalHref;
+                const hrefPrompt = tag === "a" ? window.prompt("Editar enlace del botón", originalHref) : originalHref;
                 if (hrefPrompt === null) {
                   return;
                 }
-                const bgPrompt = window.prompt("Edit button background color", currentBg);
+                const bgPrompt = window.prompt("Editar color de fondo del botón", currentBg);
                 if (bgPrompt === null) {
                   return;
                 }
-                const colorPrompt = window.prompt("Edit button text color", currentColor);
+                const colorPrompt = window.prompt("Editar color del texto del botón", currentColor);
                 if (colorPrompt === null) {
                   return;
                 }
@@ -618,11 +618,11 @@ function ccms_admin_preview_html(string $html): string
                   blockType: node.dataset.ccmsBlockType || "",
                   blockId: node.dataset.ccmsBlockId || ""
                 });
-                const newText = window.prompt("Edit link text", originalText);
+                const newText = window.prompt("Editar texto del enlace", originalText);
                 if (newText === null) {
                   return;
                 }
-                const newHref = window.prompt("Edit link URL", originalHref);
+                const newHref = window.prompt("Editar enlace URL", originalHref);
                 if (newHref === null) {
                   return;
                 }
@@ -707,13 +707,13 @@ function ccms_admin_preview_html(string $html): string
           const toolbar = document.createElement("div");
           toolbar.className = "ccms-block-toolbar";
           [
-            ["content", "Edit content"],
-            ["link", "Edit link"],
-            ["media", "Edit media"],
-            ["style", "Edit style"],
-            ["insert", "Insert after"],
-            ["duplicate", "Duplicate"],
-            ["remove", "Delete"]
+            ["content", "Editar contenido"],
+            ["link", "Editar enlace"],
+            ["media", "Editar media"],
+            ["style", "Editar estilo"],
+            ["insert", "Insertar después"],
+            ["duplicate", "Duplicar"],
+            ["remove", "Eliminar"]
           ].forEach(([action, label]) => {
             const button = document.createElement("button");
             button.type = "button";

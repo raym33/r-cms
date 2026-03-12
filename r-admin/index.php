@@ -1011,6 +1011,22 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
     .client-quick-actions{display:none;flex-wrap:wrap;gap:10px;margin-bottom:16px}
     .client-quick-actions .btn{min-height:40px;padding:10px 16px}
+    .quickstart-guide{display:grid;gap:14px;padding:18px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,#fffaf7 0%,#fff 100%)}
+    .quickstart-head{display:grid;gap:6px}
+    .quickstart-head h3{margin:0;font-size:20px}
+    .quickstart-head p{margin:0;color:var(--muted);line-height:1.65}
+    .quickstart-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .quickstart-step{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:#fff;box-shadow:0 12px 30px -24px rgba(47,36,31,.18)}
+    .quickstart-step-number{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:#f1e7de;color:var(--text);font-size:13px;font-weight:800}
+    .quickstart-step strong{font-size:15px}
+    .quickstart-step p{margin:0;font-size:13px;line-height:1.6;color:var(--muted)}
+    .preview-helper{display:grid;gap:10px;margin:0 0 14px;padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:#fcfaf7}
+    .preview-helper-head{display:grid;gap:4px}
+    .preview-helper-head strong{font-size:15px}
+    .preview-helper-head span{font-size:13px;color:var(--muted);line-height:1.6}
+    .preview-helper-list{display:grid;gap:8px}
+    .preview-helper-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.6;color:var(--muted)}
+    .preview-helper-item b{color:var(--text)}
     .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
     .media-card{display:grid;gap:10px;padding:12px;border-radius:18px;border:1px solid var(--line);background:#fff}
     .media-card img{width:100%;height:120px;object-fit:cover;border-radius:14px;background:#f1ece6}
@@ -1040,9 +1056,13 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       .builder-fields{grid-template-columns:1fr}
       .builder-style-grid{grid-template-columns:1fr}
       .builder-repeater-fields{grid-template-columns:1fr}
+      .quickstart-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
       .topbar,.editor-header{flex-direction:column}
       .preview-frame{min-height:520px}
       .media-modal-toolbar{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .quickstart-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -1827,15 +1847,47 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                       <div class="metabox">
                         <div class="subtabs" id="editorTabs">
                           <button type="button" class="active" data-tab-target="content">Contenido</button>
-                          <button type="button" data-tab-target="builder">Builder</button>
+                          <button type="button" data-tab-target="builder">Secciones</button>
                           <button type="button" class="advanced-only" data-tab-target="seo">SEO y menú</button>
-                          <button type="button" class="advanced-only" data-tab-target="capsule">Capsule JSON</button>
+                          <button type="button" class="advanced-only" data-tab-target="capsule">JSON avanzado</button>
                           <button type="button" data-tab-target="publish">Publicación</button>
                         </div>
 
                         <section class="subpanel active" data-tab-panel="content">
+                          <div class="quickstart-guide">
+                            <div class="quickstart-head">
+                              <h3>Empieza por aquí</h3>
+                              <p>Si no eres técnico, sigue estos cuatro pasos: primero cambia los textos principales, luego sustituye las fotos, después revisa el orden de las secciones y al final publica.</p>
+                            </div>
+                            <div class="quickstart-grid">
+                              <article class="quickstart-step">
+                                <span class="quickstart-step-number">1</span>
+                                <strong>Cambia los textos</strong>
+                                <p>Haz clic en una sección de la vista previa y luego doble clic sobre un título, párrafo o botón para editarlo.</p>
+                                <button class="btn btn-secondary" type="button" data-guide-target="preview-text">Ir a textos</button>
+                              </article>
+                              <article class="quickstart-step">
+                                <span class="quickstart-step-number">2</span>
+                                <strong>Sustituye las fotos</strong>
+                                <p>Haz doble clic sobre una imagen o usa la biblioteca media para poner fotos reales de tu negocio.</p>
+                                <button class="btn btn-secondary" type="button" data-guide-target="preview-media">Ir a fotos</button>
+                              </article>
+                              <article class="quickstart-step">
+                                <span class="quickstart-step-number">3</span>
+                                <strong>Ordena las secciones</strong>
+                                <p>En la pestaña <strong>Secciones</strong> puedes añadir, duplicar, mover o borrar bloques sin tocar código.</p>
+                                <button class="btn btn-secondary" type="button" data-guide-target="builder">Ir a secciones</button>
+                              </article>
+                              <article class="quickstart-step">
+                                <span class="quickstart-step-number">4</span>
+                                <strong>Revisa antes de publicar</strong>
+                                <p>Comprueba enlaces, textos pendientes y estado de la página desde la pestaña de publicación.</p>
+                                <button class="btn btn-secondary" type="button" data-guide-target="publish">Ir a publicar</button>
+                              </article>
+                            </div>
+                          </div>
                           <div class="help-box advanced-only">
-                            <h4>Biblioteca de secciones</h4>
+                            <h4>Bloques rápidos</h4>
                             <ul>
                               <li>Inserta una sección y luego personaliza el texto directamente en el HTML.</li>
                               <li>Si ya subiste imágenes, puedes insertarlas desde la biblioteca media más abajo.</li>
@@ -1878,7 +1930,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                         <section class="subpanel" data-tab-panel="builder">
                           <div class="builder-layout">
                             <div class="builder-note">
-                              Este modo te permite editar la <strong>capsule</strong> de forma más visual: añadir bloques, cambiarlos de orden, duplicarlos y tocar sus props más comunes sin entrar directamente en el JSON. Cuando guardes la página, el CMS actualizará el campo <strong>Capsule JSON</strong> automáticamente.
+                              Aquí editas la <strong>estructura de la página</strong> de forma visual: puedes añadir secciones, cambiar su orden, duplicarlas y tocar sus ajustes principales sin entrar en código. Cuando guardes la página, el CMS actualizará el <strong>JSON avanzado</strong> automáticamente.
                             </div>
                             <div class="builder-toolbar advanced-only">
                               <div class="builder-stats">
@@ -1927,13 +1979,13 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
 
                         <section class="subpanel" data-tab-panel="capsule">
                           <div class="help-box">
-                            <h4>Capsule JSON</h4>
+                            <h4>JSON avanzado</h4>
                             <ul>
                               <li>Guarda aquí la versión estructurada si la página vino del builder original.</li>
                               <li>No es obligatorio para publicar en este CMS, pero ayuda a conservar trazabilidad.</li>
                             </ul>
                           </div>
-                          <div class="field"><label>Capsule JSON</label><textarea name="capsule_json" class="html-editor" style="min-height:420px"><?= ccms_h((string) $selectedPage['capsule_json']) ?></textarea></div>
+                          <div class="field"><label>JSON avanzado</label><textarea name="capsule_json" class="html-editor" style="min-height:420px"><?= ccms_h((string) $selectedPage['capsule_json']) ?></textarea></div>
                         </section>
 
                         <section class="subpanel" data-tab-panel="publish">
@@ -1971,6 +2023,17 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                       <div class="card editor-card">
                         <h2 style="margin-bottom:10px">Vista previa</h2>
                         <p class="small">Se actualiza al guardar o al pulsar refrescar vista previa. Úsala para editar con más confianza.</p>
+                        <div class="preview-helper">
+                          <div class="preview-helper-head">
+                            <strong>Cómo editar desde la vista previa</strong>
+                            <span>No hace falta tocar código: usa la propia maqueta para saltar al lugar correcto.</span>
+                          </div>
+                          <div class="preview-helper-list">
+                            <div class="preview-helper-item"><span class="chip" style="padding:4px 10px">1</span><span><b>Haz clic en una sección</b> para seleccionarla y ver sus opciones.</span></div>
+                            <div class="preview-helper-item"><span class="chip" style="padding:4px 10px">2</span><span><b>Doble clic en un texto</b> para editar títulos, párrafos o botones.</span></div>
+                            <div class="preview-helper-item"><span class="chip" style="padding:4px 10px">3</span><span><b>Doble clic en una imagen</b> para abrir la biblioteca media y cambiar la foto.</span></div>
+                          </div>
+                        </div>
                         <iframe id="pagePreview" class="preview-frame" srcdoc="<?= ccms_h($previewHtml) ?>"></iframe>
                         <div class="preview-actions">
                           <button class="btn btn-secondary js-refresh-preview" type="button">Refrescar vista previa</button>
@@ -2058,7 +2121,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                       <textarea class="html-editor" disabled><?= ccms_h((string) $selectedPage['html_content']) ?></textarea>
                     </div>
                     <div class="metabox">
-                      <h3>Capsule JSON</h3>
+                      <h3>JSON avanzado</h3>
                       <p class="small">Esta es la versión estructurada de la página, útil para auditoría o soporte.</p>
                       <textarea class="html-editor" style="min-height:420px" disabled><?= ccms_h((string) $selectedPage['capsule_json']) ?></textarea>
                     </div>
@@ -2194,6 +2257,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     const clientModeToggle = document.getElementById("clientModeToggle");
     const clientModeBannerToggle = document.getElementById("clientModeBannerToggle");
     const clientQuickActions = document.getElementById("clientQuickActions");
+    const quickstartGuide = document.querySelector(".quickstart-guide");
     const clientModeStorageKey = "ccms-client-mode";
     tabs.forEach((tabButton) => {
       tabButton.addEventListener("click", () => {
@@ -2258,6 +2322,30 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       }
       if (target) {
         activateEditorTab(target);
+      }
+    });
+
+    function focusPreviewPanel() {
+      const previewCard = preview?.closest(".editor-card");
+      previewCard?.scrollIntoView({ block: "start", behavior: "smooth" });
+      preview?.focus?.({ preventScroll: true });
+    }
+
+    quickstartGuide?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-guide-target]");
+      if (!button) return;
+      const target = button.dataset.guideTarget || "";
+      if (target === "preview-text" || target === "preview-media") {
+        activateEditorTab("content");
+        window.setTimeout(() => focusPreviewPanel(), 80);
+        return;
+      }
+      if (target === "builder" || target === "publish") {
+        activateEditorTab(target);
+        return;
+      }
+      if (target === "site") {
+        window.location.href = "/r-admin/?tab=site";
       }
     });
 
@@ -3904,7 +3992,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       builderSyncButton.addEventListener("click", () => {
         if (builderReadOnly) return;
         syncCapsuleTextarea();
-        window.alert("Capsule JSON sincronizado con el builder.");
+        window.alert("JSON avanzado sincronizado con las secciones.");
       });
     }
 

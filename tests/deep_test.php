@@ -341,11 +341,11 @@ lc_assert(str_contains($previewHtml, 'ccms-preview-quick-media'), 'admin preview
 lc_assert(str_contains($previewHtml, 'ccms-preview-quick-link'), 'admin preview includes quick link hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-apply-link'), 'admin preview includes inline link apply hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-apply-button'), 'admin preview includes inline button apply hook');
-lc_assert(str_contains($previewHtml, 'Edit content'), 'admin preview includes edit content action');
-lc_assert(str_contains($previewHtml, 'Edit link'), 'admin preview includes edit link action');
-lc_assert(str_contains($previewHtml, 'Edit media'), 'admin preview includes edit media action');
-lc_assert(str_contains($previewHtml, 'Edit style'), 'admin preview includes edit style action');
-lc_assert(str_contains($previewHtml, 'Insert after'), 'admin preview includes insert action');
+lc_assert(str_contains($previewHtml, 'Editar contenido'), 'admin preview includes edit content action');
+lc_assert(str_contains($previewHtml, 'Editar enlace'), 'admin preview includes edit link action');
+lc_assert(str_contains($previewHtml, 'Editar media'), 'admin preview includes edit media action');
+lc_assert(str_contains($previewHtml, 'Editar estilo'), 'admin preview includes edit style action');
+lc_assert(str_contains($previewHtml, 'Insertar después'), 'admin preview includes insert action');
 $adminHtml = ob_get_clean();
 ob_start();
 $_GET = ['tab' => 'pages'];
@@ -517,6 +517,9 @@ ob_start();
 include $sourceRoot . '/r-admin/index.php';
 $pagesHtml = ob_get_clean();
 lc_assert(str_contains($pagesHtml, 'Textos y fotos'), 'pages admin renders client quick actions');
+lc_assert(str_contains($pagesHtml, 'Empieza por aquí'), 'pages admin renders quick start guide');
+lc_assert(str_contains($pagesHtml, 'Cómo editar desde la vista previa'), 'pages admin renders preview helper guidance');
+lc_assert(str_contains($pagesHtml, 'data-tab-target="builder">Secciones<'), 'pages admin uses friendly sections label');
 lc_assert(str_contains($pagesHtml, 'data-tab-target="publish"'), 'pages admin keeps publish tab');
 lc_assert(str_contains($pagesHtml, 'id="clientModeToggle"'), 'pages admin includes client mode button');
 

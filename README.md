@@ -70,6 +70,9 @@ LinuxCMS already includes:
 - double-click visible links in the selected preview block to edit both label and URL
 - double-click visible buttons in the selected preview block to edit label, URL and basic button colors
 - client mode toggle in `/r-admin` for a simpler editing surface focused on text, photos, colors and publishing
+- quick-start guide inside the page editor for non-technical users
+- preview-side editing hints that explain how to edit text, photos, and buttons
+- friendlier wording in the page editor: `Sections` instead of a raw builder-first label and `Advanced JSON` instead of exposing capsule jargon by default
 - lightweight site themes with presets and optional custom CSS
 - lightweight plugins/extensions with activation from the admin
 - full site backup export/import from the admin, including uploads

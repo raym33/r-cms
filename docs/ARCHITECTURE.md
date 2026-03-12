@@ -135,6 +135,9 @@ The current builder already supports:
 - inline text editing in preview with save-on-enter/blur back into capsule-backed fields
 - double-click links in preview to edit both the visible label and the URL, then sync them back to capsule-backed fields
 - double-click buttons in preview to edit label, URL and basic colors, then persist them through capsule-backed fields and block style
+- quick-start guidance inside the page editor for non-technical users
+- permanent preview hints explaining the edit model without requiring external docs
+- friendlier UI language in client mode (`Sections`, `Advanced JSON`) to reduce builder jargon
 - lightweight site themes with preset styling and optional custom CSS at the site level
 - lightweight plugins/extensions discovered from `plugins/` and enabled from the admin
 - full-site backup export/import with JSON payloads that also carry uploaded files
