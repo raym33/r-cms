@@ -129,6 +129,9 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - dedicated view module for the `Site` tab, including branding, theme preset, colors, and custom CSS settings
 - `r-admin/views/audit.php`
   - dedicated view module for the `Audit` tab, focused on recent privileged actions and metadata inspection
+- `r-admin/views/extensions.php`
+  - dedicated view module for the `Extensions` tab, including trusted plugin mode and plugin activation controls
+- `src/admin_actions.php`
   - centralizes admin `POST` action handling
   - separates write-side request logic from the view-heavy `r-admin/index.php`
 
