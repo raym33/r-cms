@@ -92,6 +92,7 @@ function ccms_default_data(): array
             'contact_email' => '',
             'theme_preset' => 'warm',
             'custom_css' => '',
+            'trusted_plugins_enabled' => false,
             'enabled_plugins' => [],
             'colors' => [
                 'bg' => '#f7f4ee',
@@ -151,6 +152,8 @@ function ccms_normalize_password_reset_tokens(array $data): array
 
 function ccms_normalize_users(array $data): array
 {
+    $data['site'] ??= [];
+    $data['site']['trusted_plugins_enabled'] = !empty($data['site']['trusted_plugins_enabled']);
     $data['users'] = array_values(array_filter(array_map(static function ($user) {
         if (!is_array($user)) {
             return null;
@@ -452,7 +455,61 @@ function ccms_import_backup_payload(array $payload): array
         throw new RuntimeException('Backup payload is missing site data.');
     }
 
-    $data = ccms_normalize_users(array_replace_recursive(ccms_default_data(), $payload['data']));
+    $payloadData = is_array($payload['data']) ? $payload['data'] : [];
+    $defaults = ccms_default_data();
+    $data = $defaults;
+
+    if (is_array($payloadData['site'] ?? null)) {
+        $site = $payloadData['site'];
+        $data['site']['title'] = trim((string) ($site['title'] ?? $data['site']['title'])) ?: $data['site']['title'];
+        $data['site']['tagline'] = trim((string) ($site['tagline'] ?? $data['site']['tagline']));
+        $data['site']['footer_text'] = trim((string) ($site['footer_text'] ?? $data['site']['footer_text']));
+        $data['site']['contact_email'] = trim((string) ($site['contact_email'] ?? $data['site']['contact_email']));
+        $themePreset = trim((string) ($site['theme_preset'] ?? $data['site']['theme_preset']));
+        if (in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
+            $data['site']['theme_preset'] = $themePreset;
+        }
+        $data['site']['custom_css'] = ccms_sanitize_custom_css((string) ($site['custom_css'] ?? ''));
+        $data['site']['trusted_plugins_enabled'] = !empty($site['trusted_plugins_enabled']);
+        $requestedPlugins = array_values(array_filter(array_map('strval', is_array($site['enabled_plugins'] ?? null) ? $site['enabled_plugins'] : [])));
+        $availablePlugins = ccms_discover_plugins();
+        $data['site']['enabled_plugins'] = array_values(array_filter($requestedPlugins, static function (string $slug) use ($availablePlugins): bool {
+            return isset($availablePlugins[$slug]);
+        }));
+        if (is_array($site['colors'] ?? null)) {
+            $data['site']['colors'] = array_merge($data['site']['colors'], array_intersect_key($site['colors'], $data['site']['colors']));
+        }
+    }
+
+    if (is_array($payloadData['local_ai'] ?? null)) {
+        $localAi = $payloadData['local_ai'];
+        $data['local_ai']['endpoint'] = trim((string) ($localAi['endpoint'] ?? $data['local_ai']['endpoint']));
+        $data['local_ai']['model'] = trim((string) ($localAi['model'] ?? $data['local_ai']['model']));
+        $data['local_ai']['temperature'] = is_numeric($localAi['temperature'] ?? null) ? (float) $localAi['temperature'] : $data['local_ai']['temperature'];
+        $data['local_ai']['max_tokens'] = is_numeric($localAi['max_tokens'] ?? null) ? (int) $localAi['max_tokens'] : $data['local_ai']['max_tokens'];
+        $data['local_ai']['timeout'] = is_numeric($localAi['timeout'] ?? null) ? (int) $localAi['timeout'] : $data['local_ai']['timeout'];
+    }
+
+    if (is_array($payloadData['admin'] ?? null)) {
+        $data['admin'] = array_merge($data['admin'], array_intersect_key($payloadData['admin'], $data['admin']));
+    }
+    if (is_array($payloadData['users'] ?? null)) {
+        $data['users'] = $payloadData['users'];
+    }
+    if (is_array($payloadData['pages'] ?? null)) {
+        $data['pages'] = $payloadData['pages'];
+    }
+    if (is_array($payloadData['media'] ?? null)) {
+        $data['media'] = $payloadData['media'];
+    }
+    if (is_array($payloadData['audit_logs'] ?? null)) {
+        $data['audit_logs'] = $payloadData['audit_logs'];
+    }
+    if (is_array($payloadData['password_reset_tokens'] ?? null)) {
+        $data['password_reset_tokens'] = $payloadData['password_reset_tokens'];
+    }
+
+    $data = ccms_normalize_users($data);
 
     foreach (scandir(ccms_uploads_dir()) ?: [] as $entry) {
         if ($entry === '.' || $entry === '..') {

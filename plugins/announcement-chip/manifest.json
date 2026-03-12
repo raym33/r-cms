@@ -2,5 +2,7 @@
   "slug": "announcement-chip",
   "name": "Announcement Chip",
   "version": "1.0.0",
-  "description": "Adds a small floating announcement badge to the public site."
+  "description": "Adds a small floating announcement badge to the public site.",
+  "trusted": true,
+  "entry_sha256": "7ac8a810ce19853a1b638acd2b8161f556b0af3077f15140ab84818481f9128c"
 }

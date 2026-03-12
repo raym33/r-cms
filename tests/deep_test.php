@@ -73,6 +73,7 @@ $defaults = ccms_default_data();
 lc_assert(($defaults['site']['title'] ?? '') === 'LinuxCMS', 'default site title is LinuxCMS');
 lc_assert(($defaults['site']['theme_preset'] ?? '') === 'warm', 'default site theme preset is warm');
 lc_assert(array_key_exists('custom_css', $defaults['site']), 'default site includes custom css');
+lc_assert(array_key_exists('trusted_plugins_enabled', $defaults['site']), 'default site includes trusted plugins flag');
 lc_assert(is_array($defaults['site']['enabled_plugins'] ?? null), 'default site includes enabled plugins array');
 lc_assert(isset($defaults['local_ai']['endpoint']), 'default data includes local_ai settings');
 lc_assert(ccms_storage_runtime_info()['driver'] === 'json', 'default storage driver is json');
@@ -92,6 +93,11 @@ $sanitizedCss = ccms_sanitize_custom_css("body{background:url(https://evil.examp
 lc_assert(!str_contains($sanitizedCss, 'url('), 'custom css sanitizer removes url');
 lc_assert(!str_contains($sanitizedCss, '@import'), 'custom css sanitizer removes import');
 lc_assert(str_contains($sanitizedCss, 'color:red'), 'custom css sanitizer preserves safe declarations');
+$headFragment = ccms_sanitize_plugin_fragment('public_head_end', '<script>alert(1)</script><style>body{background:url(https://evil.example.com/x)} .ok{color:#123}</style><meta name="theme-color" content="#fff"><link rel="stylesheet" href="javascript:alert(1)">');
+lc_assert(!str_contains($headFragment, '<script'), 'plugin head sanitizer removes script tags');
+lc_assert(!str_contains($headFragment, 'url('), 'plugin head sanitizer strips dangerous css urls');
+lc_assert(str_contains($headFragment, '<meta '), 'plugin head sanitizer preserves safe meta');
+lc_assert(!str_contains($headFragment, 'javascript:'), 'plugin head sanitizer strips dangerous link href');
 
 // Save and load JSON
 $defaults['installed_at'] = ccms_now_iso();
@@ -315,7 +321,11 @@ $data['site']['theme_preset'] = 'editorial';
 $data['site']['custom_css'] = 'body[data-test-theme="1"]{outline:0}';
 $plugins = ccms_discover_plugins();
 lc_assert(isset($plugins['announcement-chip']), 'plugin discovery finds announcement chip');
+$pluginMeta = $plugins['announcement-chip'];
+lc_assert(!empty($pluginMeta['trusted']), 'plugin manifest marks trusted plugin');
+lc_assert(!empty($pluginMeta['integrity_ok']), 'plugin integrity hash matches');
 $data['site']['enabled_plugins'] = ['announcement-chip'];
+$data['site']['trusted_plugins_enabled'] = true;
 $backupFixtureFile = ccms_uploads_dir() . '/deep-test-upload.txt';
 file_put_contents($backupFixtureFile, 'deep test upload');
 $data['media'][] = [
@@ -378,6 +388,11 @@ lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includ
 lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'public page includes enabled plugin markup');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
 
+$pluginsDisabledSite = $data['site'];
+$pluginsDisabledSite['trusted_plugins_enabled'] = false;
+$pluginsDisabledHtml = ccms_render_public_page($pluginsDisabledSite, $homepage, ccms_menu_pages($data));
+lc_assert(!str_contains($pluginsDisabledHtml, 'data-ccms-plugin="announcement-chip"'), 'public page skips plugin markup when trusted plugins disabled');
+
 $unsafePage = $homepage;
 $unsafePage['capsule_json'] = '{}';
 $unsafePage['html_content'] = '<section><img src="x" onerror="alert(1)"><p>Safe text</p><a href="javascript:alert(1)">bad</a></section>';
@@ -391,12 +406,18 @@ lc_assert(($backupPayload['format'] ?? '') === 'linuxcms-backup', 'backup payloa
 lc_assert(count($backupPayload['uploads'] ?? []) >= 1, 'backup payload includes uploaded files');
 $mutatedPayload = $backupPayload;
 $mutatedPayload['data']['site']['title'] = 'Restored Test Site';
+$mutatedPayload['data']['site']['trusted_plugins_enabled'] = true;
+$mutatedPayload['data']['site']['enabled_plugins'] = ['announcement-chip', 'malicious-plugin'];
+$mutatedPayload['data']['site']['colors']['evil'] = '#000000';
 $mutatedPayload['uploads'][] = [
     'filename' => 'restored-upload.txt',
     'content_base64' => base64_encode('restored upload'),
 ];
 $restoredData = ccms_import_backup_payload($mutatedPayload);
 lc_assert(($restoredData['site']['title'] ?? '') === 'Restored Test Site', 'backup import restores mutated site title');
+lc_assert(($restoredData['site']['trusted_plugins_enabled'] ?? false) === true, 'backup import restores trusted plugins flag');
+lc_assert(($restoredData['site']['enabled_plugins'] ?? []) === ['announcement-chip'], 'backup import filters unknown plugins');
+lc_assert(!isset($restoredData['site']['colors']['evil']), 'backup import whitelists site color keys');
 lc_assert(is_file(ccms_uploads_dir() . '/restored-upload.txt'), 'backup import restores uploaded files');
 ccms_save_data($restoredData);
 $data = ccms_load_data();
@@ -482,6 +503,7 @@ include $sourceRoot . '/r-admin/index.php';
 $extensionsHtml = ob_get_clean();
 lc_assert(str_contains($extensionsHtml, 'Extensiones ligeras del sitio'), 'extensions tab renders');
 lc_assert(str_contains($extensionsHtml, 'Announcement Chip'), 'extensions view shows available plugin');
+lc_assert(str_contains($extensionsHtml, 'Permitir trusted plugins PHP'), 'extensions view shows trusted plugins toggle');
 
 // Include login screen in pending 2FA mode
 $_GET = ['step' => '2fa'];

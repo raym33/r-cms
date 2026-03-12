@@ -12,6 +12,15 @@ function ccms_plugin_runtime_reset(): void
     $GLOBALS['ccms_plugin_manifests'] = [];
 }
 
+function ccms_plugins_trusted_enabled(array $site): bool
+{
+    $env = strtolower(trim((string) getenv('CCMS_TRUSTED_PLUGINS')));
+    if (in_array($env, ['1', 'true', 'yes', 'on'], true)) {
+        return true;
+    }
+    return !empty($site['trusted_plugins_enabled']);
+}
+
 function ccms_register_plugin_hook(string $hook, callable $callback): void
 {
     $GLOBALS['ccms_plugin_hooks'][$hook] ??= [];
@@ -50,6 +59,15 @@ function ccms_discover_plugins(): array
         $manifest['path'] = $pluginDir;
         $manifest['entry'] = $pluginDir . DIRECTORY_SEPARATOR . 'plugin.php';
         $manifest['active'] = false;
+        $manifest['trusted'] = !empty($manifest['trusted']);
+        $entrySha = trim((string) ($manifest['entry_sha256'] ?? ''));
+        $manifest['entry_sha256'] = preg_match('/^[a-f0-9]{64}$/i', $entrySha) ? strtolower($entrySha) : '';
+        $manifest['integrity_ok'] = false;
+        if (is_file($manifest['entry']) && $manifest['entry_sha256'] !== '') {
+            $actualHash = hash_file('sha256', $manifest['entry']);
+            $manifest['integrity_ok'] = is_string($actualHash) && hash_equals($manifest['entry_sha256'], strtolower($actualHash));
+        }
+        $manifest['loadable'] = $manifest['trusted'] && $manifest['integrity_ok'];
         $plugins[$manifest['slug']] = $manifest;
     }
     ksort($plugins);
@@ -60,9 +78,15 @@ function ccms_load_enabled_plugins(array $site): array
 {
     ccms_plugin_runtime_reset();
     $plugins = ccms_discover_plugins();
+    if (!ccms_plugins_trusted_enabled($site)) {
+        return $plugins;
+    }
     $enabled = array_values(array_filter(array_map('strval', is_array($site['enabled_plugins'] ?? null) ? $site['enabled_plugins'] : [])));
     foreach ($enabled as $slug) {
         if (!isset($plugins[$slug])) {
+            continue;
+        }
+        if (empty($plugins[$slug]['loadable'])) {
             continue;
         }
         $entry = (string) ($plugins[$slug]['entry'] ?? '');
@@ -85,8 +109,90 @@ function ccms_render_plugin_fragments(string $hook, array $context = []): string
     foreach (($GLOBALS['ccms_plugin_hooks'][$hook] ?? []) as $callback) {
         $fragment = $callback($context);
         if (is_string($fragment) && $fragment !== '') {
-            $output .= $fragment;
+            $output .= ccms_sanitize_plugin_fragment($hook, $fragment);
         }
     }
+    return $output;
+}
+
+function ccms_sanitize_plugin_fragment(string $hook, string $fragment): string
+{
+    if ($hook === 'public_head_end') {
+        return ccms_sanitize_plugin_head_fragment($fragment);
+    }
+    return ccms_sanitize_html_fragment($fragment);
+}
+
+function ccms_sanitize_plugin_head_fragment(string $html): string
+{
+    $html = trim($html);
+    if ($html === '' || !class_exists(DOMDocument::class)) {
+        return '';
+    }
+
+    $wrapped = '<div id="ccms-plugin-head-root">' . $html . '</div>';
+    $previous = libxml_use_internal_errors(true);
+    $dom = new DOMDocument('1.0', 'UTF-8');
+    $dom->loadHTML('<?xml encoding="utf-8" ?>' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
+
+    $root = $dom->getElementById('ccms-plugin-head-root');
+    if (!$root instanceof DOMElement) {
+        return '';
+    }
+
+    $allowedTags = ['style', 'meta', 'link'];
+    $output = '';
+    foreach (iterator_to_array($root->childNodes) as $node) {
+        if (!$node instanceof DOMElement) {
+            continue;
+        }
+        $tag = strtolower($node->tagName);
+        if (!in_array($tag, $allowedTags, true)) {
+            continue;
+        }
+        if ($tag === 'style') {
+            $css = ccms_sanitize_custom_css($node->textContent ?? '');
+            if ($css !== '') {
+                $id = $node->getAttribute('id');
+                $idAttr = $id !== '' ? ' id="' . ccms_h($id) . '"' : '';
+                $output .= '<style' . $idAttr . '>' . $css . '</style>';
+            }
+            continue;
+        }
+        if ($tag === 'meta') {
+            $attrs = [];
+            foreach (['name', 'content', 'property', 'charset'] as $attr) {
+                $value = trim($node->getAttribute($attr));
+                if ($value !== '') {
+                    $attrs[] = $attr . '="' . ccms_h($value) . '"';
+                }
+            }
+            if ($attrs !== []) {
+                $output .= '<meta ' . implode(' ', $attrs) . '>';
+            }
+            continue;
+        }
+        if ($tag === 'link') {
+            $href = ccms_sanitize_url($node->getAttribute('href'));
+            if ($href === '') {
+                continue;
+            }
+            $rel = trim($node->getAttribute('rel'));
+            if (!in_array($rel, ['stylesheet', 'preconnect', 'dns-prefetch', 'icon'], true)) {
+                continue;
+            }
+            $attrs = ['rel="' . ccms_h($rel) . '"', 'href="' . ccms_h($href) . '"'];
+            foreach (['media', 'crossorigin', 'referrerpolicy'] as $attr) {
+                $value = trim($node->getAttribute($attr));
+                if ($value !== '') {
+                    $attrs[] = $attr . '="' . ccms_h($value) . '"';
+                }
+            }
+            $output .= '<link ' . implode(' ', $attrs) . '>';
+        }
+    }
+
     return $output;
 }

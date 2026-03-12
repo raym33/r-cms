@@ -148,6 +148,9 @@ The current builder already supports:
 - friendlier UI language in client mode (`Sections`, `Advanced JSON`) to reduce builder jargon
 - lightweight site themes with preset styling and optional custom CSS at the site level
 - lightweight plugins/extensions discovered from `plugins/` and enabled from the admin
+  - disabled by default
+  - only loaded in trusted mode
+  - require manifest trust flag and `plugin.php` SHA-256 integrity match
 - full-site backup export/import with JSON payloads that also carry uploaded files
 - static export packaging that writes a hosting-ready site with `index.html`, slug folders and `uploads/`
 

@@ -28,6 +28,12 @@ It is security-conscious by default, but it is not presented as a formally audit
 - basic idle session expiry handling
 - sanitization of stored `html_content` before render/output
 - sanitization of site-level custom CSS before output
+- sanitization of plugin-provided head/body fragments before public render
+- trusted PHP plugins disabled by default
+- trusted plugin loading only when:
+  - trusted mode is enabled
+  - the plugin manifest marks the plugin as trusted
+  - the `plugin.php` SHA-256 matches the manifest
 - common security headers:
   - `X-Frame-Options: SAMEORIGIN`
   - `X-Content-Type-Options: nosniff`
@@ -55,7 +61,7 @@ For `/r-admin`, use:
 
 - no external identity provider yet
 - shared-hosting hardening still depends partly on provider configuration
-- plugins are trusted PHP code, not sandboxed extensions
+- plugins are still trusted PHP code, not sandboxed extensions
 - the admin remains monolithic and should be modularized further
 
 ## Development guidance

@@ -212,10 +212,12 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             ccms_require_capability('site_manage');
             $availablePlugins = ccms_discover_plugins();
             $requestedPlugins = array_values(array_filter(array_map('strval', is_array($_POST['enabled_plugins'] ?? null) ? $_POST['enabled_plugins'] : [])));
+            $data['site']['trusted_plugins_enabled'] = isset($_POST['trusted_plugins_enabled']);
             $data['site']['enabled_plugins'] = array_values(array_filter($requestedPlugins, static function (string $slug) use ($availablePlugins): bool {
                 return isset($availablePlugins[$slug]);
             }));
             ccms_push_audit_log($data, 'site.plugins_updated', 'Site plugins updated', $currentAdmin, [
+                'trusted_plugins_enabled' => !empty($data['site']['trusted_plugins_enabled']),
                 'enabled_plugins' => $data['site']['enabled_plugins'],
             ]);
             ccms_save_data($data);

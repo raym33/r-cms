@@ -251,7 +251,8 @@ function ccms_sanitize_html_fragment(string $html): string
                     $toRemove[] = $attr->name;
                     continue;
                 }
-                if (!in_array($name, $allowedAttrs, true)) {
+                $isDataAttr = preg_match('/^data-[a-z0-9:_-]+$/', $name) === 1;
+                if (!$isDataAttr && !in_array($name, $allowedAttrs, true)) {
                     $toRemove[] = $attr->name;
                     continue;
                 }

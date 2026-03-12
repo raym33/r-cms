@@ -75,6 +75,9 @@ LinuxCMS already includes:
 - friendlier wording in the page editor: `Sections` instead of a raw builder-first label and `Advanced JSON` instead of exposing capsule jargon by default
 - lightweight site themes with presets and optional custom CSS
 - lightweight plugins/extensions with activation from the admin
+  - disabled by default
+  - opt-in trusted mode
+  - manifest + `plugin.php` integrity check
 - full site backup export/import from the admin, including uploads
 - static hosting package export from the admin for basic hosting without PHP
 - page revisions and restore
