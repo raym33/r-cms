@@ -886,6 +886,8 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .flash{padding:14px 16px;border-radius:16px;margin-bottom:16px}
     .flash.success{background:#eaf7f0;color:#1b5a3c}
     .flash.error{background:#fde9e7;color:#8e3c34}
+    .client-mode-banner{display:none;align-items:flex-start;justify-content:space-between;gap:14px;padding:16px 18px;border-radius:20px;background:#fff7f4;border:1px solid rgba(200,111,92,.24);margin:0 0 18px}
+    .client-mode-banner strong{display:block;margin-bottom:4px}
     .nav-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
     .nav-tabs a{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:999px;background:#ece4da;color:var(--text);text-decoration:none;font-weight:800}
     .nav-tabs a.active{background:var(--text);color:#fff}
@@ -1007,6 +1009,8 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .html-editor{min-height:520px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.6}
     .preview-frame{width:100%;min-height:760px;border:1px solid var(--line);border-radius:22px;background:#fff}
     .preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .client-quick-actions{display:none;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+    .client-quick-actions .btn{min-height:40px;padding:10px 16px}
     .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
     .media-card{display:grid;gap:10px;padding:12px;border-radius:18px;border:1px solid var(--line);background:#fff}
     .media-card img{width:100%;height:120px;object-fit:cover;border-radius:14px;background:#f1ece6}
@@ -1022,6 +1026,12 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     .help-box h4{margin:0 0 8px}
     .help-box ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.7}
     .sticky-actions{position:sticky;top:16px}
+    body.client-mode .advanced-only{display:none !important}
+    body.client-mode .client-mode-banner{display:flex}
+    body.client-mode .client-quick-actions{display:flex}
+    body.client-mode .editor-layout{grid-template-columns:minmax(0,1fr) 320px}
+    body.client-mode .builder-context{background:#fffdf9}
+    body.client-mode .builder-context-actions .btn-secondary{background:#fff}
     @media (max-width:1180px){
       .editor-layout{grid-template-columns:1fr}
     }
@@ -1110,30 +1120,38 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
         </div>
         <div class="toolbar">
           <a class="btn btn-secondary" href="/">Abrir web</a>
-          <?php if ($canGenerateAi): ?><a class="btn btn-secondary" href="?tab=studio">Studio local</a><?php endif; ?>
-          <?php if ($canManageSite): ?><a class="btn btn-secondary" href="?tab=extensions">Extensiones</a><?php endif; ?>
-          <?php if ($canManageBackups): ?><a class="btn btn-secondary" href="?tab=backups">Backups</a><?php endif; ?>
+          <button class="btn btn-secondary" type="button" id="clientModeToggle" aria-pressed="false">Modo cliente</button>
+          <?php if ($canGenerateAi): ?><a class="btn btn-secondary advanced-only" href="?tab=studio">Studio local</a><?php endif; ?>
+          <?php if ($canManageSite): ?><a class="btn btn-secondary advanced-only" href="?tab=extensions">Extensiones</a><?php endif; ?>
+          <?php if ($canManageBackups): ?><a class="btn btn-secondary advanced-only" href="?tab=backups">Backups</a><?php endif; ?>
           <?php if ($canManageMedia): ?><a class="btn btn-secondary" href="?tab=media">Media</a><?php endif; ?>
-          <?php if ($canImportCapsules): ?><a class="btn btn-secondary" href="?tab=import">Importar</a><?php endif; ?>
-          <?php if ($canManageUsers): ?><a class="btn btn-secondary" href="?tab=users">Usuarios</a><?php endif; ?>
+          <?php if ($canImportCapsules): ?><a class="btn btn-secondary advanced-only" href="?tab=import">Importar</a><?php endif; ?>
+          <?php if ($canManageUsers): ?><a class="btn btn-secondary advanced-only" href="?tab=users">Usuarios</a><?php endif; ?>
           <a class="btn btn-secondary" href="/r-admin/logout.php">Salir</a>
         </div>
       </header>
 
       <?php if ($flash): ?><div class="flash <?= ccms_h($flash['type']) ?>"><?= ccms_h($flash['message']) ?></div><?php endif; ?>
       <?php if ($error !== ''): ?><div class="flash error"><?= ccms_h($error) ?></div><?php endif; ?>
+      <div class="client-mode-banner" id="clientModeBanner">
+        <div>
+          <strong>Modo cliente activado</strong>
+          <div class="small">Se muestran solo las acciones clave para editar textos, fotos, colores y publicar. Si necesitas todo el panel, cambia a <strong>Modo avanzado</strong>.</div>
+        </div>
+        <button class="btn btn-secondary" type="button" id="clientModeBannerToggle">Cambiar a modo avanzado</button>
+      </div>
 
       <nav class="nav-tabs">
-        <?php if ($canGenerateAi): ?><a class="<?= $tab === 'studio' ? 'active' : '' ?>" href="/r-admin/?tab=studio"><span class="icon-dot"></span>Studio</a><?php endif; ?>
+        <?php if ($canGenerateAi): ?><a class="advanced-only <?= $tab === 'studio' ? 'active' : '' ?>" href="/r-admin/?tab=studio"><span class="icon-dot"></span>Studio</a><?php endif; ?>
         <a class="<?= $tab === 'pages' ? 'active' : '' ?>" href="/r-admin/?tab=pages"><span class="icon-dot"></span>Páginas</a>
         <a class="<?= $tab === 'account' ? 'active' : '' ?>" href="/r-admin/?tab=account"><span class="icon-dot"></span>Cuenta</a>
         <?php if ($canManageSite): ?><a class="<?= $tab === 'site' ? 'active' : '' ?>" href="/r-admin/?tab=site"><span class="icon-dot"></span>Sitio</a><?php endif; ?>
-        <?php if ($canManageSite): ?><a class="<?= $tab === 'extensions' ? 'active' : '' ?>" href="/r-admin/?tab=extensions"><span class="icon-dot"></span>Extensiones</a><?php endif; ?>
-        <?php if ($canManageBackups): ?><a class="<?= $tab === 'backups' ? 'active' : '' ?>" href="/r-admin/?tab=backups"><span class="icon-dot"></span>Backups</a><?php endif; ?>
+        <?php if ($canManageSite): ?><a class="advanced-only <?= $tab === 'extensions' ? 'active' : '' ?>" href="/r-admin/?tab=extensions"><span class="icon-dot"></span>Extensiones</a><?php endif; ?>
+        <?php if ($canManageBackups): ?><a class="advanced-only <?= $tab === 'backups' ? 'active' : '' ?>" href="/r-admin/?tab=backups"><span class="icon-dot"></span>Backups</a><?php endif; ?>
         <?php if ($canManageMedia): ?><a class="<?= $tab === 'media' ? 'active' : '' ?>" href="/r-admin/?tab=media"><span class="icon-dot"></span>Media</a><?php endif; ?>
-        <?php if ($canImportCapsules): ?><a class="<?= $tab === 'import' ? 'active' : '' ?>" href="/r-admin/?tab=import"><span class="icon-dot"></span>Importar cápsula</a><?php endif; ?>
-        <?php if ($canManageUsers): ?><a class="<?= $tab === 'users' ? 'active' : '' ?>" href="/r-admin/?tab=users"><span class="icon-dot"></span>Usuarios</a><?php endif; ?>
-        <?php if ($canViewAudit): ?><a class="<?= $tab === 'audit' ? 'active' : '' ?>" href="/r-admin/?tab=audit"><span class="icon-dot"></span>Auditoría</a><?php endif; ?>
+        <?php if ($canImportCapsules): ?><a class="advanced-only <?= $tab === 'import' ? 'active' : '' ?>" href="/r-admin/?tab=import"><span class="icon-dot"></span>Importar cápsula</a><?php endif; ?>
+        <?php if ($canManageUsers): ?><a class="advanced-only <?= $tab === 'users' ? 'active' : '' ?>" href="/r-admin/?tab=users"><span class="icon-dot"></span>Usuarios</a><?php endif; ?>
+        <?php if ($canViewAudit): ?><a class="advanced-only <?= $tab === 'audit' ? 'active' : '' ?>" href="/r-admin/?tab=audit"><span class="icon-dot"></span>Auditoría</a><?php endif; ?>
       </nav>
 
       <?php if ($mustChangePassword): ?>
@@ -1792,6 +1810,12 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                     <a class="btn btn-secondary" href="<?= !empty($selectedPage['is_homepage']) ? '/' : '/' . rawurlencode((string) $selectedPage['slug']) ?>" target="_blank" rel="noopener">Abrir página</a>
                   </div>
                 </div>
+                <div class="client-quick-actions" id="clientQuickActions">
+                  <button class="btn btn-secondary" type="button" data-client-focus="content">Textos y fotos</button>
+                  <button class="btn btn-secondary" type="button" data-client-focus="builder">Secciones</button>
+                  <button class="btn btn-secondary" type="button" data-client-focus="site">Colores globales</button>
+                  <button class="btn btn-secondary" type="button" data-client-focus="publish">Publicar</button>
+                </div>
                 <?php if ($canManagePages): ?>
                 <form method="post" id="pageEditorForm">
                   <input type="hidden" name="action" value="save_page">
@@ -1804,13 +1828,13 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                         <div class="subtabs" id="editorTabs">
                           <button type="button" class="active" data-tab-target="content">Contenido</button>
                           <button type="button" data-tab-target="builder">Builder</button>
-                          <button type="button" data-tab-target="seo">SEO y menú</button>
-                          <button type="button" data-tab-target="capsule">Capsule JSON</button>
+                          <button type="button" class="advanced-only" data-tab-target="seo">SEO y menú</button>
+                          <button type="button" class="advanced-only" data-tab-target="capsule">Capsule JSON</button>
                           <button type="button" data-tab-target="publish">Publicación</button>
                         </div>
 
                         <section class="subpanel active" data-tab-panel="content">
-                          <div class="help-box">
+                          <div class="help-box advanced-only">
                             <h4>Biblioteca de secciones</h4>
                             <ul>
                               <li>Inserta una sección y luego personaliza el texto directamente en el HTML.</li>
@@ -1856,7 +1880,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                             <div class="builder-note">
                               Este modo te permite editar la <strong>capsule</strong> de forma más visual: añadir bloques, cambiarlos de orden, duplicarlos y tocar sus props más comunes sin entrar directamente en el JSON. Cuando guardes la página, el CMS actualizará el campo <strong>Capsule JSON</strong> automáticamente.
                             </div>
-                            <div class="builder-toolbar">
+                            <div class="builder-toolbar advanced-only">
                               <div class="builder-stats">
                                 <span class="chip" id="builderBlockCount">0 bloques</span>
                                 <span class="chip">Solo bloques PHP soportados</span>
@@ -1960,7 +1984,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                         </div>
                         <p class="small" style="margin-top:14px">Consejo: inserta una sección, cambia los textos directamente en el HTML y usa la vista previa para validar antes de publicar.</p>
                       </div>
-                      <div class="card editor-card">
+                      <div class="card editor-card advanced-only">
                         <h2 style="margin-bottom:10px">Duplicar página</h2>
                         <form method="post">
                           <input type="hidden" name="action" value="duplicate_page">
@@ -1969,7 +1993,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                           <button class="btn btn-secondary" type="submit">Crear una copia borrador</button>
                         </form>
                       </div>
-                      <div class="card editor-card">
+                      <div class="card editor-card advanced-only">
                         <h2 style="margin-bottom:10px">Historial de revisiones</h2>
                         <?php if (!empty($selectedRevisions)): ?>
                           <div class="stack">
@@ -1991,7 +2015,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
                           <p class="small">Todavía no hay revisiones guardadas para esta página.</p>
                         <?php endif; ?>
                       </div>
-                      <div class="card editor-card">
+                      <div class="card editor-card advanced-only">
                         <h2 style="margin-bottom:10px">Eliminar página</h2>
                         <form method="post" onsubmit="return confirm('¿Seguro que quieres borrar esta página?');">
                           <input type="hidden" name="action" value="delete_page">
@@ -2167,12 +2191,74 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
 
     const tabs = document.querySelectorAll("[data-tab-target]");
     const panels = document.querySelectorAll("[data-tab-panel]");
+    const clientModeToggle = document.getElementById("clientModeToggle");
+    const clientModeBannerToggle = document.getElementById("clientModeBannerToggle");
+    const clientQuickActions = document.getElementById("clientQuickActions");
+    const clientModeStorageKey = "ccms-client-mode";
     tabs.forEach((tabButton) => {
       tabButton.addEventListener("click", () => {
         const target = tabButton.dataset.tabTarget;
         tabs.forEach((button) => button.classList.toggle("active", button === tabButton));
         panels.forEach((panel) => panel.classList.toggle("active", panel.dataset.tabPanel === target));
       });
+    });
+
+    function activateEditorTab(target) {
+      const button = Array.from(tabs).find((item) => item.dataset.tabTarget === target && item.offsetParent !== null);
+      button?.click();
+    }
+
+    function setClientMode(enabled) {
+      document.body.classList.toggle("client-mode", enabled);
+      if (clientModeToggle) {
+        clientModeToggle.textContent = enabled ? "Modo avanzado" : "Modo cliente";
+        clientModeToggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+      }
+      if (clientModeBannerToggle) {
+        clientModeBannerToggle.textContent = enabled ? "Cambiar a modo avanzado" : "Volver a modo cliente";
+      }
+      try {
+        window.localStorage.setItem(clientModeStorageKey, enabled ? "1" : "0");
+      } catch (error) {
+        console.warn("Could not persist client mode:", error);
+      }
+      const activeHiddenTab = Array.from(tabs).find((button) => button.classList.contains("active") && button.offsetParent === null);
+      if (enabled && activeHiddenTab) {
+        activateEditorTab("content");
+      }
+    }
+
+    function getInitialClientMode() {
+      try {
+        const stored = window.localStorage.getItem(clientModeStorageKey);
+        if (stored === "0" || stored === "1") {
+          return stored === "1";
+        }
+      } catch (error) {
+        console.warn("Could not read client mode:", error);
+      }
+      return true;
+    }
+
+    clientModeToggle?.addEventListener("click", () => {
+      setClientMode(!document.body.classList.contains("client-mode"));
+    });
+
+    clientModeBannerToggle?.addEventListener("click", () => {
+      setClientMode(!document.body.classList.contains("client-mode"));
+    });
+
+    clientQuickActions?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-client-focus]");
+      if (!button) return;
+      const target = button.dataset.clientFocus || "";
+      if (target === "site") {
+        window.location.href = "/r-admin/?tab=site";
+        return;
+      }
+      if (target) {
+        activateEditorTab(target);
+      }
     });
 
     const htmlEditor = document.getElementById("html_content");
@@ -4017,6 +4103,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     renderBuilderGlobalStyle();
     renderBuilderBlocks();
     applyBuilderReadOnlyState();
+    setClientMode(getInitialClientMode());
     if (activeBuilderBlockIndex >= 0) {
       highlightPreviewBlock(activeBuilderBlockIndex);
     }

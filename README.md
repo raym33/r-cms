@@ -69,6 +69,7 @@ LinuxCMS already includes:
 - inline text editing inside the preview for selected blocks, synced back to the builder
 - double-click visible links in the selected preview block to edit both label and URL
 - double-click visible buttons in the selected preview block to edit label, URL and basic button colors
+- client mode toggle in `/r-admin` for a simpler editing surface focused on text, photos, colors and publishing
 - lightweight site themes with presets and optional custom CSS
 - lightweight plugins/extensions with activation from the admin
 - full site backup export/import from the admin, including uploads
@@ -95,12 +96,16 @@ LinuxCMS already includes:
 bash start-local.sh
 ```
 
-This launcher starts LinuxCMS in the background, stores a PID file, and writes logs to `.linuxcms-runtime/server.log`.
+This launcher starts LinuxCMS in the background, stores a PID file, writes logs to `.linuxcms-runtime/server.log`, and waits for a real health check before reporting success.
 
 Then open:
 
 - `http://127.0.0.1:8088/install.php`
 - `http://127.0.0.1:8088/r-admin`
+
+Health endpoint:
+
+- `http://127.0.0.1:8088/api/health`
 
 ### macOS stable mode
 
@@ -231,3 +236,4 @@ LinuxCMS is now the base for the product you described:
 - keyboard-first editing
 - capsule-based rendering
 - uploadable CMS for basic hosting
+- simplified client mode for non-technical editing

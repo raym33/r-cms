@@ -56,6 +56,9 @@ $sourceRoot = realpath(__DIR__ . '/..');
 $runtimeRoot = sys_get_temp_dir() . '/linuxcms_deep_test_runtime';
 lc_rrmdir($runtimeRoot);
 lc_rcopy((string) $sourceRoot, $runtimeRoot);
+@unlink($runtimeRoot . '/data/app.json');
+@unlink($runtimeRoot . '/data/app.sqlite');
+@unlink($runtimeRoot . '/data/storage.json');
 putenv('CCMS_ROOT=' . $runtimeRoot);
 
 require $sourceRoot . '/src/bootstrap.php';
@@ -441,6 +444,7 @@ lc_assert(str_contains($adminHtml, 'Crea una web completa desde un brief'), 'stu
 lc_assert(str_contains($adminHtml, 'Guardar configuración'), 'studio settings form rendered');
 lc_assert(str_contains($adminHtml, 'Generar borrador con LM Studio'), 'studio generate button rendered');
 lc_assert(str_contains($adminHtml, 'Cómo funciona LinuxCMS'), 'admin renders LinuxCMS guidance copy');
+lc_assert(str_contains($adminHtml, 'Modo cliente'), 'admin renders client mode toggle');
 
 // Include site settings screen
 $_GET = ['tab' => 'site'];
@@ -499,6 +503,22 @@ $viewerHtml = ob_get_clean();
 lc_assert(str_contains($viewerHtml, 'Modo solo lectura'), 'viewer sees read-only banner');
 lc_assert(!str_contains($viewerHtml, 'Generar borrador con LM Studio'), 'viewer does not see studio generate form');
 lc_assert(!str_contains($viewerHtml, 'Guardar página'), 'viewer does not see save page button');
+
+// Include pages admin as owner and verify client quick actions
+$_GET = ['tab' => 'pages'];
+$_SESSION['ccms_admin'] = [
+    'id' => $data['users'][0]['id'],
+    'username' => $data['users'][0]['username'],
+    'email' => $data['users'][0]['email'],
+    'role' => 'owner',
+    'must_change_password' => false,
+];
+ob_start();
+include $sourceRoot . '/r-admin/index.php';
+$pagesHtml = ob_get_clean();
+lc_assert(str_contains($pagesHtml, 'Textos y fotos'), 'pages admin renders client quick actions');
+lc_assert(str_contains($pagesHtml, 'data-tab-target="publish"'), 'pages admin keeps publish tab');
+lc_assert(str_contains($pagesHtml, 'id="clientModeToggle"'), 'pages admin includes client mode button');
 
 // Include admin as forced-password user
 $_GET = ['tab' => 'pages'];
