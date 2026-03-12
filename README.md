@@ -182,6 +182,8 @@ Current protections include:
 - account and 2FA UI extracted from the admin monolith into `r-admin/views/account.php`
 - local LM Studio authoring UI extracted from the admin monolith into `r-admin/views/studio.php`
 - import UI extracted from the admin monolith into `r-admin/views/import.php`
+- login/reset/2FA access shell extracted from the admin monolith into `r-admin/views/auth_shell.php`
+- shared admin topbar, alerts and tab navigation extracted into `r-admin/views/admin_chrome.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`

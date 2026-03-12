@@ -137,6 +137,10 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - dedicated view module for the `Studio` tab, including LM Studio settings, connectivity probe, and brief-driven first-draft generation
 - `r-admin/views/import.php`
   - dedicated view module for the `Import` tab, including quick HTML/capsule import into a new page
+- `r-admin/views/auth_shell.php`
+  - dedicated view module for the login, 2FA verification, and password reset entry shell
+- `r-admin/views/admin_chrome.php`
+  - shared admin chrome for the topbar, flash messages, client-mode banner, and tab navigation
 - `src/admin_actions.php`
   - centralizes admin `POST` action handling
   - separates write-side request logic from the view-heavy `r-admin/index.php`
