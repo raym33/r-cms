@@ -175,25 +175,11 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
       initialCapsuleState: <?= $selectedCapsuleStateJson ?: '{"meta":{},"style":{},"blocks":[]}' ?>,
       mediaItems: <?= $mediaItemsJson ?: '[]' ?>,
       previewSiteConfig: <?= $previewSiteConfigJson ?: '{"site":{},"menu":[]}' ?>,
-      builderReadOnly: <?= $builderReadOnly ? 'true' : 'false' ?>
+      builderReadOnly: <?= $builderReadOnly ? 'true' : 'false' ?>,
+      cspNonce: <?= json_encode(ccms_csp_nonce(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
     };
   </script>
   <script src="<?= htmlspecialchars(ccms_base_url() . '/r-admin/assets/admin.js', ENT_QUOTES, 'UTF-8') ?>"></script>
   <?php endif; ?>
 </body>
 </html>
-    function normalizeInsertIndex(index) {
-      const max = Array.isArray(capsuleState.blocks) ? capsuleState.blocks.length : 0;
-      if (!Number.isFinite(index)) return max;
-      return Math.max(0, Math.min(Number(index), max));
-    }
-
-    function setPendingInsertIndex(index, options = {}) {
-      const { render = true } = options;
-      pendingInsertIndex = normalizeInsertIndex(index);
-      if (render) {
-        renderBuilderTemplateLibrary();
-        renderBuilderContext();
-        renderBuilderBlocks();
-      }
-    }

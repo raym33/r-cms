@@ -33,6 +33,7 @@ It is security-conscious by default, but it is not presented as a formally audit
 - media upload validation by extension, MIME type and maximum file size
 - SVG uploads disabled by default
 - backup imports restricted by file type and maximum payload size
+- backup restore preserves the previous `uploads/` files in a timestamped local backup folder before replacing them
 - public `/api/health` rate limited by IP
 - trusted PHP plugins disabled by default
 - plugin discovery restricted to valid slugs and trusted real paths inside `plugins/`
@@ -47,6 +48,7 @@ It is security-conscious by default, but it is not presented as a formally audit
   - `Referrer-Policy: same-origin`
   - `Permissions-Policy`
   - `Content-Security-Policy`
+- public pages send `ETag` and short-lived cache headers to reduce unnecessary re-renders
 - no-cache headers for admin responses
 
 ## Hosting recommendations

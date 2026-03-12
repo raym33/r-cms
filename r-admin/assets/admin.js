@@ -5,6 +5,7 @@ const initialCapsuleState = bootstrap.initialCapsuleState || { meta: {}, style: 
 const mediaItems = bootstrap.mediaItems || [];
 const previewSiteConfig = bootstrap.previewSiteConfig || { site: {}, menu: [] };
 const builderReadOnly = !!bootstrap.builderReadOnly;
+const cspNonce = bootstrap.cspNonce || "";
 
     function insertAtCursor(textarea, snippet) {
       if (!textarea) return;
@@ -31,6 +32,7 @@ const builderReadOnly = !!bootstrap.builderReadOnly;
       }).join("");
       const title = pageTitle || site.title || "LinuxCMS";
       const description = site.tagline || "";
+      const styleNonceAttr = cspNonce ? ` nonce="${cspNonce}"` : "";
       return `<!doctype html>
 <html lang="es">
 <head>
@@ -38,7 +40,7 @@ const builderReadOnly = !!bootstrap.builderReadOnly;
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${title}</title>
   <meta name="description" content="${description}">
-  <style>
+  <style${styleNonceAttr}>
     :root{
       --bg:${colors.bg || "#f7f4ee"};
       --surface:${colors.surface || "#ffffff"};

@@ -511,11 +511,39 @@ function ccms_import_backup_payload(array $payload): array
 
     $data = ccms_normalize_users($data);
 
-    foreach (scandir(ccms_uploads_dir()) ?: [] as $entry) {
+    $uploadsDir = ccms_uploads_dir();
+    $backupDir = $uploadsDir . '_backup_' . gmdate('Ymd_His');
+    $hasUploadFiles = false;
+    foreach (scandir($uploadsDir) ?: [] as $entry) {
         if ($entry === '.' || $entry === '..') {
             continue;
         }
-        $path = ccms_uploads_dir() . DIRECTORY_SEPARATOR . $entry;
+        $path = $uploadsDir . DIRECTORY_SEPARATOR . $entry;
+        if (is_file($path)) {
+            $hasUploadFiles = true;
+            break;
+        }
+    }
+    if ($hasUploadFiles) {
+        @mkdir($backupDir, 0775, true);
+        foreach (scandir($uploadsDir) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $uploadsDir . DIRECTORY_SEPARATOR . $entry;
+            if (!is_file($path)) {
+                continue;
+            }
+            @copy($path, $backupDir . DIRECTORY_SEPARATOR . $entry);
+            @unlink($path);
+        }
+    }
+
+    foreach (scandir($uploadsDir) ?: [] as $entry) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+        $path = $uploadsDir . DIRECTORY_SEPARATOR . $entry;
         if (is_file($path)) {
             @unlink($path);
         }
@@ -534,10 +562,27 @@ function ccms_import_backup_payload(array $payload): array
         if ($decoded === false) {
             continue;
         }
-        file_put_contents(ccms_uploads_dir() . DIRECTORY_SEPARATOR . $filename, $decoded);
+        file_put_contents($uploadsDir . DIRECTORY_SEPARATOR . $filename, $decoded);
     }
 
     return $data;
+}
+
+function ccms_load_page_by_slug(string $slug): ?array
+{
+    $data = ccms_load_data();
+    foreach (($data['pages'] ?? []) as $page) {
+        if (($page['slug'] ?? '') === $slug) {
+            return $page;
+        }
+    }
+    return null;
+}
+
+function ccms_load_site_config(): array
+{
+    $data = ccms_load_data();
+    return is_array($data['site'] ?? null) ? $data['site'] : [];
 }
 
 function ccms_next_id(string $prefix): string

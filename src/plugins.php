@@ -194,7 +194,7 @@ function ccms_sanitize_plugin_head_fragment(string $html): string
             if ($css !== '') {
                 $id = $node->getAttribute('id');
                 $idAttr = $id !== '' ? ' id="' . ccms_h($id) . '"' : '';
-                $output .= '<style' . $idAttr . '>' . $css . '</style>';
+                $output .= '<style' . ccms_style_nonce_attr() . $idAttr . '>' . $css . '</style>';
             }
             continue;
         }

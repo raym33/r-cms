@@ -193,6 +193,8 @@ The current builder already supports:
   - only loaded in trusted mode
   - require manifest trust flag and `plugin.php` SHA-256 integrity match
 - full-site backup export/import with JSON payloads that also carry uploaded files
+- backup restore preserves the previous `uploads/` files in a timestamped backup directory before replacement
+- public runtime sends `ETag` and short-lived cache headers for rendered pages
 - static export packaging that writes a hosting-ready site with `index.html`, slug folders and `uploads/`
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.

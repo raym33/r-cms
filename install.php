@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Instalar LinuxCMS</title>
-  <style>
+  <style<?= ccms_style_nonce_attr() ?>>
     body{margin:0;background:#f5f0e8;color:#3b2d28;font-family:Arial,Helvetica,sans-serif}
     .shell{width:min(860px,calc(100% - 24px));margin:0 auto;padding:28px 0 48px}
     .card{background:#fff;border-radius:24px;padding:28px;box-shadow:0 24px 50px -30px rgba(0,0,0,.25)}

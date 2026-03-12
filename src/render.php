@@ -297,6 +297,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     $hasOwnHeader = $usesNativeCapsule && array_intersect($blockTypes, ['nav', 'sticky_header']);
     $hasOwnFooter = $usesNativeCapsule && array_intersect($blockTypes, ['footer_multi', 'contact']);
     $content = ccms_page_body_html($page);
+    $styleNonceAttr = ccms_style_nonce_attr();
     $menuHtml = '';
     foreach ($menuPages as $menuPage) {
         $href = !empty($menuPage['is_homepage']) ? '/' : '/' . rawurlencode((string) $menuPage['slug']);
@@ -339,7 +340,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>' . ccms_h($pageTitle) . '</title>
   <meta name="description" content="' . ccms_h($metaDescription) . '">
-  <style>
+  <style' . $styleNonceAttr . '>
     :root{
       --bg:' . ccms_h((string) ($colors['bg'] ?? '#f7f4ee')) . ';
       --surface:' . ccms_h((string) ($colors['surface'] ?? '#ffffff')) . ';
@@ -375,7 +376,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
       .menu{gap:10px}
     }
   </style>' . ($customCss !== '' ? '
-  <style id="ccms-custom-css">
+  <style' . $styleNonceAttr . ' id="ccms-custom-css">
 ' . $customCss . '
   </style>' : '') . ($pluginHead !== '' ? '
 ' . $pluginHead : '') . '
@@ -393,7 +394,8 @@ function ccms_render_capsule_body(array $capsule): string
 {
     $style = ccms_capsule_style($capsule);
     $scriptNonceAttr = ccms_script_nonce_attr();
-    $html = '<style>
+    $styleNonceAttr = ccms_style_nonce_attr();
+    $html = '<style' . $styleNonceAttr . '>
       .ccms-capsule{background:linear-gradient(180deg,' . ccms_h($style['bg_from']) . ' 0%,' . ccms_h($style['bg_to']) . ' 100%);color:' . ccms_h($style['text_primary']) . ';font-family:' . ccms_h($style['font_family']) . '}
       .ccms-capsule *{box-sizing:border-box}
       .ccms-capsule section{position:relative}
@@ -443,7 +445,8 @@ function ccms_render_capsule_body(array $capsule): string
 function ccms_admin_preview_html(string $html): string
 {
     $scriptNonceAttr = ccms_script_nonce_attr();
-    $injected = '<style>
+    $styleNonceAttr = ccms_style_nonce_attr();
+    $injected = '<style' . $styleNonceAttr . '>
       .ccms-block-shell{position:relative}
       .ccms-block-shell[data-ccms-block-index]{cursor:pointer}
       .ccms-block-shell.is-ccms-selected{outline:3px solid rgba(200,111,92,.72);outline-offset:-3px}

@@ -715,6 +715,65 @@ $attempts = ccms_load_login_attempts();
 lc_assert(count($attempts) >= 1, 'login attempts stored');
 ccms_clear_login_attempts('owner', '127.0.0.1');
 
+// Security helpers and backup import protections
+$etagSeedPage = [
+    'id' => 'page_test',
+    'slug' => 'test',
+    'title' => 'Test',
+    'updated_at' => '2026-03-12T00:00:00Z',
+    'status' => 'published',
+    'html_content' => '<p>Test</p>',
+    'capsule_json' => '',
+];
+$etagSeedSite = [
+    'title' => 'Site',
+    'tagline' => 'Tagline',
+    'footer_text' => 'Footer',
+    'theme_preset' => 'warm',
+    'custom_css' => '',
+    'colors' => ['bg' => '#fff'],
+];
+$etagA = '"' . hash('sha256', json_encode([
+    'page' => $etagSeedPage,
+    'site' => $etagSeedSite,
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '"';
+$etagB = '"' . hash('sha256', json_encode([
+    'page' => array_merge($etagSeedPage, ['title' => 'Changed']),
+    'site' => $etagSeedSite,
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '"';
+lc_assert($etagA !== $etagB, 'etag seed changes when page content changes');
+
+$pageBySlug = ccms_load_page_by_slug((string) ($pageRecord['slug'] ?? ''));
+lc_assert(is_array($pageBySlug) && ($pageBySlug['id'] ?? '') === ($pageRecord['id'] ?? ''), 'load_page_by_slug returns page');
+$siteConfig = ccms_load_site_config();
+lc_assert(is_array($siteConfig) && ($siteConfig['title'] ?? '') === ($data['site']['title'] ?? ''), 'load_site_config returns site settings');
+
+$uploadsDir = ccms_uploads_dir();
+@mkdir($uploadsDir, 0775, true);
+$legacyUpload = $uploadsDir . DIRECTORY_SEPARATOR . 'legacy-demo.txt';
+file_put_contents($legacyUpload, 'legacy');
+$importPayload = ccms_export_backup_payload($data);
+$importPayload['uploads'] = [
+    [
+        'filename' => 'fresh-demo.txt',
+        'content_base64' => base64_encode('fresh'),
+    ],
+];
+$restoredData = ccms_import_backup_payload($importPayload);
+lc_assert(is_array($restoredData) && !empty($restoredData['site']), 'import backup returns normalized site data');
+$freshUpload = $uploadsDir . DIRECTORY_SEPARATOR . 'fresh-demo.txt';
+lc_assert(is_file($freshUpload), 'import backup restores uploaded file payloads');
+$backupDirs = glob($uploadsDir . '_backup_*') ?: [];
+lc_assert(count($backupDirs) >= 1, 'import backup preserves previous uploads in timestamped backup directory');
+$backupContainsLegacy = false;
+foreach ($backupDirs as $backupDir) {
+    if (is_file($backupDir . DIRECTORY_SEPARATOR . 'legacy-demo.txt')) {
+        $backupContainsLegacy = true;
+        break;
+    }
+}
+lc_assert($backupContainsLegacy, 'timestamped upload backup contains previous upload file');
+
 echo 'DEEP TEST OK - ' . $GLOBALS['lc_assert_count'] . " checks passed.\n";
 
 $buffer = ob_get_clean();

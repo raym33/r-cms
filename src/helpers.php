@@ -62,7 +62,7 @@ function ccms_send_common_security_headers(): void
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: same-origin');
     header("Permissions-Policy: camera=(), microphone=(), geolocation=()");
-    header("Content-Security-Policy: default-src 'self' https: data: blob:; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'nonce-{$nonce}'; frame-src 'self'; connect-src 'self' http://127.0.0.1:1234 http://localhost:1234 https:;");
+    header("Content-Security-Policy: default-src 'self' https:; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' https: data: blob:; style-src 'self' 'nonce-{$nonce}' https:; style-src-attr 'unsafe-inline'; script-src 'self' 'nonce-{$nonce}'; frame-src 'self'; connect-src 'self' http://127.0.0.1:1234 http://localhost:1234 https:;");
 }
 
 function ccms_send_admin_headers(): void
@@ -162,6 +162,11 @@ function ccms_csp_nonce(): string
 }
 
 function ccms_script_nonce_attr(): string
+{
+    return ' nonce="' . ccms_h(ccms_csp_nonce()) . '"';
+}
+
+function ccms_style_nonce_attr(): string
 {
     return ' nonce="' . ccms_h(ccms_csp_nonce()) . '"';
 }

@@ -79,6 +79,7 @@ LinuxCMS already includes:
   - opt-in trusted mode
   - manifest + `plugin.php` integrity check
 - full site backup export/import from the admin, including uploads
+  - backup restore preserves the previous `uploads/` files in a timestamped sibling backup folder before replacing them
 - static hosting package export from the admin for basic hosting without PHP
 - page revisions and restore
 - page duplication
@@ -95,6 +96,7 @@ LinuxCMS already includes:
   - forced password change for temporary user credentials
   - optional TOTP 2FA for admin accounts
   - owner-generated password reset links
+  - public page `ETag` + short HTTP cache headers for basic hosting performance
 
 ## Local development
 
