@@ -192,6 +192,7 @@ Current protections include:
 - action-family handler entrypoints extracted into `r-admin/handlers/*.php`
 - shared admin stylesheet extracted into `r-admin/assets/admin.css`
 - shared admin JavaScript extracted into `r-admin/assets/admin.js`
+- shared admin read-context bootstrap extracted into `src/admin_context.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`

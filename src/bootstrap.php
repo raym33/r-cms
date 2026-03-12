@@ -8,6 +8,7 @@ require_once __DIR__ . '/plugins.php';
 require_once __DIR__ . '/render.php';
 require_once __DIR__ . '/export.php';
 require_once __DIR__ . '/ai.php';
+require_once __DIR__ . '/admin_context.php';
 
 ccms_start_session();
 ccms_ensure_runtime_dirs();
