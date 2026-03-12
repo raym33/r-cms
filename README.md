@@ -179,6 +179,7 @@ Current protections include:
 - site branding/theme UI extracted from the admin monolith into `r-admin/views/site.php`
 - audit log UI extracted from the admin monolith into `r-admin/views/audit.php`
 - extensions UI extracted from the admin monolith into `r-admin/views/extensions.php`
+- account and 2FA UI extracted from the admin monolith into `r-admin/views/account.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
