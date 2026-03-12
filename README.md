@@ -173,6 +173,7 @@ Current protections include:
 - owner-generated password reset links
 - first modular split of the admin action layer into `src/admin_actions.php`
 - pages editor UI extracted from the admin monolith into `r-admin/views/pages.php`
+- users management UI extracted from the admin monolith into `r-admin/views/users.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
