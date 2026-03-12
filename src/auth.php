@@ -88,6 +88,72 @@ function ccms_clear_login_attempts(string $username, string $ip): void
     }
 }
 
+function ccms_request_limits_file(): string
+{
+    return ccms_root_path('data/request_limits.json');
+}
+
+function ccms_load_request_limits(): array
+{
+    $path = ccms_request_limits_file();
+    if (!is_file($path)) {
+        return [];
+    }
+    $decoded = json_decode((string) file_get_contents($path), true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function ccms_save_request_limits(array $payload): void
+{
+    file_put_contents(
+        ccms_request_limits_file(),
+        json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    );
+}
+
+function ccms_cleanup_request_limits(array $payload, int $maxWindowSeconds = 3600): array
+{
+    $now = time();
+    foreach ($payload as $key => $row) {
+        $window = max(1, (int) ($row['window'] ?? $maxWindowSeconds));
+        $timestamps = array_values(array_filter(array_map('intval', is_array($row['timestamps'] ?? null) ? $row['timestamps'] : []), static function (int $timestamp) use ($now, $window): bool {
+            return $timestamp > 0 && ($now - $timestamp) <= $window;
+        }));
+        if ($timestamps === []) {
+            unset($payload[$key]);
+            continue;
+        }
+        $payload[$key]['timestamps'] = $timestamps;
+        $payload[$key]['window'] = $window;
+    }
+    return $payload;
+}
+
+function ccms_request_limit_key(string $bucket, string $identity): string
+{
+    return sha1(trim(strtolower($bucket)) . '|' . trim(strtolower($identity)));
+}
+
+function ccms_hit_rate_limit(string $bucket, string $identity, int $maxAttempts, int $windowSeconds, string $message = 'Demasiadas peticiones. Inténtalo de nuevo más tarde.'): void
+{
+    $limits = ccms_cleanup_request_limits(ccms_load_request_limits(), max($windowSeconds, 3600));
+    $key = ccms_request_limit_key($bucket, $identity);
+    $row = $limits[$key] ?? ['bucket' => $bucket, 'window' => $windowSeconds, 'timestamps' => []];
+    $timestamps = array_values(array_filter(array_map('intval', is_array($row['timestamps'] ?? null) ? $row['timestamps'] : []), static function (int $timestamp): bool {
+        return $timestamp > 0;
+    }));
+    if (count($timestamps) >= $maxAttempts) {
+        throw new RuntimeException($message);
+    }
+    $timestamps[] = time();
+    $limits[$key] = [
+        'bucket' => $bucket,
+        'window' => $windowSeconds,
+        'timestamps' => $timestamps,
+    ];
+    ccms_save_request_limits($limits);
+}
+
 function ccms_base32_encode(string $binary): string
 {
     $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';

@@ -445,6 +445,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
 
         case 'upload_media':
             ccms_require_capability('media_manage');
+            ccms_hit_rate_limit('upload_media', ccms_client_ip(), 20, 300, 'Demasiadas subidas seguidas. Espera un momento antes de volver a intentarlo.');
             if (!isset($_FILES['media_file']) || !is_array($_FILES['media_file'])) {
                 throw new RuntimeException('No se recibió ningún archivo.');
             }
@@ -453,10 +454,20 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
                 throw new RuntimeException('No se pudo subir el archivo.');
             }
             $original = (string) ($file['name'] ?? 'upload');
-            $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
-            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'], true)) {
-                throw new RuntimeException('Formato no permitido.');
-            }
+            $validatedAsset = ccms_validate_uploaded_asset(
+                (string) ($file['tmp_name'] ?? ''),
+                $original,
+                (int) ($file['size'] ?? 0),
+                [
+                    'jpg' => ['image/jpeg'],
+                    'jpeg' => ['image/jpeg'],
+                    'png' => ['image/png'],
+                    'webp' => ['image/webp'],
+                    'gif' => ['image/gif'],
+                ],
+                8 * 1024 * 1024
+            );
+            $extension = (string) $validatedAsset['extension'];
             $safeFile = ccms_slugify(pathinfo($original, PATHINFO_FILENAME)) . '-' . time() . '.' . $extension;
             $target = ccms_uploads_dir() . DIRECTORY_SEPARATOR . $safeFile;
             if (!move_uploaded_file((string) $file['tmp_name'], $target)) {
@@ -538,13 +549,24 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
 
         case 'import_backup':
             ccms_require_capability('users_manage');
+            ccms_hit_rate_limit('import_backup', ccms_client_ip(), 6, 300, 'Demasiadas importaciones seguidas. Espera un momento antes de volver a intentarlo.');
             $rawBackup = trim((string) ($_POST['backup_json'] ?? ''));
             if ($rawBackup === '' && isset($_FILES['backup_file']) && is_array($_FILES['backup_file']) && (int) ($_FILES['backup_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                $rawBackup = (string) file_get_contents((string) $_FILES['backup_file']['tmp_name']);
+                $backupFile = $_FILES['backup_file'];
+                $backupName = (string) ($backupFile['name'] ?? 'backup.json');
+                $backupExt = strtolower(pathinfo($backupName, PATHINFO_EXTENSION));
+                if ($backupExt !== 'json') {
+                    throw new RuntimeException('El backup subido debe ser un archivo JSON.');
+                }
+                if ((int) ($backupFile['size'] ?? 0) > (5 * 1024 * 1024)) {
+                    throw new RuntimeException('El backup supera el tamaño máximo permitido.');
+                }
+                $rawBackup = (string) file_get_contents((string) $backupFile['tmp_name']);
             }
             if ($rawBackup === '') {
                 throw new RuntimeException('Sube un backup JSON o pega su contenido.');
             }
+            ccms_assert_payload_size($rawBackup, 5 * 1024 * 1024, 'El backup');
             $payload = json_decode($rawBackup, true);
             if (!is_array($payload)) {
                 throw new RuntimeException('El backup no es un JSON válido.');

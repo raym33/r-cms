@@ -21,6 +21,17 @@ if ($path === '/r-admin/logout' || $path === '/r-admin/logout/' || $path === '/r
 if ($path === '/api/health' || $path === '/api/health/') {
     require __DIR__ . '/src/bootstrap.php';
     header('Content-Type: application/json; charset=utf-8');
+    try {
+        ccms_hit_rate_limit('public_health', ccms_client_ip(), 60, 60, 'Too many health checks.');
+    } catch (Throwable $e) {
+        http_response_code(429);
+        echo json_encode([
+            'ok' => false,
+            'error' => 'rate_limited',
+            'message' => $e->getMessage(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return true;
+    }
     $payload = [
         'ok' => true,
         'installed' => ccms_is_installed(),

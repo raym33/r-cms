@@ -93,6 +93,27 @@ $sanitizedCss = ccms_sanitize_custom_css("body{background:url(https://evil.examp
 lc_assert(!str_contains($sanitizedCss, 'url('), 'custom css sanitizer removes url');
 lc_assert(!str_contains($sanitizedCss, '@import'), 'custom css sanitizer removes import');
 lc_assert(str_contains($sanitizedCss, 'color:red'), 'custom css sanitizer preserves safe declarations');
+$tmpPng = $runtimeRoot . '/tmp-test.png';
+file_put_contents($tmpPng, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9sOtJkAAAAAASUVORK5CYII='));
+$assetInfo = ccms_validate_uploaded_asset($tmpPng, 'tiny.png', filesize($tmpPng), [
+    'png' => ['image/png'],
+], 1024 * 1024);
+lc_assert(($assetInfo['extension'] ?? '') === 'png', 'upload validator preserves png extension');
+lc_assert(($assetInfo['mime'] ?? '') === 'image/png', 'upload validator detects png mime');
+try {
+    ccms_validate_uploaded_asset($tmpPng, 'vector.svg', filesize($tmpPng), [
+        'png' => ['image/png'],
+    ], 1024 * 1024);
+    lc_assert(false, 'svg upload should be rejected');
+} catch (Throwable $e) {
+    lc_assert(str_contains($e->getMessage(), 'Formato no permitido'), 'svg upload is rejected by extension whitelist');
+}
+try {
+    ccms_assert_payload_size(str_repeat('a', 32), 8, 'El backup');
+    lc_assert(false, 'oversized payload should fail');
+} catch (Throwable $e) {
+    lc_assert(str_contains($e->getMessage(), 'supera el tamaño máximo'), 'payload size guard rejects oversized content');
+}
 $headFragment = ccms_sanitize_plugin_fragment('public_head_end', '<script>alert(1)</script><style>body{background:url(https://evil.example.com/x)} .ok{color:#123}</style><meta name="theme-color" content="#fff"><link rel="stylesheet" href="javascript:alert(1)">');
 lc_assert(!str_contains($headFragment, '<script'), 'plugin head sanitizer removes script tags');
 lc_assert(!str_contains($headFragment, 'url('), 'plugin head sanitizer strips dangerous css urls');
@@ -223,6 +244,16 @@ try {
 }
 ccms_clear_login_attempts('owner', ccms_client_ip());
 lc_assert(ccms_login('owner@example.com', 'PasswordDemo2026!') === true, 'login by email works after clearing attempts');
+
+// Generic request throttling
+ccms_hit_rate_limit('deep_test_health', '127.0.0.1', 2, 60, 'limit reached');
+ccms_hit_rate_limit('deep_test_health', '127.0.0.1', 2, 60, 'limit reached');
+try {
+    ccms_hit_rate_limit('deep_test_health', '127.0.0.1', 2, 60, 'limit reached');
+    lc_assert(false, 'generic request throttle should trigger');
+} catch (Throwable $e) {
+    lc_assert(str_contains($e->getMessage(), 'limit reached'), 'generic request throttle blocks repeated hits');
+}
 
 // Add users and capability matrix
 $data = ccms_load_data();
@@ -376,8 +407,8 @@ $_SERVER['REQUEST_METHOD'] = 'GET';
 require $sourceRoot . '/r-admin/index.php';
 $adminPagesHtml = ob_get_clean();
 ob_start();
-lc_assert(str_contains($adminPagesHtml, 'media-modal-backdrop'), 'admin pages view includes media modal');
-lc_assert(str_contains($adminPagesHtml, 'Seleccionar imagen'), 'admin pages view includes media modal heading');
+lc_assert(str_contains($adminPagesHtml, '/r-admin/assets/admin.js'), 'admin pages view includes extracted admin javascript asset');
+lc_assert(str_contains($adminPagesHtml, '/r-admin/assets/admin.css'), 'admin pages view includes extracted admin stylesheet asset');
 $publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($publicHtml, '<!doctype html>'), 'public page is full html');
 lc_assert(str_contains($publicHtml, 'Corporate Law for fast-moving businesses'), 'public page contains generated title');

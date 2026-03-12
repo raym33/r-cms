@@ -96,6 +96,61 @@ function ccms_public_upload_url(string $filename): string
     return '/uploads/' . rawurlencode($filename);
 }
 
+function ccms_detect_mime_type(string $path): string
+{
+    if (!is_file($path)) {
+        return '';
+    }
+    $mime = '';
+    if (function_exists('finfo_open')) {
+        $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo !== false) {
+            $detected = @finfo_file($finfo, $path);
+            if (is_string($detected)) {
+                $mime = $detected;
+            }
+            @finfo_close($finfo);
+        }
+    }
+    if ($mime === '' && function_exists('mime_content_type')) {
+        $detected = @mime_content_type($path);
+        if (is_string($detected)) {
+            $mime = $detected;
+        }
+    }
+    return strtolower(trim($mime));
+}
+
+function ccms_validate_uploaded_asset(string $tmpPath, string $originalName, int $size, array $allowedExtMime, int $maxBytes): array
+{
+    if ($size <= 0) {
+        throw new RuntimeException('El archivo está vacío.');
+    }
+    if ($size > $maxBytes) {
+        throw new RuntimeException('El archivo supera el tamaño máximo permitido.');
+    }
+    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    if ($extension === '' || !isset($allowedExtMime[$extension])) {
+        throw new RuntimeException('Formato no permitido.');
+    }
+    $mime = ccms_detect_mime_type($tmpPath);
+    $allowedMimes = array_map('strtolower', array_values(array_filter(array_map('strval', (array) $allowedExtMime[$extension]))));
+    if ($mime === '' || !in_array($mime, $allowedMimes, true)) {
+        throw new RuntimeException('El archivo no coincide con el formato esperado.');
+    }
+    return [
+        'extension' => $extension,
+        'mime' => $mime,
+    ];
+}
+
+function ccms_assert_payload_size(string $payload, int $maxBytes, string $label = 'El contenido'): void
+{
+    if (strlen($payload) > $maxBytes) {
+        throw new RuntimeException($label . ' supera el tamaño máximo permitido.');
+    }
+}
+
 function ccms_csp_nonce(): string
 {
     static $nonce = null;

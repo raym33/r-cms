@@ -29,6 +29,11 @@ It is security-conscious by default, but it is not presented as a formally audit
 - sanitization of stored `html_content` before render/output
 - sanitization of site-level custom CSS before output
 - sanitization of plugin-provided head/body fragments before public render
+- generic request throttling helpers for sensitive endpoints
+- media upload validation by extension, MIME type and maximum file size
+- SVG uploads disabled by default
+- backup imports restricted by file type and maximum payload size
+- public `/api/health` rate limited by IP
 - trusted PHP plugins disabled by default
 - trusted plugin loading only when:
   - trusted mode is enabled

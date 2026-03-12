@@ -192,6 +192,11 @@ Current protections include:
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
 - Content Security Policy headers
 - admin no-cache headers
+- generic request throttling helpers for sensitive routes
+- media uploads restricted by extension, MIME type and max size
+- SVG uploads disabled by default
+- backup imports restricted by size and file type
+- public `/api/health` endpoint rate limited by IP
 
 Recommended hosting-side protections:
 
