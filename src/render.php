@@ -265,7 +265,7 @@ function ccms_page_body_html(array $page): string
     if (ccms_capsule_can_render($capsule)) {
         return ccms_render_capsule_body($capsule);
     }
-    return (string) ($page['html_content'] ?? '<section><p>Empty page.</p></section>');
+    return ccms_sanitize_html_fragment((string) ($page['html_content'] ?? '<section><p>Empty page.</p></section>'));
 }
 
 function ccms_render_public_page(array $site, array $page, array $menuPages): string
@@ -273,7 +273,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     ccms_load_enabled_plugins($site);
     $colors = $site['colors'] ?? [];
     $theme = ccms_site_theme_preset($site);
-    $customCss = trim((string) ($site['custom_css'] ?? ''));
+    $customCss = ccms_sanitize_custom_css(trim((string) ($site['custom_css'] ?? '')));
     $pluginHead = ccms_render_plugin_fragments('public_head_end', [
         'site' => $site,
         'page' => $page,
@@ -331,6 +331,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
   </main>';
     }
 
+    $scriptNonceAttr = ccms_script_nonce_attr();
     return '<!doctype html>
 <html lang="es">
 <head>
@@ -391,6 +392,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
 function ccms_render_capsule_body(array $capsule): string
 {
     $style = ccms_capsule_style($capsule);
+    $scriptNonceAttr = ccms_script_nonce_attr();
     $html = '<style>
       .ccms-capsule{background:linear-gradient(180deg,' . ccms_h($style['bg_from']) . ' 0%,' . ccms_h($style['bg_to']) . ' 100%);color:' . ccms_h($style['text_primary']) . ';font-family:' . ccms_h($style['font_family']) . '}
       .ccms-capsule *{box-sizing:border-box}
@@ -440,6 +442,7 @@ function ccms_render_capsule_body(array $capsule): string
 
 function ccms_admin_preview_html(string $html): string
 {
+    $scriptNonceAttr = ccms_script_nonce_attr();
     $injected = '<style>
       .ccms-block-shell{position:relative}
       .ccms-block-shell[data-ccms-block-index]{cursor:pointer}
@@ -526,7 +529,7 @@ function ccms_admin_preview_html(string $html): string
         .ccms-block-toolbar button{padding:8px 10px;font-size:11px}
       }
     </style>
-    <script>
+    <script' . $scriptNonceAttr . '>
       (function(){
         const blocks = Array.from(document.querySelectorAll("[data-ccms-block-index]"));
         function setSelected(index){
@@ -801,7 +804,7 @@ function ccms_render_capsule_block(array $block, array $style): string
             foreach (($props['links'] ?? []) as $link) {
                 $links .= '<a href="' . ccms_h((string) ($link['href'] ?? '#')) . '" style="display:block;font-size:clamp(28px,4vw,44px);line-height:1.1;font-weight:900;text-decoration:none;color:' . ccms_h($style['text_primary']) . '">' . ccms_h(ccms_capsule_link_text($link)) . '</a>';
             }
-            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:48;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:6px">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</div><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div></div><button type="button" data-open-offcanvas="' . ccms_h($uid) . '" style="display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-weight:800;cursor:pointer">' . ccms_h((string) ($props['button_text'] ?? 'Menu')) . '</button></div><div id="offcanvas-' . ccms_h($uid) . '" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.54);display:none"><div data-offcanvas-panel="' . ccms_h($uid) . '" style="position:absolute;right:0;top:0;bottom:0;width:min(520px,100%);background:' . ccms_h($style['bg_to']) . ';padding:34px 28px;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);overflow:auto"><div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:26px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:8px">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><h2 style="margin:0;font-size:32px;line-height:1.05;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</h2></div><button type="button" data-close-offcanvas="' . ccms_h($uid) . '" aria-label="Close menu" style="width:46px;height:46px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-size:28px;cursor:pointer">&times;</button></div><p class="ccms-note" style="margin:0 0 24px">' . ccms_h((string) ($props['helper_text'] ?? '')) . '</p><div style="display:grid;gap:18px">' . $links . '</div><div style="margin-top:30px"><a class="ccms-btn" href="' . ccms_h((string) ($props['cta_href'] ?? '#contact')) . '" style="width:100%">' . ccms_h((string) ($props['cta_text'] ?? 'Talk to us')) . '</a></div></div></div><script>(function(){var uid=' . json_encode($uid) . ';var openBtn=document.querySelector(\'[data-open-offcanvas=\"\'+uid+\'\"]\');var overlay=document.getElementById(\'offcanvas-\'+uid);if(!openBtn||!overlay)return;var panel=overlay.querySelector(\'[data-offcanvas-panel=\"\'+uid+\'\"]\');var closeBtn=overlay.querySelector(\'[data-close-offcanvas=\"\'+uid+\'\"]\');function openMenu(){overlay.style.display=\'block\';requestAnimationFrame(function(){panel.style.transform=\'translateX(0)\';});}function closeMenu(){panel.style.transform=\'translateX(100%)\';setTimeout(function(){overlay.style.display=\'none\';},250);}openBtn.addEventListener(\'click\',openMenu);if(closeBtn)closeBtn.addEventListener(\'click\',closeMenu);overlay.addEventListener(\'click\',function(e){if(e.target===overlay)closeMenu();});document.addEventListener(\'keydown\',function(e){if(e.key===\'Escape\'&&overlay.style.display===\'block\'){closeMenu();}});}());</script></section>';
+            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:48;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:6px">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</div><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div></div><button type="button" data-open-offcanvas="' . ccms_h($uid) . '" style="display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-weight:800;cursor:pointer">' . ccms_h((string) ($props['button_text'] ?? 'Menu')) . '</button></div><div id="offcanvas-' . ccms_h($uid) . '" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.54);display:none"><div data-offcanvas-panel="' . ccms_h($uid) . '" style="position:absolute;right:0;top:0;bottom:0;width:min(520px,100%);background:' . ccms_h($style['bg_to']) . ';padding:34px 28px;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);overflow:auto"><div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:26px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:8px">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><h2 style="margin:0;font-size:32px;line-height:1.05;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</h2></div><button type="button" data-close-offcanvas="' . ccms_h($uid) . '" aria-label="Close menu" style="width:46px;height:46px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-size:28px;cursor:pointer">&times;</button></div><p class="ccms-note" style="margin:0 0 24px">' . ccms_h((string) ($props['helper_text'] ?? '')) . '</p><div style="display:grid;gap:18px">' . $links . '</div><div style="margin-top:30px"><a class="ccms-btn" href="' . ccms_h((string) ($props['cta_href'] ?? '#contact')) . '" style="width:100%">' . ccms_h((string) ($props['cta_text'] ?? 'Talk to us')) . '</a></div></div></div><script' . $scriptNonceAttr . '>(function(){var uid=' . json_encode($uid) . ';var openBtn=document.querySelector(\'[data-open-offcanvas=\"\'+uid+\'\"]\');var overlay=document.getElementById(\'offcanvas-\'+uid);if(!openBtn||!overlay)return;var panel=overlay.querySelector(\'[data-offcanvas-panel=\"\'+uid+\'\"]\');var closeBtn=overlay.querySelector(\'[data-close-offcanvas=\"\'+uid+\'\"]\');function openMenu(){overlay.style.display=\'block\';requestAnimationFrame(function(){panel.style.transform=\'translateX(0)\';});}function closeMenu(){panel.style.transform=\'translateX(100%)\';setTimeout(function(){overlay.style.display=\'none\';},250);}openBtn.addEventListener(\'click\',openMenu);if(closeBtn)closeBtn.addEventListener(\'click\',closeMenu);overlay.addEventListener(\'click\',function(e){if(e.target===overlay)closeMenu();});document.addEventListener(\'keydown\',function(e){if(e.key===\'Escape\'&&overlay.style.display===\'block\'){closeMenu();}});}());</script></section>';
 
         case 'banner':
             return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:14px 0;background:' . $style['gradient_accent']) . '><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;color:#fff"><p style="margin:0;font-weight:800">' . ccms_h((string) ($props['text'] ?? '')) . '</p><a class="ccms-btn ccms-btn--ghost" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_text'] ?? 'Ver más')) . '</a></div></section>';

@@ -26,6 +26,8 @@ It is security-conscious by default, but it is not presented as a formally audit
 - `HttpOnly` + `SameSite=Lax` session cookies
 - session rotation on successful login
 - basic idle session expiry handling
+- sanitization of stored `html_content` before render/output
+- sanitization of site-level custom CSS before output
 - common security headers:
   - `X-Frame-Options: SAMEORIGIN`
   - `X-Content-Type-Options: nosniff`
@@ -43,6 +45,7 @@ For `/r-admin`, use:
 - writable `data/` and `uploads/` folders
 - disabled directory listing
 - no public backup files in web root
+- trusted-only plugins inside `plugins/`
 - if available:
   - IP allowlisting
   - extra HTTP auth in front of `/r-admin`
@@ -52,7 +55,8 @@ For `/r-admin`, use:
 
 - no external identity provider yet
 - shared-hosting hardening still depends partly on provider configuration
-- CSP is intentionally permissive enough to support the current inline admin UX and LM Studio local integration
+- plugins are trusted PHP code, not sandboxed extensions
+- the admin remains monolithic and should be modularized further
 
 ## Development guidance
 

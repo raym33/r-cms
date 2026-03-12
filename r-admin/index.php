@@ -189,7 +189,7 @@ try {
                 $themePreset = 'warm';
             }
             $data['site']['theme_preset'] = $themePreset;
-            $data['site']['custom_css'] = trim((string) ($_POST['custom_css'] ?? ''));
+            $data['site']['custom_css'] = ccms_sanitize_custom_css(trim((string) ($_POST['custom_css'] ?? '')));
             $data['site']['colors'] = [
                 'bg' => trim((string) ($_POST['color_bg'] ?? '#f7f4ee')),
                 'surface' => trim((string) ($_POST['color_surface'] ?? '#ffffff')),
@@ -350,7 +350,7 @@ try {
             $data['pages'][$index]['meta_title'] = trim((string) ($_POST['meta_title'] ?? ''));
             $data['pages'][$index]['meta_description'] = trim((string) ($_POST['meta_description'] ?? ''));
             $data['pages'][$index]['capsule_json'] = (string) ($_POST['capsule_json'] ?? '{}');
-            $data['pages'][$index]['html_content'] = (string) ($_POST['html_content'] ?? '');
+            $data['pages'][$index]['html_content'] = ccms_sanitize_html_fragment((string) ($_POST['html_content'] ?? ''));
             $data['pages'][$index]['updated_at'] = ccms_now_iso();
             if ($data['pages'][$index]['is_homepage']) {
                 foreach ($data['pages'] as $otherIndex => $page) {
@@ -487,7 +487,7 @@ try {
             ccms_require_capability('import_capsules');
             $title = trim((string) ($_POST['import_title'] ?? ''));
             $slug = ccms_slugify((string) ($_POST['import_slug'] ?? $title));
-            $html = (string) ($_POST['import_html'] ?? '');
+            $html = ccms_sanitize_html_fragment((string) ($_POST['import_html'] ?? ''));
             $capsuleJson = trim((string) ($_POST['import_capsule_json'] ?? ''));
             if ($title === '' || trim($html) === '') {
                 throw new RuntimeException('Para importar hace falta título y HTML.');
@@ -2167,7 +2167,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
   </div>
 
   <?php if ($currentAdmin): ?>
-  <script>
+  <script<?= ccms_script_nonce_attr() ?>>
     const sectionTemplates = <?= $sectionTemplatesJson ?: '[]' ?>;
     const capsuleBuilderTemplates = <?= $capsuleBuilderTemplatesJson ?: '[]' ?>;
     const initialCapsuleState = <?= $selectedCapsuleStateJson ?: '{"meta":{},"style":{},"blocks":[]}' ?>;

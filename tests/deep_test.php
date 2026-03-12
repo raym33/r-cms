@@ -79,6 +79,19 @@ lc_assert(ccms_storage_runtime_info()['driver'] === 'json', 'default storage dri
 lc_assert(is_bool(ccms_storage_runtime_info()['sqlite_available'] ?? null), 'storage runtime exposes sqlite availability flag');
 lc_assert(ccms_slugify('Hello Premium World') === 'hello-premium-world', 'slugify normalizes titles');
 lc_assert(str_contains(ccms_base_url(), '127.0.0.1'), 'base url helper uses current host');
+lc_assert(str_contains(ccms_script_nonce_attr(), 'nonce="'), 'script nonce attribute is generated');
+
+$sanitizedHtml = ccms_sanitize_html_fragment('<section><img src="x" onerror="alert(1)"><script>alert(1)</script><p style="color:red;background:url(https://evil.example.com/x)">Safe copy</p><a href="javascript:alert(1)" onclick="evil()">Bad</a><a href="/ok" onclick="evil()">Good</a></section>');
+lc_assert(!str_contains($sanitizedHtml, 'onerror'), 'html sanitizer removes event handlers');
+lc_assert(!str_contains($sanitizedHtml, '<script'), 'html sanitizer removes script tags');
+lc_assert(!str_contains($sanitizedHtml, 'javascript:'), 'html sanitizer strips javascript links');
+lc_assert(!str_contains($sanitizedHtml, 'url('), 'html sanitizer strips dangerous css urls');
+lc_assert(str_contains($sanitizedHtml, 'href="/ok"'), 'html sanitizer preserves safe relative links');
+
+$sanitizedCss = ccms_sanitize_custom_css("body{background:url(https://evil.example.com/a)}\n.test{color:red}\n@import url(https://evil.example.com/x.css);");
+lc_assert(!str_contains($sanitizedCss, 'url('), 'custom css sanitizer removes url');
+lc_assert(!str_contains($sanitizedCss, '@import'), 'custom css sanitizer removes import');
+lc_assert(str_contains($sanitizedCss, 'color:red'), 'custom css sanitizer preserves safe declarations');
 
 // Save and load JSON
 $defaults['installed_at'] = ccms_now_iso();
@@ -364,6 +377,14 @@ lc_assert(str_contains($publicHtml, '--site-surface-radius:16px'), 'public page 
 lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includes custom css block');
 lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'public page includes enabled plugin markup');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
+
+$unsafePage = $homepage;
+$unsafePage['capsule_json'] = '{}';
+$unsafePage['html_content'] = '<section><img src="x" onerror="alert(1)"><p>Safe text</p><a href="javascript:alert(1)">bad</a></section>';
+$unsafePublic = ccms_render_public_page($data['site'], $unsafePage, ccms_menu_pages($data));
+lc_assert(!str_contains($unsafePublic, 'onerror'), 'public render strips event handlers from html_content');
+lc_assert(!str_contains($unsafePublic, 'javascript:'), 'public render strips javascript links from html_content');
+lc_assert(str_contains($unsafePublic, 'Safe text'), 'public render preserves safe html content');
 
 $backupPayload = ccms_export_backup_payload($data);
 lc_assert(($backupPayload['format'] ?? '') === 'linuxcms-backup', 'backup payload uses linuxcms format');
