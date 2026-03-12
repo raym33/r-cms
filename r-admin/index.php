@@ -22,6 +22,7 @@ try {
 }
 
 $data = ccms_load_data();
+$flash = $flash ?? ccms_consume_flash();
 $currentAdmin = ccms_current_admin();
 $pendingTwoFactor = ccms_pending_2fa();
 $canManageSite = ccms_user_can('site_manage');
@@ -147,39 +148,9 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     'style' => [],
     'blocks' => [],
 ]) : ['meta' => ['business_name' => 'Untitled'], 'style' => [], 'blocks' => []], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-?>
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>r-admin | LinuxCMS</title>
-  <link rel="stylesheet" href="<?= htmlspecialchars(ccms_base_url() . '/r-admin/assets/admin.css', ENT_QUOTES, 'UTF-8') ?>">
-</head>
-<body>
-  <div class="shell">
-    <?php if (!$currentAdmin): ?>
-      <?php require __DIR__ . '/views/auth_shell.php'; ?>
-    <?php else: ?>
-      <?php require __DIR__ . '/views/admin_chrome.php'; ?>
+if (!$currentAdmin) {
+    require __DIR__ . '/views/login.php';
+    return;
+}
 
-      <?php require __DIR__ . '/views/admin_tabs.php'; ?>
-    <?php endif; ?>
-  </div>
-
-  <?php if ($currentAdmin): ?>
-  <script<?= ccms_script_nonce_attr() ?>>
-    window.CCMS_ADMIN_BOOTSTRAP = {
-      sectionTemplates: <?= $sectionTemplatesJson ?: '[]' ?>,
-      capsuleBuilderTemplates: <?= $capsuleBuilderTemplatesJson ?: '[]' ?>,
-      initialCapsuleState: <?= $selectedCapsuleStateJson ?: '{"meta":{},"style":{},"blocks":[]}' ?>,
-      mediaItems: <?= $mediaItemsJson ?: '[]' ?>,
-      previewSiteConfig: <?= $previewSiteConfigJson ?: '{"site":{},"menu":[]}' ?>,
-      builderReadOnly: <?= $builderReadOnly ? 'true' : 'false' ?>,
-      cspNonce: <?= json_encode(ccms_csp_nonce(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
-    };
-  </script>
-  <script src="<?= htmlspecialchars(ccms_base_url() . '/r-admin/assets/admin.js', ENT_QUOTES, 'UTF-8') ?>"></script>
-  <?php endif; ?>
-</body>
-</html>
+require __DIR__ . '/views/layout.php';

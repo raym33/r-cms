@@ -148,10 +148,17 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - dedicated view module for the `Import` tab, including quick HTML/capsule import into a new page
 - `r-admin/views/auth_shell.php`
   - dedicated view module for the login, 2FA verification, and password reset entry shell
+- `r-admin/views/login.php`
+  - top-level unauthenticated wrapper that renders the access shell and loads shared admin assets
+- `r-admin/views/layout.php`
+  - top-level authenticated wrapper that bootstraps admin state, loads shared assets, and composes admin chrome + tab content
 - `r-admin/views/admin_chrome.php`
   - shared admin chrome for the topbar, flash messages, client-mode banner, and tab navigation
 - `r-admin/views/admin_tabs.php`
   - shared tab switch that delegates to the dedicated view modules for account, studio, site, extensions, backups, media, import, audit, users, and pages
+- `r-admin/handlers/*.php`
+  - route entrypoints grouped by action family
+  - they delegate authenticated and guest-facing write operations through the shared `src/admin_actions.php` layer
 - `r-admin/assets/admin.css`
   - shared admin styling for the topbar, builder, preview, media modal, client mode, and responsive layout
 - `r-admin/assets/admin.js`
@@ -161,6 +168,26 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - separates write-side request logic from the view-heavy `r-admin/index.php`
 
 This is the first step toward splitting the admin into smaller modules such as pages, media, users, site settings and backups.
+
+## Security hardening notes
+
+Recent hardening work added these runtime protections:
+
+- `ccms_sanitize_html()` / `ccms_sanitize_html_fragment()`
+  - sanitize stored `html_content` before public rendering
+- `ccms_sanitize_css()` / `ccms_sanitize_custom_css()`
+  - sanitize custom CSS before storage and public rendering
+- request-scoped CSP nonces
+  - applied to public and admin inline script/style blocks
+- trusted plugin mode
+  - plugin discovery restricted to valid slugs, trusted paths and integrity-checked `plugin.php`
+- safer backup restore
+  - uploaded files are preserved into a timestamped backup directory before replacement
+- partial public data access helpers
+  - `ccms_load_page_by_slug()`
+  - `ccms_load_site_config()`
+- public cache support
+  - short-lived `ETag` + `Cache-Control` on rendered pages
 
 ## Builder direction
 

@@ -469,7 +469,7 @@ function ccms_import_backup_payload(array $payload): array
         if (in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
             $data['site']['theme_preset'] = $themePreset;
         }
-        $data['site']['custom_css'] = ccms_sanitize_custom_css((string) ($site['custom_css'] ?? ''));
+        $data['site']['custom_css'] = ccms_sanitize_css((string) ($site['custom_css'] ?? ''));
         $data['site']['trusted_plugins_enabled'] = !empty($site['trusted_plugins_enabled']);
         $requestedPlugins = array_values(array_filter(array_map('strval', is_array($site['enabled_plugins'] ?? null) ? $site['enabled_plugins'] : [])));
         $availablePlugins = ccms_discover_plugins();

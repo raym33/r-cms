@@ -185,20 +185,26 @@ Current protections include:
 - local LM Studio authoring UI extracted from the admin monolith into `r-admin/views/studio.php`
 - import UI extracted from the admin monolith into `r-admin/views/import.php`
 - login/reset/2FA access shell extracted from the admin monolith into `r-admin/views/auth_shell.php`
+- unauthenticated page wrapper extracted into `r-admin/views/login.php`
+- authenticated page wrapper extracted into `r-admin/views/layout.php`
 - shared admin topbar, alerts and tab navigation extracted into `r-admin/views/admin_chrome.php`
 - main admin tab switch extracted into `r-admin/views/admin_tabs.php`
+- action-family handler entrypoints extracted into `r-admin/handlers/*.php`
 - shared admin stylesheet extracted into `r-admin/assets/admin.css`
 - shared admin JavaScript extracted into `r-admin/assets/admin.js`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
 - Content Security Policy headers
+- CSP nonces for inline admin/public script and style blocks
 - admin no-cache headers
 - generic request throttling helpers for sensitive routes
 - media uploads restricted by extension, MIME type and max size
 - SVG uploads disabled by default
 - backup imports restricted by size and file type
 - public `/api/health` endpoint rate limited by IP
+- stored `html_content` sanitized before public rendering
+- custom CSS sanitized before storage and before public rendering
 - plugin discovery restricted to valid slugs and trusted paths inside `plugins/`
 - plugin hooks restricted to the public hook whitelist
 

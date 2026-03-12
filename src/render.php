@@ -265,7 +265,7 @@ function ccms_page_body_html(array $page): string
     if (ccms_capsule_can_render($capsule)) {
         return ccms_render_capsule_body($capsule);
     }
-    return ccms_sanitize_html_fragment((string) ($page['html_content'] ?? '<section><p>Empty page.</p></section>'));
+    return ccms_sanitize_html((string) ($page['html_content'] ?? '<section><p>Empty page.</p></section>'));
 }
 
 function ccms_render_public_page(array $site, array $page, array $menuPages): string
@@ -273,7 +273,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     ccms_load_enabled_plugins($site);
     $colors = $site['colors'] ?? [];
     $theme = ccms_site_theme_preset($site);
-    $customCss = ccms_sanitize_custom_css(trim((string) ($site['custom_css'] ?? '')));
+    $customCss = ccms_sanitize_css(trim((string) ($site['custom_css'] ?? '')));
     $pluginHead = ccms_render_plugin_fragments('public_head_end', [
         'site' => $site,
         'page' => $page,

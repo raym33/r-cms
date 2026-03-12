@@ -82,14 +82,14 @@ lc_assert(ccms_slugify('Hello Premium World') === 'hello-premium-world', 'slugif
 lc_assert(str_contains(ccms_base_url(), '127.0.0.1'), 'base url helper uses current host');
 lc_assert(str_contains(ccms_script_nonce_attr(), 'nonce="'), 'script nonce attribute is generated');
 
-$sanitizedHtml = ccms_sanitize_html_fragment('<section><img src="x" onerror="alert(1)"><script>alert(1)</script><p style="color:red;background:url(https://evil.example.com/x)">Safe copy</p><a href="javascript:alert(1)" onclick="evil()">Bad</a><a href="/ok" onclick="evil()">Good</a></section>');
+$sanitizedHtml = ccms_sanitize_html('<section><img src="x" onerror="alert(1)"><script>alert(1)</script><p style="color:red;background:url(https://evil.example.com/x)">Safe copy</p><a href="javascript:alert(1)" onclick="evil()">Bad</a><a href="/ok" onclick="evil()">Good</a></section>');
 lc_assert(!str_contains($sanitizedHtml, 'onerror'), 'html sanitizer removes event handlers');
 lc_assert(!str_contains($sanitizedHtml, '<script'), 'html sanitizer removes script tags');
 lc_assert(!str_contains($sanitizedHtml, 'javascript:'), 'html sanitizer strips javascript links');
 lc_assert(!str_contains($sanitizedHtml, 'url('), 'html sanitizer strips dangerous css urls');
 lc_assert(str_contains($sanitizedHtml, 'href="/ok"'), 'html sanitizer preserves safe relative links');
 
-$sanitizedCss = ccms_sanitize_custom_css("body{background:url(https://evil.example.com/a)}\n.test{color:red}\n@import url(https://evil.example.com/x.css);");
+$sanitizedCss = ccms_sanitize_css("body{background:url(https://evil.example.com/a)}\n.test{color:red}\n@import url(https://evil.example.com/x.css);");
 lc_assert(!str_contains($sanitizedCss, 'url('), 'custom css sanitizer removes url');
 lc_assert(!str_contains($sanitizedCss, '@import'), 'custom css sanitizer removes import');
 lc_assert(str_contains($sanitizedCss, 'color:red'), 'custom css sanitizer preserves safe declarations');

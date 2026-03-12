@@ -257,6 +257,11 @@ function ccms_sanitize_custom_css(string $css): string
     return trim($css);
 }
 
+function ccms_sanitize_css(string $css): string
+{
+    return ccms_sanitize_custom_css($css);
+}
+
 function ccms_sanitize_html_fragment(string $html): string
 {
     $html = trim($html);
@@ -371,4 +376,9 @@ function ccms_sanitize_html_fragment(string $html): string
         $output .= $dom->saveHTML($child);
     }
     return $output;
+}
+
+function ccms_sanitize_html(string $html): string
+{
+    return ccms_sanitize_html_fragment($html);
 }

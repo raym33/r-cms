@@ -13,7 +13,7 @@ function ccms_admin_handle_post(): void
     $currentAdmin = ccms_current_admin();
 
     if (!$currentAdmin) {
-        ccms_admin_handle_guest_post($action);
+        require ccms_root_path('r-admin/handlers/auth.php');
         throw new RuntimeException('Acción no válida.');
     }
 
@@ -25,6 +25,39 @@ function ccms_admin_handle_post(): void
 
     if ($mustChangePassword && $action !== 'change_own_password') {
         throw new RuntimeException('Debes cambiar tu contraseña temporal antes de continuar.');
+    }
+
+    if (in_array($action, ['start_totp_setup', 'cancel_totp_setup', 'enable_totp', 'disable_totp', 'change_own_password'], true)) {
+        require ccms_root_path('r-admin/handlers/account.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if (in_array($action, ['create_page', 'save_page', 'duplicate_page', 'restore_revision', 'delete_page'], true)) {
+        require ccms_root_path('r-admin/handlers/pages.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if (in_array($action, ['create_user', 'update_user', 'create_password_reset_token', 'delete_user'], true)) {
+        require ccms_root_path('r-admin/handlers/users.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if (in_array($action, ['save_site', 'save_plugins'], true)) {
+        require ccms_root_path('r-admin/handlers/site.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if ($action === 'upload_media') {
+        require ccms_root_path('r-admin/handlers/media.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if (in_array($action, ['save_ai_settings', 'probe_ai', 'ai_generate_page'], true)) {
+        require ccms_root_path('r-admin/handlers/ai.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if ($action === 'quick_import') {
+        require ccms_root_path('r-admin/handlers/import.php');
+        throw new RuntimeException('Acción no válida.');
+    }
+    if (in_array($action, ['export_backup', 'export_static_site', 'import_backup'], true)) {
+        require ccms_root_path('r-admin/handlers/backups.php');
+        throw new RuntimeException('Acción no válida.');
     }
 
     ccms_admin_handle_authenticated_post($action, $data, $currentAdmin);
@@ -191,7 +224,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
                 $themePreset = 'warm';
             }
             $data['site']['theme_preset'] = $themePreset;
-            $data['site']['custom_css'] = ccms_sanitize_custom_css(trim((string) ($_POST['custom_css'] ?? '')));
+            $data['site']['custom_css'] = ccms_sanitize_css(trim((string) ($_POST['custom_css'] ?? '')));
             $data['site']['colors'] = [
                 'bg' => trim((string) ($_POST['color_bg'] ?? '#f7f4ee')),
                 'surface' => trim((string) ($_POST['color_surface'] ?? '#ffffff')),
@@ -348,7 +381,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             $data['pages'][$index]['meta_title'] = trim((string) ($_POST['meta_title'] ?? ''));
             $data['pages'][$index]['meta_description'] = trim((string) ($_POST['meta_description'] ?? ''));
             $data['pages'][$index]['capsule_json'] = (string) ($_POST['capsule_json'] ?? '{}');
-            $data['pages'][$index]['html_content'] = ccms_sanitize_html_fragment((string) ($_POST['html_content'] ?? ''));
+            $data['pages'][$index]['html_content'] = ccms_sanitize_html((string) ($_POST['html_content'] ?? ''));
             $data['pages'][$index]['updated_at'] = ccms_now_iso();
             if ($data['pages'][$index]['is_homepage']) {
                 foreach ($data['pages'] as $otherIndex => $page) {
@@ -491,7 +524,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             ccms_require_capability('import_capsules');
             $title = trim((string) ($_POST['import_title'] ?? ''));
             $slug = ccms_slugify((string) ($_POST['import_slug'] ?? $title));
-            $html = ccms_sanitize_html_fragment((string) ($_POST['import_html'] ?? ''));
+            $html = ccms_sanitize_html((string) ($_POST['import_html'] ?? ''));
             $capsuleJson = trim((string) ($_POST['import_capsule_json'] ?? ''));
             if ($title === '' || trim($html) === '') {
                 throw new RuntimeException('Para importar hace falta título y HTML.');

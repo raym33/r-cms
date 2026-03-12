@@ -31,7 +31,7 @@ try {
             $page['meta_title'] = trim((string) ($_POST['meta_title'] ?? $page['meta_title'] ?? ''));
             $page['meta_description'] = trim((string) ($_POST['meta_description'] ?? $page['meta_description'] ?? ''));
             $page['capsule_json'] = (string) ($_POST['capsule_json'] ?? $page['capsule_json'] ?? '{}');
-            $page['html_content'] = ccms_sanitize_html_fragment((string) ($_POST['html_content'] ?? $page['html_content'] ?? ''));
+            $page['html_content'] = ccms_sanitize_html((string) ($_POST['html_content'] ?? $page['html_content'] ?? ''));
             $page['status'] = (string) ($_POST['status'] ?? $page['status'] ?? 'draft') === 'published' ? 'published' : 'draft';
             $page['show_in_menu'] = isset($_POST['show_in_menu']);
             $page['is_homepage'] = isset($_POST['is_homepage']);
@@ -59,7 +59,7 @@ try {
             'meta_title' => trim((string) ($_POST['meta_title'] ?? '')),
             'meta_description' => trim((string) ($_POST['meta_description'] ?? '')),
             'capsule_json' => (string) ($_POST['capsule_json'] ?? '{}'),
-            'html_content' => ccms_sanitize_html_fragment((string) ($_POST['html_content'] ?? '')),
+            'html_content' => ccms_sanitize_html((string) ($_POST['html_content'] ?? '')),
         ];
         $data['pages'][] = $page;
     }
