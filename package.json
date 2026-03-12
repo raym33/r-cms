@@ -1,0 +1,13 @@
+{
+  "name": "linuxcms",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local-first landing page CMS with LM Studio authoring and generic-hosting runtime.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0"
+  }
+}

@@ -27,6 +27,15 @@ LinuxCMS uses:
 
 This keeps the hosted runtime compatible with generic shared hosting.
 
+## Testing layers
+
+LinuxCMS now has two complementary test layers:
+
+- `tests/deep_test.php`
+  - CLI-heavy regression coverage for storage, auth, security helpers, rendering, backups, and exports
+- `tests/e2e/admin.spec.js`
+  - browser smoke coverage for a real install, login, page creation, and preview visibility in `/r-admin`
+
 ## Local AI layer
 
 LinuxCMS adds a local-only authoring layer through LM Studio:

@@ -218,6 +218,21 @@ LinuxCMS includes a deep CLI regression script:
 php tests/deep_test.php
 ```
 
+LinuxCMS now also includes a browser E2E smoke with Playwright:
+
+```bash
+npm install
+npx playwright install chromium
+npm run test:e2e
+```
+
+The E2E smoke currently covers:
+
+- fresh install
+- admin login
+- page creation from `/r-admin`
+- selected page preview visible in the admin
+
 This test exercises more than 100 checks, including:
 
 - JSON and SQLite storage
