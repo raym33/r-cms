@@ -121,6 +121,8 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - dedicated view module for the `Pages` tab, including the visual builder, preview, revisions, and read-only fallback
 - `r-admin/views/users.php`
   - dedicated view module for the `Users` tab, including user creation, role management, password resets, and user removal
+- `r-admin/views/media.php`
+  - dedicated view module for the `Media` tab, including uploads and the reusable asset library
   - centralizes admin `POST` action handling
   - separates write-side request logic from the view-heavy `r-admin/index.php`
 
