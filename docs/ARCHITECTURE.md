@@ -143,6 +143,8 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
   - shared admin chrome for the topbar, flash messages, client-mode banner, and tab navigation
 - `r-admin/views/admin_tabs.php`
   - shared tab switch that delegates to the dedicated view modules for account, studio, site, extensions, backups, media, import, audit, users, and pages
+- `r-admin/assets/admin.js`
+  - shared admin client-side behavior for the builder, preview sync, media picker, inline editing, and client mode
 - `src/admin_actions.php`
   - centralizes admin `POST` action handling
   - separates write-side request logic from the view-heavy `r-admin/index.php`
