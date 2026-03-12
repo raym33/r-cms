@@ -119,6 +119,9 @@ lc_assert(!str_contains($headFragment, '<script'), 'plugin head sanitizer remove
 lc_assert(!str_contains($headFragment, 'url('), 'plugin head sanitizer strips dangerous css urls');
 lc_assert(str_contains($headFragment, '<meta '), 'plugin head sanitizer preserves safe meta');
 lc_assert(!str_contains($headFragment, 'javascript:'), 'plugin head sanitizer strips dangerous link href');
+ccms_plugin_runtime_reset();
+ccms_register_plugin_hook('evil_hook', static fn (): string => '<script>alert(1)</script>');
+lc_assert(ccms_render_plugin_fragments('evil_hook', []) === '', 'invalid plugin hooks are ignored');
 
 // Save and load JSON
 $defaults['installed_at'] = ccms_now_iso();
@@ -355,6 +358,20 @@ lc_assert(isset($plugins['announcement-chip']), 'plugin discovery finds announce
 $pluginMeta = $plugins['announcement-chip'];
 lc_assert(!empty($pluginMeta['trusted']), 'plugin manifest marks trusted plugin');
 lc_assert(!empty($pluginMeta['integrity_ok']), 'plugin integrity hash matches');
+lc_assert(!empty($pluginMeta['path_trusted']), 'plugin path is inside trusted plugins root');
+lc_assert(!empty($pluginMeta['entry_trusted']), 'plugin entry is inside trusted plugins root');
+$invalidPluginDir = ccms_plugins_dir() . DIRECTORY_SEPARATOR . 'Bad Plugin!';
+@mkdir($invalidPluginDir, 0775, true);
+file_put_contents($invalidPluginDir . '/manifest.json', json_encode([
+    'slug' => '../evil',
+    'name' => 'Bad Plugin',
+    'trusted' => true,
+    'entry_sha256' => str_repeat('0', 64),
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+file_put_contents($invalidPluginDir . '/plugin.php', '<?php return [];');
+$rediscoveredPlugins = ccms_discover_plugins();
+lc_assert(!isset($rediscoveredPlugins['../evil']), 'plugin discovery ignores invalid manifest slugs');
+lc_assert(!isset($rediscoveredPlugins['Bad Plugin!']), 'plugin discovery ignores invalid directory slugs');
 $data['site']['enabled_plugins'] = ['announcement-chip'];
 $data['site']['trusted_plugins_enabled'] = true;
 $backupFixtureFile = ccms_uploads_dir() . '/deep-test-upload.txt';

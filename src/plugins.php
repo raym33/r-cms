@@ -21,8 +21,36 @@ function ccms_plugins_trusted_enabled(array $site): bool
     return !empty($site['trusted_plugins_enabled']);
 }
 
+function ccms_plugin_allowed_hooks(): array
+{
+    return ['public_head_end', 'public_body_end'];
+}
+
+function ccms_plugin_slug_is_valid(string $slug): bool
+{
+    return preg_match('/^[a-z0-9][a-z0-9_-]{1,63}$/', $slug) === 1;
+}
+
+function ccms_plugin_path_is_trusted(string $path): bool
+{
+    $pluginsRoot = realpath(ccms_plugins_dir());
+    $realPath = realpath($path);
+    if (!$pluginsRoot || !$realPath) {
+        return false;
+    }
+    return $realPath === $pluginsRoot || str_starts_with($realPath, $pluginsRoot . DIRECTORY_SEPARATOR);
+}
+
+function ccms_include_plugin_file(string $entry)
+{
+    return include $entry;
+}
+
 function ccms_register_plugin_hook(string $hook, callable $callback): void
 {
+    if (!in_array($hook, ccms_plugin_allowed_hooks(), true)) {
+        return;
+    }
     $GLOBALS['ccms_plugin_hooks'][$hook] ??= [];
     $GLOBALS['ccms_plugin_hooks'][$hook][] = $callback;
 }
@@ -39,7 +67,7 @@ function ccms_discover_plugins(): array
             continue;
         }
         $pluginDir = $dir . DIRECTORY_SEPARATOR . $entry;
-        if (!is_dir($pluginDir)) {
+        if (!is_dir($pluginDir) || is_link($pluginDir) || !ccms_plugin_slug_is_valid($entry)) {
             continue;
         }
         $manifest = [
@@ -56,18 +84,23 @@ function ccms_discover_plugins(): array
             }
         }
         $manifest['slug'] = (string) ($manifest['slug'] ?? $entry);
+        if ($manifest['slug'] !== $entry || !ccms_plugin_slug_is_valid($manifest['slug'])) {
+            continue;
+        }
         $manifest['path'] = $pluginDir;
         $manifest['entry'] = $pluginDir . DIRECTORY_SEPARATOR . 'plugin.php';
         $manifest['active'] = false;
         $manifest['trusted'] = !empty($manifest['trusted']);
+        $manifest['path_trusted'] = ccms_plugin_path_is_trusted($pluginDir);
+        $manifest['entry_trusted'] = is_file($manifest['entry']) && !is_link($manifest['entry']) && ccms_plugin_path_is_trusted($manifest['entry']);
         $entrySha = trim((string) ($manifest['entry_sha256'] ?? ''));
         $manifest['entry_sha256'] = preg_match('/^[a-f0-9]{64}$/i', $entrySha) ? strtolower($entrySha) : '';
         $manifest['integrity_ok'] = false;
-        if (is_file($manifest['entry']) && $manifest['entry_sha256'] !== '') {
+        if (!empty($manifest['entry_trusted']) && $manifest['entry_sha256'] !== '') {
             $actualHash = hash_file('sha256', $manifest['entry']);
             $manifest['integrity_ok'] = is_string($actualHash) && hash_equals($manifest['entry_sha256'], strtolower($actualHash));
         }
-        $manifest['loadable'] = $manifest['trusted'] && $manifest['integrity_ok'];
+        $manifest['loadable'] = $manifest['trusted'] && !empty($manifest['path_trusted']) && !empty($manifest['entry_trusted']) && $manifest['integrity_ok'];
         $plugins[$manifest['slug']] = $manifest;
     }
     ksort($plugins);
@@ -90,10 +123,14 @@ function ccms_load_enabled_plugins(array $site): array
             continue;
         }
         $entry = (string) ($plugins[$slug]['entry'] ?? '');
-        if (!is_file($entry)) {
+        if (!is_file($entry) || empty($plugins[$slug]['entry_trusted'])) {
             continue;
         }
-        $manifest = include $entry;
+        try {
+            $manifest = ccms_include_plugin_file($entry);
+        } catch (Throwable $e) {
+            continue;
+        }
         if (is_array($manifest)) {
             $plugins[$slug] = array_merge($plugins[$slug], $manifest);
         }

@@ -35,6 +35,8 @@ It is security-conscious by default, but it is not presented as a formally audit
 - backup imports restricted by file type and maximum payload size
 - public `/api/health` rate limited by IP
 - trusted PHP plugins disabled by default
+- plugin discovery restricted to valid slugs and trusted real paths inside `plugins/`
+- plugin hook registration restricted to a public hook whitelist
 - trusted plugin loading only when:
   - trusted mode is enabled
   - the plugin manifest marks the plugin as trusted

@@ -197,6 +197,8 @@ Current protections include:
 - SVG uploads disabled by default
 - backup imports restricted by size and file type
 - public `/api/health` endpoint rate limited by IP
+- plugin discovery restricted to valid slugs and trusted paths inside `plugins/`
+- plugin hooks restricted to the public hook whitelist
 
 Recommended hosting-side protections:
 
