@@ -113,6 +113,14 @@ This keeps migration from older tools practical while progressively expanding PH
 - `Users`
   - owner/editor/viewer management
 
+The admin is still UI-heavy in a single entry file, but the first structural cut is now done:
+
+- `src/admin_actions.php`
+  - centralizes admin `POST` action handling
+  - separates write-side request logic from the view-heavy `r-admin/index.php`
+
+This is the first step toward splitting the admin into smaller modules such as pages, media, users, site settings and backups.
+
 ## Builder direction
 
 The current builder already supports:

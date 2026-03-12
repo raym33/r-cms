@@ -168,6 +168,7 @@ Current protections include:
   - `viewer`
 - optional TOTP 2FA for admin accounts
 - owner-generated password reset links
+- first modular split of the admin action layer into `src/admin_actions.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
@@ -205,6 +206,7 @@ This test exercises more than 100 checks, including:
 - install page rendering
 - admin view rendering for `owner` and `viewer`
 - revisions and helper coverage
+- public HTML/CSS sanitization and CSP hardening
 
 Use it before shipping a client build or before pushing changes.
 
