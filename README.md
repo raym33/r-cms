@@ -184,6 +184,7 @@ Current protections include:
 - import UI extracted from the admin monolith into `r-admin/views/import.php`
 - login/reset/2FA access shell extracted from the admin monolith into `r-admin/views/auth_shell.php`
 - shared admin topbar, alerts and tab navigation extracted into `r-admin/views/admin_chrome.php`
+- main admin tab switch extracted into `r-admin/views/admin_tabs.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`

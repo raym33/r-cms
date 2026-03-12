@@ -378,27 +378,7 @@ $selectedCapsuleStateJson = json_encode($selectedPage ? (ccms_capsule_decode($se
     <?php else: ?>
       <?php require __DIR__ . '/views/admin_chrome.php'; ?>
 
-      <?php if ($tab === 'account'): ?>
-        <?php require __DIR__ . '/views/account.php'; ?>
-      <?php elseif ($tab === 'studio'): ?>
-        <?php require __DIR__ . '/views/studio.php'; ?>
-      <?php elseif ($tab === 'site'): ?>
-        <?php require __DIR__ . '/views/site.php'; ?>
-      <?php elseif ($tab === 'extensions'): ?>
-        <?php require __DIR__ . '/views/extensions.php'; ?>
-      <?php elseif ($tab === 'backups'): ?>
-        <?php require __DIR__ . '/views/backups.php'; ?>
-      <?php elseif ($tab === 'media'): ?>
-        <?php require __DIR__ . '/views/media.php'; ?>
-      <?php elseif ($tab === 'import'): ?>
-        <?php require __DIR__ . '/views/import.php'; ?>
-      <?php elseif ($tab === 'audit'): ?>
-        <?php require __DIR__ . '/views/audit.php'; ?>
-      <?php elseif ($tab === 'users'): ?>
-        <?php require __DIR__ . '/views/users.php'; ?>
-      <?php else: ?>
-        <?php require __DIR__ . '/views/pages.php'; ?>
-      <?php endif; ?>
+      <?php require __DIR__ . '/views/admin_tabs.php'; ?>
     <?php endif; ?>
   </div>
 
