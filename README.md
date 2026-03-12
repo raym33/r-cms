@@ -176,6 +176,7 @@ Current protections include:
 - users management UI extracted from the admin monolith into `r-admin/views/users.php`
 - media library UI extracted from the admin monolith into `r-admin/views/media.php`
 - backup/export/restore UI extracted from the admin monolith into `r-admin/views/backups.php`
+- site branding/theme UI extracted from the admin monolith into `r-admin/views/site.php`
 - `HttpOnly` session cookies
 - `SameSite=Lax` cookies
 - `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`
