@@ -107,6 +107,130 @@ function ccms_allowed_font_pairings(): array
     ];
 }
 
+function ccms_business_profile_type_catalog(): array
+{
+    return [
+        '' => ['label' => 'Sin perfil', 'schema_type' => 'LocalBusiness'],
+        'local_business' => ['label' => 'Negocio local', 'schema_type' => 'LocalBusiness'],
+        'restaurant' => ['label' => 'Restaurante', 'schema_type' => 'Restaurant'],
+        'hair_salon' => ['label' => 'Peluqueria', 'schema_type' => 'HairSalon'],
+        'dentist' => ['label' => 'Dentista', 'schema_type' => 'Dentist'],
+        'store' => ['label' => 'Tienda', 'schema_type' => 'Store'],
+        'health_club' => ['label' => 'Gimnasio', 'schema_type' => 'HealthClub'],
+        'attorney' => ['label' => 'Abogado / despacho', 'schema_type' => 'Attorney'],
+        'real_estate_agent' => ['label' => 'Inmobiliaria', 'schema_type' => 'RealEstateAgent'],
+        'veterinary_care' => ['label' => 'Veterinario', 'schema_type' => 'VeterinaryCare'],
+    ];
+}
+
+function ccms_allowed_business_profile_types(): array
+{
+    return array_keys(ccms_business_profile_type_catalog());
+}
+
+function ccms_normalize_business_profile_type(string $value, string $fallback = ''): string
+{
+    $value = trim($value);
+    return in_array($value, ccms_allowed_business_profile_types(), true) ? $value : $fallback;
+}
+
+function ccms_business_profile_schema_type(string $type): string
+{
+    $catalog = ccms_business_profile_type_catalog();
+    $type = ccms_normalize_business_profile_type($type);
+    return (string) ($catalog[$type]['schema_type'] ?? 'LocalBusiness');
+}
+
+function ccms_default_business_profile(): array
+{
+    return [
+        'type' => '',
+        'name' => '',
+        'description' => '',
+        'phone' => '',
+        'email' => '',
+        'street_address' => '',
+        'postal_code' => '',
+        'city' => '',
+        'region' => '',
+        'country' => '',
+        'latitude' => '',
+        'longitude' => '',
+        'price_range' => '',
+        'currencies_accepted' => 'EUR',
+        'serves_cuisine' => '',
+        'reservation_url' => '',
+        'menu_url' => '',
+        'daily_menu_slot' => '',
+        'hours_slot' => '',
+        'price_list_slot' => '',
+        'schema_enabled' => true,
+        'ai_feed_enabled' => true,
+    ];
+}
+
+function ccms_normalize_business_profile($profile): array
+{
+    $profile = is_array($profile) ? $profile : [];
+    $defaults = ccms_default_business_profile();
+    $normalized = array_merge($defaults, $profile);
+    $normalized['type'] = ccms_normalize_business_profile_type((string) ($normalized['type'] ?? ''));
+    foreach ([
+        'name',
+        'description',
+        'phone',
+        'email',
+        'street_address',
+        'postal_code',
+        'city',
+        'region',
+        'country',
+        'price_range',
+        'serves_cuisine',
+        'daily_menu_slot',
+        'hours_slot',
+        'price_list_slot',
+    ] as $key) {
+        $normalized[$key] = trim((string) ($normalized[$key] ?? ''));
+    }
+    foreach (['latitude', 'longitude'] as $key) {
+        $value = trim((string) ($normalized[$key] ?? ''));
+        $normalized[$key] = ($value !== '' && is_numeric($value)) ? $value : '';
+    }
+    $normalized['currencies_accepted'] = strtoupper(substr(trim((string) ($normalized['currencies_accepted'] ?? 'EUR')) ?: 'EUR', 0, 12));
+    $normalized['email'] = trim((string) ($normalized['email'] ?? ''));
+    $normalized['reservation_url'] = ccms_sanitize_url((string) ($normalized['reservation_url'] ?? ''), true);
+    $normalized['menu_url'] = ccms_sanitize_url((string) ($normalized['menu_url'] ?? ''), true);
+    $normalized['schema_enabled'] = !empty($normalized['schema_enabled']);
+    $normalized['ai_feed_enabled'] = !empty($normalized['ai_feed_enabled']);
+    return $normalized;
+}
+
+function ccms_business_profile_is_active(array $profile): bool
+{
+    $profile = ccms_normalize_business_profile($profile);
+    foreach ([
+        'type',
+        'name',
+        'description',
+        'phone',
+        'email',
+        'street_address',
+        'city',
+        'region',
+        'country',
+        'daily_menu_slot',
+        'hours_slot',
+        'price_list_slot',
+    ] as $key) {
+        if (trim((string) ($profile[$key] ?? '')) !== '') {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function ccms_allowed_user_roles(): array
 {
     return [

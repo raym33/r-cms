@@ -13,7 +13,7 @@ $path = trim(ccms_request_path(), '/');
 $menuPages = ccms_menu_pages($data);
 
 if ($path === 'blog') {
-    echo ccms_render_blog_archive_page($data['site'], ccms_posts_published($data), $menuPages);
+    echo ccms_render_blog_archive_page($publicSite, ccms_posts_published($data), $menuPages);
     exit;
 }
 
@@ -41,7 +41,7 @@ if (preg_match('#^blog/category/([^/]+)$#', $path, $matches)) {
         );
         exit;
     }
-    echo ccms_render_blog_archive_page($data['site'], $posts, $menuPages, $categoryLabel, null);
+    echo ccms_render_blog_archive_page($publicSite, $posts, $menuPages, $categoryLabel, null);
     exit;
 }
 
@@ -69,7 +69,7 @@ if (preg_match('#^blog/tag/([^/]+)$#', $path, $matches)) {
         );
         exit;
     }
-    echo ccms_render_blog_archive_page($data['site'], $posts, $menuPages, null, $tagLabel);
+    echo ccms_render_blog_archive_page($publicSite, $posts, $menuPages, null, $tagLabel);
     exit;
 }
 
@@ -90,7 +90,7 @@ if (preg_match('#^blog/([^/]+)$#', $path, $matches)) {
         );
         exit;
     }
-    echo ccms_render_blog_post_page($data['site'], $post, $menuPages);
+    echo ccms_render_blog_post_page($publicSite, $post, $menuPages);
     exit;
 }
 
@@ -127,7 +127,9 @@ if (!headers_sent()) {
             'tagline' => (string) ($data['site']['tagline'] ?? ''),
             'footer_text' => (string) ($data['site']['footer_text'] ?? ''),
             'theme_preset' => (string) ($data['site']['theme_preset'] ?? ''),
+            'font_pairing' => (string) ($data['site']['font_pairing'] ?? ''),
             'custom_css' => (string) ($data['site']['custom_css'] ?? ''),
+            'business_profile' => is_array($data['site']['business_profile'] ?? null) ? $data['site']['business_profile'] : [],
             'colors' => is_array($data['site']['colors'] ?? null) ? $data['site']['colors'] : [],
         ],
         'live_data' => $data['live_data'] ?? [],

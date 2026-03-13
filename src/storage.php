@@ -285,6 +285,7 @@ function ccms_default_data(): array
             'theme_preset' => 'warm',
             'font_pairing' => 'auto',
             'custom_css' => '',
+            'business_profile' => ccms_default_business_profile(),
             'onboarding' => ccms_default_onboarding_state(),
             'trusted_plugins_enabled' => false,
             'enabled_plugins' => [],
@@ -547,6 +548,7 @@ function ccms_normalize_users(array $data): array
     $data['site']['analytics_id'] = trim((string) ($data['site']['analytics_id'] ?? ''));
     $data['site']['theme_preset'] = ccms_normalize_theme_preset((string) ($data['site']['theme_preset'] ?? 'warm'));
     $data['site']['font_pairing'] = ccms_normalize_font_pairing((string) ($data['site']['font_pairing'] ?? 'auto'));
+    $data['site']['business_profile'] = ccms_normalize_business_profile($data['site']['business_profile'] ?? []);
     $data['site']['onboarding'] = array_merge(
         ccms_default_onboarding_state(),
         is_array($data['site']['onboarding'] ?? null) ? $data['site']['onboarding'] : []
@@ -884,6 +886,7 @@ function ccms_import_backup_payload(array $payload): array
         $data['site']['theme_preset'] = ccms_normalize_theme_preset((string) ($site['theme_preset'] ?? $data['site']['theme_preset']));
         $data['site']['font_pairing'] = ccms_normalize_font_pairing((string) ($site['font_pairing'] ?? $data['site']['font_pairing']));
         $data['site']['custom_css'] = ccms_sanitize_css((string) ($site['custom_css'] ?? ''));
+        $data['site']['business_profile'] = ccms_normalize_business_profile($site['business_profile'] ?? []);
         if (is_array($site['onboarding'] ?? null)) {
             $onboarding = $site['onboarding'];
             $data['site']['onboarding'] = array_merge(

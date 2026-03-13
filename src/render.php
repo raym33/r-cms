@@ -64,6 +64,7 @@ function ccms_public_site_config(array $data): array
 {
     $site = is_array($data['site'] ?? null) ? $data['site'] : [];
     $site['live_data'] = ccms_normalize_live_data_structure($data['live_data'] ?? []);
+    $site['business_profile'] = ccms_normalize_business_profile($site['business_profile'] ?? []);
     return $site;
 }
 
@@ -712,12 +713,287 @@ function ccms_page_primary_image(array $page): string
     return '';
 }
 
+function ccms_site_business_profile(array $site): array
+{
+    return ccms_normalize_business_profile($site['business_profile'] ?? []);
+}
+
+function ccms_business_profile_slot_field(string $type): string
+{
+    return match ($type) {
+        'menu_daily' => 'daily_menu_slot',
+        'hours_status' => 'hours_slot',
+        'price_list' => 'price_list_slot',
+        default => '',
+    };
+}
+
+function ccms_business_profile_slot(array $site, array $profile, string $type): ?array
+{
+    $liveData = ccms_site_live_data($site);
+    $slotField = ccms_business_profile_slot_field($type);
+    $slotKey = $slotField !== '' ? trim((string) ($profile[$slotField] ?? '')) : '';
+    if ($slotKey !== '') {
+        $slot = $liveData['slots'][$slotKey] ?? null;
+        if (is_array($slot) && (($slot['type'] ?? '') === $type)) {
+            return ['key' => $slotKey] + $slot;
+        }
+    }
+
+    foreach (($liveData['slots'] ?? []) as $candidateKey => $slot) {
+        if (!is_array($slot) || (($slot['type'] ?? '') !== $type)) {
+            continue;
+        }
+        return ['key' => (string) $candidateKey] + $slot;
+    }
+
+    return null;
+}
+
+function ccms_business_profile_address_schema(array $profile): ?array
+{
+    $address = [
+        '@type' => 'PostalAddress',
+        'streetAddress' => trim((string) ($profile['street_address'] ?? '')),
+        'postalCode' => trim((string) ($profile['postal_code'] ?? '')),
+        'addressLocality' => trim((string) ($profile['city'] ?? '')),
+        'addressRegion' => trim((string) ($profile['region'] ?? '')),
+        'addressCountry' => trim((string) ($profile['country'] ?? '')),
+    ];
+
+    foreach (['streetAddress', 'postalCode', 'addressLocality', 'addressRegion', 'addressCountry'] as $key) {
+        if ($address[$key] === '') {
+            unset($address[$key]);
+        }
+    }
+
+    return count($address) > 1 ? $address : null;
+}
+
+function ccms_business_profile_geo_schema(array $profile): ?array
+{
+    $latitude = trim((string) ($profile['latitude'] ?? ''));
+    $longitude = trim((string) ($profile['longitude'] ?? ''));
+    if ($latitude === '' || $longitude === '') {
+        return null;
+    }
+
+    return [
+        '@type' => 'GeoCoordinates',
+        'latitude' => $latitude,
+        'longitude' => $longitude,
+    ];
+}
+
+function ccms_business_profile_opening_hours_schema(array $payload): array
+{
+    $days = [
+        'mon' => 'Monday',
+        'tue' => 'Tuesday',
+        'wed' => 'Wednesday',
+        'thu' => 'Thursday',
+        'fri' => 'Friday',
+        'sat' => 'Saturday',
+        'sun' => 'Sunday',
+    ];
+    $specifications = [];
+    foreach ($days as $dayKey => $dayLabel) {
+        $day = is_array($payload['days'][$dayKey] ?? null) ? $payload['days'][$dayKey] : [];
+        if (!empty($day['closed'])) {
+            continue;
+        }
+        foreach ((array) ($day['slots'] ?? []) as $slot) {
+            $open = trim((string) ($slot['open'] ?? ''));
+            $close = trim((string) ($slot['close'] ?? ''));
+            if (!preg_match('/^\d{2}:\d{2}$/', $open) || !preg_match('/^\d{2}:\d{2}$/', $close)) {
+                continue;
+            }
+            $specifications[] = [
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => $dayLabel,
+                'opens' => $open,
+                'closes' => $close,
+            ];
+        }
+    }
+
+    return $specifications;
+}
+
+function ccms_business_profile_menu_schema(array $profile, array $payload): ?array
+{
+    $menuUrl = trim((string) ($profile['menu_url'] ?? ''));
+    $sections = [];
+    foreach ((array) ($payload['sections'] ?? []) as $section) {
+        $items = [];
+        foreach ((array) ($section['items'] ?? []) as $item) {
+            $name = trim((string) $item);
+            if ($name === '') {
+                continue;
+            }
+            $items[] = [
+                '@type' => 'MenuItem',
+                'name' => $name,
+            ];
+        }
+        if ($items === []) {
+            continue;
+        }
+        $sections[] = [
+            '@type' => 'MenuSection',
+            'name' => trim((string) ($section['name'] ?? 'Menu')),
+            'hasMenuItem' => $items,
+        ];
+    }
+
+    if ($menuUrl === '' && $sections === []) {
+        return null;
+    }
+
+    $menu = [
+        '@type' => 'Menu',
+        'name' => trim((string) ($profile['name'] ?? '')) !== '' ? (string) $profile['name'] . ' menu' : 'Menu',
+    ];
+    if ($menuUrl !== '') {
+        $menu['url'] = $menuUrl;
+    }
+    if ($sections !== []) {
+        $menu['hasMenuSection'] = $sections;
+    }
+
+    return $menu;
+}
+
+function ccms_business_profile_offer_schema(array $payload): array
+{
+    $currency = trim((string) ($payload['currency'] ?? 'EUR')) ?: 'EUR';
+    $offers = [];
+    foreach ((array) ($payload['items'] ?? []) as $item) {
+        $name = trim((string) ($item['name'] ?? ''));
+        $price = trim((string) ($item['price'] ?? ''));
+        if ($name === '' || $price === '') {
+            continue;
+        }
+        $offer = [
+            '@type' => 'Offer',
+            'price' => $price,
+            'priceCurrency' => $currency,
+            'itemOffered' => [
+                '@type' => 'Service',
+                'name' => $name,
+            ],
+        ];
+        $detail = trim((string) ($item['detail'] ?? ''));
+        if ($detail !== '') {
+            $offer['description'] = $detail;
+        }
+        $offers[] = $offer;
+    }
+
+    return $offers;
+}
+
+function ccms_business_profile_schema_node(array $site, array $page): ?array
+{
+    $profile = ccms_site_business_profile($site);
+    if (!$profile['schema_enabled'] || !ccms_business_profile_is_active($profile)) {
+        return null;
+    }
+
+    $node = [
+        '@type' => ccms_business_profile_schema_type((string) ($profile['type'] ?? '')),
+        'name' => trim((string) ($profile['name'] ?? '')) ?: trim((string) ($site['title'] ?? 'LinuxCMS')),
+        'url' => rtrim(ccms_base_url(), '/') . '/',
+    ];
+    $description = trim((string) ($profile['description'] ?? '')) ?: trim((string) ($site['tagline'] ?? ''));
+    if ($description !== '') {
+        $node['description'] = $description;
+    }
+    $phone = trim((string) ($profile['phone'] ?? ''));
+    if ($phone !== '') {
+        $node['telephone'] = $phone;
+    }
+    $email = trim((string) ($profile['email'] ?? '')) ?: trim((string) ($site['contact_email'] ?? ''));
+    if ($email !== '') {
+        $node['email'] = $email;
+    }
+    if ($address = ccms_business_profile_address_schema($profile)) {
+        $node['address'] = $address;
+    }
+    if ($geo = ccms_business_profile_geo_schema($profile)) {
+        $node['geo'] = $geo;
+    }
+    $priceRange = trim((string) ($profile['price_range'] ?? ''));
+    if ($priceRange !== '') {
+        $node['priceRange'] = $priceRange;
+    }
+    $currencies = trim((string) ($profile['currencies_accepted'] ?? ''));
+    if ($currencies !== '') {
+        $node['currenciesAccepted'] = $currencies;
+    }
+    if (trim((string) ($profile['serves_cuisine'] ?? '')) !== '') {
+        $node['servesCuisine'] = trim((string) $profile['serves_cuisine']);
+    }
+    if (trim((string) ($profile['reservation_url'] ?? '')) !== '') {
+        $node['acceptsReservations'] = (string) $profile['reservation_url'];
+    }
+    $image = ccms_page_primary_image($page);
+    if ($image !== '') {
+        $node['image'] = $image;
+    }
+
+    $menuSlot = ccms_business_profile_slot($site, $profile, 'menu_daily');
+    $menuPayload = $menuSlot ? ccms_normalize_live_data_payload('menu_daily', $menuSlot['payload'] ?? []) : [];
+    if ($menuSchema = ccms_business_profile_menu_schema($profile, $menuPayload)) {
+        $node['hasMenu'] = $menuSchema;
+    }
+
+    $hoursSlot = ccms_business_profile_slot($site, $profile, 'hours_status');
+    $hoursPayload = $hoursSlot ? ccms_normalize_live_data_payload('hours_status', $hoursSlot['payload'] ?? []) : [];
+    $openingHours = ccms_business_profile_opening_hours_schema($hoursPayload);
+    if ($openingHours !== []) {
+        $node['openingHoursSpecification'] = $openingHours;
+    }
+
+    $priceSlot = ccms_business_profile_slot($site, $profile, 'price_list');
+    $pricePayload = $priceSlot ? ccms_normalize_live_data_payload('price_list', $priceSlot['payload'] ?? []) : [];
+    $offers = ccms_business_profile_offer_schema($pricePayload);
+    if ($offers !== []) {
+        $node['makesOffer'] = $offers;
+    }
+
+    return $node;
+}
+
+function ccms_business_profile_feed_enabled(array $site): bool
+{
+    $profile = ccms_site_business_profile($site);
+    return $profile['ai_feed_enabled'] && ccms_business_profile_is_active($profile);
+}
+
+function ccms_business_profile_latest_update(array $site, array $profile): ?string
+{
+    $timestamps = [];
+    foreach (['menu_daily', 'hours_status', 'price_list'] as $type) {
+        $slot = ccms_business_profile_slot($site, $profile, $type);
+        $updatedAt = trim((string) ($slot['updated_at'] ?? ''));
+        if ($updatedAt !== '') {
+            $timestamps[] = $updatedAt;
+        }
+    }
+    if ($timestamps === []) {
+        return null;
+    }
+    usort($timestamps, static fn (string $a, string $b): int => strcmp($b, $a));
+    return $timestamps[0];
+}
+
 function ccms_render_public_schema(array $site, array $page): string
 {
     $contentType = (string) ($page['content_type'] ?? '');
+    $graph = [];
     if ($contentType === 'post') {
-        $schema = [
-            '@context' => 'https://schema.org',
+        $graph[] = [
             '@type' => 'BlogPosting',
             'headline' => trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? '')),
             'description' => trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($page['excerpt'] ?? '')),
@@ -731,37 +1007,134 @@ function ccms_render_public_schema(array $site, array $page): string
         ];
         $siteTitle = trim((string) ($site['title'] ?? ''));
         if ($siteTitle !== '') {
-            $schema['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
+            $graph[0]['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
         }
         $image = ccms_page_primary_image($page);
         if ($image !== '') {
-            $schema['image'] = $image;
+            $graph[0]['image'] = $image;
         }
         if (!empty($page['categories'][0])) {
-            $schema['articleSection'] = (string) $page['categories'][0];
+            $graph[0]['articleSection'] = (string) $page['categories'][0];
         }
-        return json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
-    }
-    $schema = [
-        '@context' => 'https://schema.org',
+    } else {
+        $graph[] = [
         '@type' => !empty($page['is_homepage']) ? 'WebSite' : 'WebPage',
         'name' => trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? $site['title'] ?? 'LinuxCMS')),
         'description' => trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? '')),
         'url' => ccms_public_page_url($page),
-    ];
-    $siteTitle = trim((string) ($site['title'] ?? ''));
-    $contactEmail = trim((string) ($site['contact_email'] ?? ''));
-    if ($siteTitle !== '') {
-        $schema['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
-        if ($contactEmail !== '') {
-            $schema['publisher']['email'] = $contactEmail;
+        ];
+        $siteTitle = trim((string) ($site['title'] ?? ''));
+        $contactEmail = trim((string) ($site['contact_email'] ?? ''));
+        if ($siteTitle !== '') {
+            $graph[0]['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
+            if ($contactEmail !== '') {
+                $graph[0]['publisher']['email'] = $contactEmail;
+            }
+        }
+        $image = ccms_page_primary_image($page);
+        if ($image !== '') {
+            $graph[0]['image'] = $image;
         }
     }
-    $image = ccms_page_primary_image($page);
-    if ($image !== '') {
-        $schema['image'] = $image;
+
+    if ($businessSchema = ccms_business_profile_schema_node($site, $page)) {
+        $graph[] = $businessSchema;
     }
-    return json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+
+    if (count($graph) === 1) {
+        return json_encode(['@context' => 'https://schema.org'] + $graph[0], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+    }
+
+    return json_encode([
+        '@context' => 'https://schema.org',
+        '@graph' => $graph,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+}
+
+function ccms_render_ai_well_known(array $data): string
+{
+    $site = ccms_public_site_config($data);
+    $profile = ccms_site_business_profile($site);
+    $menuSlot = ccms_business_profile_slot($site, $profile, 'menu_daily');
+    $hoursSlot = ccms_business_profile_slot($site, $profile, 'hours_status');
+    $priceSlot = ccms_business_profile_slot($site, $profile, 'price_list');
+    $menuPayload = $menuSlot ? ccms_normalize_live_data_payload('menu_daily', $menuSlot['payload'] ?? []) : [];
+    $hoursPayload = $hoursSlot ? ccms_normalize_live_data_payload('hours_status', $hoursSlot['payload'] ?? []) : [];
+    $pricePayload = $priceSlot ? ccms_normalize_live_data_payload('price_list', $priceSlot['payload'] ?? []) : [];
+    $homepage = ccms_homepage($data);
+    $homepageUrl = $homepage ? ccms_public_page_url($homepage) : rtrim(ccms_base_url(), '/') . '/';
+
+    $business = [
+        'name' => trim((string) ($profile['name'] ?? '')) ?: trim((string) ($site['title'] ?? 'LinuxCMS')),
+        'type' => trim((string) ($profile['type'] ?? '')) ?: 'local_business',
+        'schema_type' => ccms_business_profile_schema_type((string) ($profile['type'] ?? '')),
+        'description' => trim((string) ($profile['description'] ?? '')) ?: trim((string) ($site['tagline'] ?? '')),
+        'phone' => trim((string) ($profile['phone'] ?? '')),
+        'email' => trim((string) ($profile['email'] ?? '')) ?: trim((string) ($site['contact_email'] ?? '')),
+        'address' => [
+            'street_address' => trim((string) ($profile['street_address'] ?? '')),
+            'postal_code' => trim((string) ($profile['postal_code'] ?? '')),
+            'city' => trim((string) ($profile['city'] ?? '')),
+            'region' => trim((string) ($profile['region'] ?? '')),
+            'country' => trim((string) ($profile['country'] ?? '')),
+        ],
+        'geo' => [
+            'latitude' => trim((string) ($profile['latitude'] ?? '')),
+            'longitude' => trim((string) ($profile['longitude'] ?? '')),
+        ],
+        'price_range' => trim((string) ($profile['price_range'] ?? '')),
+        'currencies_accepted' => trim((string) ($profile['currencies_accepted'] ?? '')),
+        'serves_cuisine' => trim((string) ($profile['serves_cuisine'] ?? '')),
+        'reservation_url' => trim((string) ($profile['reservation_url'] ?? '')),
+        'menu_url' => trim((string) ($profile['menu_url'] ?? '')),
+    ];
+
+    $payload = [
+        'schema_version' => '1.0',
+        'generated_at' => ccms_now_iso(),
+        'updated_at' => ccms_business_profile_latest_update($site, $profile) ?? ccms_now_iso(),
+        'website' => [
+            'title' => trim((string) ($site['title'] ?? 'LinuxCMS')),
+            'tagline' => trim((string) ($site['tagline'] ?? '')),
+            'base_url' => rtrim(ccms_base_url(), '/'),
+            'homepage' => $homepageUrl,
+        ],
+        'business' => $business,
+        'live_data' => [
+            'daily_menu' => [
+                'slot' => (string) ($menuSlot['key'] ?? ''),
+                'updated_at' => (string) ($menuSlot['updated_at'] ?? ''),
+                'available' => !empty($menuPayload['sections']) || trim((string) ($menuPayload['price'] ?? '')) !== '',
+                'price' => (string) ($menuPayload['price'] ?? ''),
+                'currency' => (string) ($menuPayload['currency'] ?? ''),
+                'includes' => (string) ($menuPayload['includes'] ?? ''),
+                'sections' => $menuPayload['sections'] ?? [],
+            ],
+            'hours' => [
+                'slot' => (string) ($hoursSlot['key'] ?? ''),
+                'updated_at' => (string) ($hoursSlot['updated_at'] ?? ''),
+                'timezone' => (string) ($hoursPayload['timezone'] ?? ''),
+                'status' => $hoursPayload !== [] ? ccms_resolve_hours_status($hoursPayload) : [],
+                'days' => $hoursPayload['days'] ?? [],
+            ],
+            'price_list' => [
+                'slot' => (string) ($priceSlot['key'] ?? ''),
+                'updated_at' => (string) ($priceSlot['updated_at'] ?? ''),
+                'currency' => (string) ($pricePayload['currency'] ?? ''),
+                'note' => (string) ($pricePayload['note'] ?? ''),
+                'items' => $pricePayload['items'] ?? [],
+            ],
+        ],
+        'links' => [
+            'sitemap' => rtrim(ccms_base_url(), '/') . '/sitemap.xml',
+            'robots' => rtrim(ccms_base_url(), '/') . '/robots.txt',
+            'reservation_url' => trim((string) ($profile['reservation_url'] ?? '')),
+            'menu_url' => trim((string) ($profile['menu_url'] ?? '')),
+        ],
+        'powered_by' => 'LinuxCMS',
+    ];
+
+    return json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
 }
 
 function ccms_render_public_analytics(array $site): string

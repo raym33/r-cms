@@ -240,6 +240,30 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             $data['site']['theme_preset'] = ccms_normalize_theme_preset((string) ($_POST['theme_preset'] ?? $data['site']['theme_preset'] ?? 'warm'));
             $data['site']['font_pairing'] = ccms_normalize_font_pairing((string) ($_POST['font_pairing'] ?? $data['site']['font_pairing'] ?? 'auto'));
             $data['site']['custom_css'] = ccms_sanitize_css(trim((string) ($_POST['custom_css'] ?? '')));
+            $data['site']['business_profile'] = ccms_normalize_business_profile([
+                'type' => (string) ($_POST['business_type'] ?? ''),
+                'name' => (string) ($_POST['business_name'] ?? ''),
+                'description' => (string) ($_POST['business_description'] ?? ''),
+                'phone' => (string) ($_POST['business_phone'] ?? ''),
+                'email' => (string) ($_POST['business_email'] ?? ''),
+                'street_address' => (string) ($_POST['business_street_address'] ?? ''),
+                'postal_code' => (string) ($_POST['business_postal_code'] ?? ''),
+                'city' => (string) ($_POST['business_city'] ?? ''),
+                'region' => (string) ($_POST['business_region'] ?? ''),
+                'country' => (string) ($_POST['business_country'] ?? ''),
+                'latitude' => (string) ($_POST['business_latitude'] ?? ''),
+                'longitude' => (string) ($_POST['business_longitude'] ?? ''),
+                'price_range' => (string) ($_POST['business_price_range'] ?? ''),
+                'currencies_accepted' => (string) ($_POST['business_currencies_accepted'] ?? 'EUR'),
+                'serves_cuisine' => (string) ($_POST['business_serves_cuisine'] ?? ''),
+                'reservation_url' => (string) ($_POST['business_reservation_url'] ?? ''),
+                'menu_url' => (string) ($_POST['business_menu_url'] ?? ''),
+                'daily_menu_slot' => (string) ($_POST['business_daily_menu_slot'] ?? ''),
+                'hours_slot' => (string) ($_POST['business_hours_slot'] ?? ''),
+                'price_list_slot' => (string) ($_POST['business_price_list_slot'] ?? ''),
+                'schema_enabled' => !empty($_POST['business_schema_enabled']),
+                'ai_feed_enabled' => !empty($_POST['business_ai_feed_enabled']),
+            ]);
             $data['site']['colors'] = [
                 'bg' => trim((string) ($_POST['color_bg'] ?? '#f7f4ee')),
                 'surface' => trim((string) ($_POST['color_surface'] ?? '#ffffff')),
@@ -253,6 +277,8 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
                 'theme_preset' => $data['site']['theme_preset'],
                 'font_pairing' => $data['site']['font_pairing'],
                 'analytics_provider' => $data['site']['analytics_provider'],
+                'business_type' => $data['site']['business_profile']['type'] ?? '',
+                'business_ai_feed_enabled' => $data['site']['business_profile']['ai_feed_enabled'] ?? false,
                 'white_label_enabled' => $data['site']['white_label_enabled'],
                 'admin_brand_name' => $data['site']['admin_brand_name'],
             ]);

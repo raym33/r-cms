@@ -81,6 +81,8 @@ lc_assert(($defaults['site']['title'] ?? '') === 'LinuxCMS', 'default site title
 lc_assert(($defaults['site']['theme_preset'] ?? '') === 'warm', 'default site theme preset is warm');
 lc_assert(($defaults['site']['font_pairing'] ?? '') === 'auto', 'default site font pairing is auto');
 lc_assert(array_key_exists('custom_css', $defaults['site']), 'default site includes custom css');
+lc_assert(is_array($defaults['site']['business_profile'] ?? null), 'default site includes business profile');
+lc_assert(($defaults['site']['business_profile']['schema_enabled'] ?? null) === true, 'default business profile enables schema flag');
 lc_assert(is_array($defaults['live_data'] ?? null), 'default data includes live_data');
 lc_assert(is_array($defaults['live_data']['slots'] ?? null), 'default live_data includes slots');
 lc_assert(array_key_exists('trusted_plugins_enabled', $defaults['site']), 'default site includes trusted plugins flag');
@@ -614,6 +616,30 @@ $data['live_data'] = [
         ],
     ],
 ];
+$data['site']['business_profile'] = [
+    'type' => 'restaurant',
+    'name' => 'Casa Maria',
+    'description' => 'Restaurante de cocina casera en Valencia.',
+    'phone' => '+34 963 123 456',
+    'email' => 'hola@casamaria.com',
+    'street_address' => 'Calle Mayor 15',
+    'postal_code' => '46001',
+    'city' => 'Valencia',
+    'region' => 'Valencia',
+    'country' => 'ES',
+    'latitude' => '39.4699',
+    'longitude' => '-0.3763',
+    'price_range' => '€€',
+    'currencies_accepted' => 'EUR',
+    'serves_cuisine' => 'Mediterranea',
+    'reservation_url' => 'https://casamaria.example.com/reservas',
+    'menu_url' => 'https://casamaria.example.com/menu',
+    'daily_menu_slot' => 'business.menu.primary',
+    'hours_slot' => 'business.hours.primary',
+    'price_list_slot' => 'business.prices.primary',
+    'schema_enabled' => true,
+    'ai_feed_enabled' => true,
+];
 ccms_save_data($data);
 $data = ccms_load_data();
 $homepage = ccms_homepage($data);
@@ -901,6 +927,11 @@ $businessPublicHtml = ccms_render_public_page($publicSiteConfig, $businessPage, 
 lc_assert(str_contains($businessPublicHtml, 'Casa Maria'), 'business public page renders business title');
 lc_assert(str_contains($businessPublicHtml, 'Merluza a la plancha'), 'business public page renders live menu sections');
 lc_assert(str_contains($businessPublicHtml, 'Reserva por telefono.'), 'business public page renders live price list note');
+$aiJson = ccms_render_ai_well_known($data);
+lc_assert(str_contains($aiJson, '"schema_version":"1.0"'), 'ai feed renders schema version');
+lc_assert(str_contains($aiJson, '"type":"restaurant"'), 'ai feed serializes business type');
+lc_assert(str_contains($aiJson, '"slot":"business.menu.primary"'), 'ai feed links menu slot');
+lc_assert(str_contains($aiJson, 'Menu degustacion'), 'ai feed includes price list content');
 $submissionFixture = [
     'id' => 'sub_fixture',
     'kind' => 'lead_form',
@@ -969,6 +1000,9 @@ lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'pu
 lc_assert(str_contains($publicHtml, 'property="og:title"'), 'public page includes og title');
 lc_assert(str_contains($publicHtml, 'rel="canonical"'), 'public page includes canonical link');
 lc_assert(str_contains($publicHtml, 'application/ld+json'), 'public page includes schema json-ld');
+lc_assert(str_contains($publicHtml, '"@type":"Restaurant"'), 'public page includes business schema type');
+lc_assert(str_contains($publicHtml, '"openingHoursSpecification"'), 'public page includes business opening hours schema');
+lc_assert(str_contains($publicHtml, '"hasMenuSection"'), 'public page includes structured menu schema');
 lc_assert(str_contains($publicHtml, 'googletagmanager.com/gtag/js?id=G-DEEPTEST1'), 'public page includes GA4 script');
 lc_assert(str_contains($publicHtml, 'gtag("config","G-DEEPTEST1")') || str_contains($publicHtml, 'gtag("config", "G-DEEPTEST1")'), 'public page includes GA4 config');
 lc_assert(!str_contains($publicHtml, 'Agency Console'), 'public page does not leak admin white-label branding');
@@ -1024,6 +1058,13 @@ $mutatedPayload['data']['site']['theme_preset'] = 'playful';
 $mutatedPayload['data']['site']['font_pairing'] = 'evil';
 $mutatedPayload['data']['site']['trusted_plugins_enabled'] = true;
 $mutatedPayload['data']['site']['enabled_plugins'] = ['announcement-chip', 'malicious-plugin'];
+$mutatedPayload['data']['site']['business_profile'] = [
+    'type' => 'restaurant',
+    'name' => 'Restored Casa Maria',
+    'ai_feed_enabled' => true,
+    'schema_enabled' => true,
+    'daily_menu_slot' => 'business.menu.primary',
+];
 $mutatedPayload['data']['site']['colors']['evil'] = '#000000';
 $mutatedPayload['uploads'][] = [
     'filename' => 'restored-upload.txt',
@@ -1035,6 +1076,7 @@ lc_assert(($restoredData['site']['theme_preset'] ?? '') === 'playful', 'backup i
 lc_assert(($restoredData['site']['font_pairing'] ?? '') === 'auto', 'backup import normalizes invalid font pairing');
 lc_assert(($restoredData['site']['trusted_plugins_enabled'] ?? false) === true, 'backup import restores trusted plugins flag');
 lc_assert(($restoredData['site']['enabled_plugins'] ?? []) === ['announcement-chip'], 'backup import filters unknown plugins');
+lc_assert(($restoredData['site']['business_profile']['name'] ?? '') === 'Restored Casa Maria', 'backup import restores business profile');
 lc_assert(!isset($restoredData['site']['colors']['evil']), 'backup import whitelists site color keys');
 lc_assert(is_file(ccms_uploads_dir() . '/restored-upload.txt'), 'backup import restores uploaded files');
 ccms_save_data($restoredData);
@@ -1045,6 +1087,7 @@ lc_assert(is_dir((string) ($staticBuild['dir'] ?? '')), 'static export creates e
 lc_assert(is_file($staticBuild['dir'] . '/index.html'), 'static export creates root index.html');
 lc_assert(is_file($staticBuild['dir'] . '/' . $pageRecord['slug'] . '/index.html'), 'static export creates slug folder index');
 lc_assert(is_file($staticBuild['dir'] . '/casa-maria/index.html'), 'static export creates business mode page');
+lc_assert(is_file($staticBuild['dir'] . '/.well-known/ai.json'), 'static export creates ai feed file when business profile is enabled');
 lc_assert(!is_dir($staticBuild['dir'] . '/' . $futurePageSlug), 'static export skips future scheduled page');
 lc_assert(is_file($staticBuild['dir'] . '/' . $pastPageSlug . '/index.html'), 'static export includes past scheduled page');
 lc_assert(is_file($staticBuild['dir'] . '/blog/index.html'), 'static export creates blog archive index');
@@ -1066,6 +1109,7 @@ if (!empty($generatedImageVariants['webp_generated'])) {
 lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/index.html'), 'Corporate Law for fast-moving businesses'), 'static export root html contains page title');
 lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/blog/index.html'), 'How founders should approach contract review'), 'static export blog archive contains post title');
 lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/casa-maria/index.html'), 'Menu degustacion'), 'static export keeps business live data in rendered page');
+lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/.well-known/ai.json'), '"business"'), 'static export ai feed contains business payload');
 $sitemapXml = ccms_render_sitemap_xml($data);
 lc_assert(!str_contains($sitemapXml, $futurePageSlug), 'sitemap excludes future scheduled page');
 lc_assert(str_contains($sitemapXml, $pastPageSlug), 'sitemap includes past scheduled page');
@@ -1142,6 +1186,8 @@ lc_assert(str_contains($siteHtml, 'Google Analytics 4'), 'site settings render a
 lc_assert(str_contains($siteHtml, 'ID / dominio analytics'), 'site settings render analytics id field');
 lc_assert(str_contains($siteHtml, 'Activar white-label para agencias'), 'site settings render white-label toggle');
 lc_assert(str_contains($siteHtml, 'Nombre de marca del admin'), 'site settings render white-label brand field');
+lc_assert(str_contains($siteHtml, 'Perfil de negocio'), 'site settings render business profile section');
+lc_assert(str_contains($siteHtml, '/.well-known/ai.json'), 'site settings explain ai feed endpoint');
 
 // Include business mode screens
 $_GET = [];
@@ -1178,6 +1224,14 @@ $businessHeroEditHtml = lc_capture_include($sourceRoot . '/mi-negocio/index.php'
 lc_assert(str_contains($businessHeroEditHtml, 'Texto principal'), 'business mode capsule edit screen renders block label');
 lc_assert(str_contains($businessHeroEditHtml, 'Title'), 'business mode capsule edit screen renders configured field labels');
 lc_assert(str_contains($businessHeroEditHtml, '/uploads/demo.png'), 'business mode capsule edit screen loads existing image value');
+
+// Include ai feed endpoint
+$_GET = [];
+$_POST = [];
+$_SERVER['REQUEST_METHOD'] = 'GET';
+$aiEndpointHtml = lc_capture_include($sourceRoot . '/ai-json.php');
+lc_assert(str_contains($aiEndpointHtml, '"schema_type":"Restaurant"'), 'ai feed endpoint renders schema type');
+lc_assert(str_contains($aiEndpointHtml, '"slot":"business.menu.primary"'), 'ai feed endpoint renders linked live data slots');
 
 $_GET = ['tab' => 'extensions'];
 $_SERVER['REQUEST_METHOD'] = 'GET';

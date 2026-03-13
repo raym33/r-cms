@@ -154,6 +154,11 @@ function ccms_static_export_build(array $data): array
     file_put_contents($dir . DIRECTORY_SEPARATOR . 'README-STATIC-EXPORT.txt', $guide);
     file_put_contents($dir . DIRECTORY_SEPARATOR . 'sitemap.xml', ccms_render_sitemap_xml($data));
     file_put_contents($dir . DIRECTORY_SEPARATOR . 'robots.txt', ccms_render_robots_txt());
+    if (ccms_business_profile_feed_enabled($publicSite)) {
+        $wellKnownDir = $dir . DIRECTORY_SEPARATOR . '.well-known';
+        @mkdir($wellKnownDir, 0775, true);
+        file_put_contents($wellKnownDir . DIRECTORY_SEPARATOR . 'ai.json', ccms_render_ai_well_known($data));
+    }
 
     return [
         'dir' => $dir,
