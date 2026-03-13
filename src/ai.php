@@ -460,11 +460,20 @@ function ccms_ai_page_record_from_payload(array $payload, array $existingPages, 
     $capsule['meta']['template'] = (string) ($capsule['meta']['template'] ?? 'generic');
     $capsule['style'] ??= [];
     $htmlContent = ccms_render_capsule_body($capsule);
+    $status = trim((string) ($page['status'] ?? 'draft'));
+    if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+        $status = 'draft';
+    }
+    $publishedAt = trim((string) ($page['published_at'] ?? ''));
+    if ($status === 'published' && $publishedAt === '') {
+        $publishedAt = ccms_now_iso();
+    }
     return [
         'id' => ccms_next_id('page'),
         'title' => $title,
         'slug' => $slug,
-        'status' => ($page['status'] ?? 'draft') === 'published' ? 'published' : 'draft',
+        'status' => $status,
+        'published_at' => $publishedAt,
         'is_homepage' => $setHomepage || empty($existingPages),
         'show_in_menu' => array_key_exists('show_in_menu', $page) ? !empty($page['show_in_menu']) : true,
         'menu_label' => trim((string) ($page['menu_label'] ?? $title)) ?: $title,

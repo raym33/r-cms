@@ -1,5 +1,9 @@
 <?php if ($tab === 'account'): ?>
   <?php require __DIR__ . '/account.php'; ?>
+<?php elseif ($tab === 'posts'): ?>
+  <?php require __DIR__ . '/posts.php'; ?>
+<?php elseif ($tab === 'inbox'): ?>
+  <?php require __DIR__ . '/inbox.php'; ?>
 <?php elseif ($tab === 'studio'): ?>
   <?php require __DIR__ . '/studio.php'; ?>
 <?php elseif ($tab === 'site'): ?>

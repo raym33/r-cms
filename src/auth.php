@@ -264,7 +264,7 @@ function ccms_clear_totp_setup(): void
 function ccms_totp_otpauth_uri(array $user, string $secret): string
 {
     $account = trim((string) ($user['email'] ?? '')) ?: trim((string) ($user['username'] ?? 'linuxcms'));
-    $issuer = 'LinuxCMS';
+    $issuer = ccms_admin_branding(ccms_load_site_config())['name'] ?? 'LinuxCMS';
     return 'otpauth://totp/' . rawurlencode($issuer . ':' . $account)
         . '?secret=' . rawurlencode($secret)
         . '&issuer=' . rawurlencode($issuer)

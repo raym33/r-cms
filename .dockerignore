@@ -1,0 +1,11 @@
+.git
+.gitignore
+.linuxcms-runtime
+node_modules
+playwright-report
+test-results
+tests
+docs
+.DS_Store
+*.log
+compose.override.yaml

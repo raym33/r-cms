@@ -7,7 +7,7 @@
         <p class="muted" style="margin:0">Cambia título, mensaje general, colores y datos de contacto. Esto afecta al encabezado y al wrapper de todas las páginas.</p>
       </div>
     </div>
-    <form method="post" class="stack">
+    <form method="post" class="stack" id="siteSettingsForm">
       <input type="hidden" name="action" value="save_site">
       <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
       <div class="split-2">
@@ -16,6 +16,40 @@
       </div>
       <div class="field"><label>Subtítulo</label><input name="site_tagline" value="<?= ccms_h((string) $data['site']['tagline']) ?>"></div>
       <div class="field"><label>Texto del footer</label><input name="footer_text" value="<?= ccms_h((string) $data['site']['footer_text']) ?>"></div>
+      <div class="card" style="padding:20px;border-radius:22px;background:#fcfaf7;border:1px solid var(--line);box-shadow:none">
+        <div class="editor-title" style="margin-bottom:14px">
+          <div class="chip">Agencias · white-label</div>
+          <h3 style="margin:8px 0 6px;font-size:22px">Marca el panel privado con tu agencia</h3>
+          <p class="muted" style="margin:0">Afecta al login, la cabecera del admin y al nombre que usa el QR o URI de 2FA. No cambia la web pública salvo que edites también el contenido y footer del sitio.</p>
+        </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;color:var(--text);font-size:15px">
+            <input type="checkbox" name="white_label_enabled" value="1" <?= !empty($data['site']['white_label_enabled']) ? 'checked' : '' ?> style="width:auto;min-width:18px;min-height:18px;padding:0">
+            Activar white-label para agencias
+          </label>
+        </div>
+        <div class="split-2">
+          <div class="field"><label>Nombre de marca del admin</label><input name="admin_brand_name" value="<?= ccms_h((string) ($data['site']['admin_brand_name'] ?? '')) ?>" placeholder="Tu Agencia Studio"></div>
+          <div class="field"><label>Logo del admin (URL o /uploads/...)</label><input name="admin_logo_url" value="<?= ccms_h((string) ($data['site']['admin_logo_url'] ?? '')) ?>" placeholder="/uploads/logo-agencia.png"></div>
+        </div>
+        <div class="field"><label>Subtítulo del admin</label><input name="admin_brand_tagline" value="<?= ccms_h((string) ($data['site']['admin_brand_tagline'] ?? '')) ?>" placeholder="Panel privado para tus clientes"></div>
+      </div>
+      <div class="split-2">
+        <div class="field">
+          <label>Analytics</label>
+          <?php $activeAnalyticsProvider = (string) ($data['site']['analytics_provider'] ?? ''); ?>
+          <select name="analytics_provider">
+            <option value="" <?= $activeAnalyticsProvider === '' ? 'selected' : '' ?>>Sin analytics</option>
+            <option value="ga4" <?= $activeAnalyticsProvider === 'ga4' ? 'selected' : '' ?>>Google Analytics 4</option>
+            <option value="plausible" <?= $activeAnalyticsProvider === 'plausible' ? 'selected' : '' ?>>Plausible</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ID / dominio analytics</label>
+          <input name="analytics_id" value="<?= ccms_h((string) ($data['site']['analytics_id'] ?? '')) ?>" placeholder="G-XXXXXXXXXX o tudominio.com">
+          <p class="small">GA4 usa un ID tipo <code>G-XXXXXXXXXX</code>. Plausible usa el dominio del sitio.</p>
+        </div>
+      </div>
       <div class="split-2">
         <div class="field">
           <label>Tema visual</label>
@@ -66,7 +100,7 @@
         <p class="small">Este CSS se inyecta al final de la página pública. Úsalo para ajustes finos de estilo del tema, no para editar el contenido.</p>
       </div>
       <div class="toolbar">
-        <button class="btn" type="submit">Guardar cambios del sitio</button>
+        <button class="btn" type="submit"><?= ccms_icon('save', 16) ?>Guardar cambios del sitio</button>
       </div>
     </form>
   </div>
@@ -74,10 +108,12 @@
     <h4>Cómo usar esta sección</h4>
     <ul>
       <li>Cambia los colores principales si quieres adaptar toda la web a una nueva marca.</li>
+      <li>El bloque white-label sirve para entregar el panel con tu nombre, logo y marca en vez de LinuxCMS.</li>
       <li>Elige un preset visual si quieres cambiar el tono general sin tocar cada bloque.</li>
       <li>Usa el CSS personalizado solo para ajustes globales más avanzados.</li>
       <li>El título y el subtítulo aparecen en la cabecera y ayudan al posicionamiento básico.</li>
       <li>El email de contacto se puede reutilizar luego en formularios y páginas.</li>
+      <li>El campo analytics inserta el script de medición en todas las páginas públicas.</li>
     </ul>
     <p class="small" style="margin:14px 0 0"><strong>Storage actual:</strong> <?= ccms_h(strtoupper((string) $storageInfo['driver'])) ?><?php if (($storageInfo['driver'] ?? '') === 'sqlite'): ?> · <?= ccms_h((string) $storageInfo['sqlite_file']) ?><?php else: ?> · <?= ccms_h((string) $storageInfo['json_file']) ?><?php endif; ?></p>
   </div>

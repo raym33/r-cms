@@ -27,6 +27,16 @@ LinuxCMS starts from a stricter rule:
 
 > One local app for creation and editing, one generic-hosting runtime for the client.
 
+## Who LinuxCMS is for
+
+Right now LinuxCMS is a strong fit for:
+
+- agencies delivering editable sites to clients
+- freelancers who want a lighter self-hosted CMS
+- teams that want LM Studio-assisted first drafts without forcing a SaaS runtime
+
+It is not yet positioned as a full multi-tenant SMB SaaS.
+
 ## Stack
 
 - PHP 8+
@@ -36,6 +46,26 @@ LinuxCMS starts from a stricter rule:
 - LM Studio via local OpenAI-compatible HTTP API
 
 No Python is required in the final hosted runtime.
+
+## Deployment modes
+
+LinuxCMS supports three practical ways to run the same project:
+
+- local authoring with the built-in PHP server
+- generic Apache/PHP hosting with `.htaccess`
+- container deployment with `docker compose`
+
+The public runtime is available through the same route set in every mode:
+
+- `/`
+- `/blog`
+- `/install.php`
+- `/r-admin`
+- `/api/health`
+- `/api/forms/submit`
+- `/feed.xml`
+- `/sitemap.xml`
+- `/robots.txt`
 
 ## Current scope
 
@@ -51,6 +81,21 @@ LinuxCMS already includes:
 - LM Studio endpoint/model settings inside the admin
 - fallback local generator when LM Studio is unavailable
 - page CRUD
+- blog/posts management with:
+  - categories
+  - tags
+  - archive pages
+  - RSS feed
+- functional public forms for:
+  - `lead_form`
+  - `contact`
+  - `newsletter`
+- admin inbox for leads and form submissions
+- per-submission status workflow:
+  - `new`
+  - `reviewed`
+  - `contacted`
+  - `archived`
 - visual capsule builder
 - capsule-wide style tokens
 - per-block layout and style controls
@@ -74,6 +119,15 @@ LinuxCMS already includes:
 - preview-side editing hints that explain how to edit text, photos, and buttons
 - friendlier wording in the page editor: `Sections` instead of a raw builder-first label and `Advanced JSON` instead of exposing capsule jargon by default
 - lightweight site themes with presets and optional custom CSS
+- analytics settings in the admin for:
+  - Google Analytics 4
+  - Plausible
+- white-label branding for agencies:
+  - custom admin brand name
+  - custom admin tagline
+  - custom admin logo
+  - branded login shell and admin header
+  - TOTP issuer aligned to the agency brand
 - lightweight plugins/extensions with activation from the admin
   - disabled by default
   - opt-in trusted mode
@@ -81,11 +135,25 @@ LinuxCMS already includes:
 - full site backup export/import from the admin, including uploads
   - backup restore preserves the previous `uploads/` files in a timestamped sibling backup folder before replacing them
 - static hosting package export from the admin for basic hosting without PHP
+  - generated responsive image variants are copied into the exported `uploads/` folder
 - page revisions and restore
 - page duplication
 - media library
+- automatic image optimization for local uploads:
+  - responsive resized variants
+  - best-effort WebP variants when the PHP runtime supports it
+  - public lazy loading and async decoding
 - capsule import from the older aivoiceweb tools
 - PHP-native rendering for a large set of capsule blocks
+- public SEO baseline:
+  - canonical URLs
+  - Open Graph tags
+  - Twitter card tags
+  - JSON-LD structured data
+  - blog/category/tag entries in `sitemap.xml`
+  - `feed.xml`
+  - `sitemap.xml`
+  - `robots.txt`
 - admin hardening for `/r-admin`:
   - CSRF protection
   - same-origin POST enforcement
@@ -96,7 +164,8 @@ LinuxCMS already includes:
   - forced password change for temporary user credentials
   - optional TOTP 2FA for admin accounts
   - owner-generated password reset links
-  - public page `ETag` + short HTTP cache headers for basic hosting performance
+- public page `ETag` + short HTTP cache headers for basic hosting performance
+- MIT license included in the repository
 
 ## Local development
 
@@ -157,6 +226,53 @@ If LM Studio is not available, LinuxCMS can still create a structured fallback d
 5. Create the first admin user.
 6. Enter `/r-admin`.
 7. The final client edits the website there manually.
+
+Apache/basic-hosting compatibility is handled through:
+
+- [.htaccess](/Users/c/Desktop/videojuego/linuxcms/.htaccess)
+- [api/health/index.php](/Users/c/Desktop/videojuego/linuxcms/api/health/index.php)
+- [api/forms/submit/index.php](/Users/c/Desktop/videojuego/linuxcms/api/forms/submit/index.php)
+- [sitemap.php](/Users/c/Desktop/videojuego/linuxcms/sitemap.php)
+- [robots.php](/Users/c/Desktop/videojuego/linuxcms/robots.php)
+
+## Docker quickstart
+
+If you want a one-command local or VPS deployment:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- `http://127.0.0.1:8088/install.php`
+- `http://127.0.0.1:8088/r-admin`
+
+Container packaging is defined in:
+
+- [Dockerfile](/Users/c/Desktop/videojuego/linuxcms/Dockerfile)
+- [compose.yaml](/Users/c/Desktop/videojuego/linuxcms/compose.yaml)
+- [docker/apache-site.conf](/Users/c/Desktop/videojuego/linuxcms/docker/apache-site.conf)
+- [docker/entrypoint.sh](/Users/c/Desktop/videojuego/linuxcms/docker/entrypoint.sh)
+
+The compose stack persists:
+
+- `./data`
+- `./uploads`
+- `./.linuxcms-runtime`
+
+So installs, content, media, optimized image variants, and exports survive restarts.
+
+## User and legal docs
+
+For product delivery and handoff, start with:
+
+- [docs/QUICKSTART.md](/Users/c/Desktop/videojuego/linuxcms/docs/QUICKSTART.md)
+- [docs/USER_GUIDE.md](/Users/c/Desktop/videojuego/linuxcms/docs/USER_GUIDE.md)
+- [docs/TERMS_OF_SERVICE_TEMPLATE.md](/Users/c/Desktop/videojuego/linuxcms/docs/TERMS_OF_SERVICE_TEMPLATE.md)
+- [docs/PRIVACY_POLICY_TEMPLATE.md](/Users/c/Desktop/videojuego/linuxcms/docs/PRIVACY_POLICY_TEMPLATE.md)
+
+These are templates and operational guides, not legal advice.
 
 ## `/r-admin` security model
 

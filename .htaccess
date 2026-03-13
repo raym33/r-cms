@@ -4,6 +4,11 @@ RewriteRule ^r-admin/?$ r-admin/index.php [L]
 RewriteRule ^r-admin/logout/?$ r-admin/logout.php [L]
 RewriteRule ^r_admin/?$ r-admin/index.php [L]
 RewriteRule ^r_admin/logout/?$ r-admin/logout.php [L]
+RewriteRule ^api/health/?$ api/health/index.php [L]
+RewriteRule ^api/forms/submit/?$ api/forms/submit/index.php [L]
+RewriteRule ^feed\.xml$ feed.php [L]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+RewriteRule ^robots\.txt$ robots.php [L]
 
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

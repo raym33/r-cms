@@ -1,5 +1,8 @@
 <div class="card" style="max-width:520px;margin:40px auto;padding:26px">
-  <p class="muted"><strong>LinuxCMS</strong></p>
+  <?php if (($adminBrand['logo_url'] ?? '') !== ''): ?>
+    <img class="auth-brand-logo" src="<?= ccms_h((string) $adminBrand['logo_url']) ?>" alt="<?= ccms_h((string) $adminBrand['name']) ?>">
+  <?php endif; ?>
+  <p class="muted"><strong><?= ccms_h((string) ($adminBrand['name'] ?? 'LinuxCMS')) ?></strong></p>
   <h1 style="margin:0 0 12px;font-size:42px;line-height:1"><?= $pendingTwoFactor ? 'Verificación en dos pasos' : ($resetTokenEntry ? 'Restablecer contraseña' : 'Entrar al panel') ?></h1>
   <p class="muted">
     <?php if ($pendingTwoFactor): ?>
@@ -7,7 +10,7 @@
     <?php elseif ($resetTokenEntry): ?>
       Elige una nueva contraseña segura para recuperar esta cuenta.
     <?php else: ?>
-      Usa tu usuario y contraseña para editar páginas, colores, medios y contenido publicado.
+      <?= ccms_h((string) ($adminBrand['tagline'] ?? 'Usa tu usuario y contraseña para editar páginas, colores, medios y contenido publicado.')) ?>
     <?php endif; ?>
   </p>
   <?php if ($flash): ?><div class="flash <?= ccms_h($flash['type']) ?>"><?= ccms_h($flash['message']) ?></div><?php endif; ?>

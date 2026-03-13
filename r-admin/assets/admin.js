@@ -188,6 +188,8 @@ const cspNonce = bootstrap.cspNonce || "";
     const pageTitle = document.getElementById("page_title");
     const capsuleTextarea = document.querySelector('textarea[name="capsule_json"]');
     const pageEditorForm = document.getElementById("pageEditorForm");
+    const postEditorForm = document.getElementById("postEditorForm");
+    const siteSettingsForm = document.getElementById("siteSettingsForm");
     const builderList = document.getElementById("builderList");
     const builderTemplateGrid = document.getElementById("builderTemplateGrid");
     const builderInsertHint = document.getElementById("builderInsertHint");
@@ -196,7 +198,16 @@ const cspNonce = bootstrap.cspNonce || "";
     const builderContext = document.getElementById("builderContext");
     const builderGlobalStyle = document.getElementById("builderGlobalStyle");
     const previewEndpoint = "/r-admin/preview.php";
+    const previewShell = document.getElementById("previewShell");
+    const autosaveStatus = document.getElementById("autosaveStatus");
+    const autosaveMeta = document.getElementById("autosaveMeta");
+    const pageAutosaveFlag = document.getElementById("pageAutosaveFlag");
     let previewTimer = null;
+    let autosaveTimer = null;
+    let autosaveInFlight = false;
+    let autosaveQueued = false;
+    let autosaveDirty = false;
+    let lastAutosaveAt = "";
 
     const capsuleGlobalStyleFields = [
       { key: "accent", label: "Accent", type: "color", fallback: "#c86f5c" },
@@ -326,6 +337,14 @@ const cspNonce = bootstrap.cspNonce || "";
       return "block_" + randomPart;
     }
 
+    function normalizeSearchText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    }
+
     function normalizeCapsule(input) {
       const capsule = (input && typeof input === "object") ? deepClone(input) : {};
       if (!capsule.meta || typeof capsule.meta !== "object") capsule.meta = {};
@@ -404,6 +423,96 @@ const cspNonce = bootstrap.cspNonce || "";
       previewTimer = window.setTimeout(() => {
         refreshPreview();
       }, delay);
+    }
+
+    function setPreviewLoading(loading) {
+      if (!previewShell) return;
+      previewShell.classList.toggle("is-loading", !!loading);
+    }
+
+    function formatAutosaveTimestamp(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function setAutosaveState(state, meta = "") {
+      if (!autosaveStatus) return;
+      const labels = {
+        saved: { icon: "circle-check", text: "Guardado" },
+        dirty: { icon: "circle-dashed", text: "Pendiente" },
+        saving: { icon: "circle-dot", text: "Guardando" },
+        error: { icon: "alert-triangle", text: "Error" },
+      };
+      const label = labels[state] || labels.saved;
+      autosaveStatus.className = `autosave-pill is-${state}`;
+      autosaveStatus.innerHTML = `${window.ccmsIcon ? window.ccmsIcon(label.icon, 14) : ""}${label.text}`;
+      if (autosaveMeta) {
+        autosaveMeta.textContent = meta;
+      }
+    }
+
+    function markAutosaveDirty(message = "Hay cambios sin guardar.") {
+      if (!pageEditorForm || builderReadOnly) return;
+      autosaveDirty = true;
+      setAutosaveState("dirty", message);
+      window.clearTimeout(autosaveTimer);
+      autosaveTimer = window.setTimeout(() => {
+        performAutosave();
+      }, 900);
+    }
+
+    async function performAutosave() {
+      if (!pageEditorForm || builderReadOnly) return;
+      if (!autosaveDirty) return;
+      if (autosaveInFlight) {
+        autosaveQueued = true;
+        return;
+      }
+      autosaveInFlight = true;
+      autosaveQueued = false;
+      setAutosaveState("saving", "Guardando cambios automáticamente…");
+      syncCapsuleTextarea();
+      if (pageAutosaveFlag) {
+        pageAutosaveFlag.value = "1";
+      }
+      try {
+        const formData = new FormData(pageEditorForm);
+        const response = await fetch(pageEditorForm.getAttribute("action") || window.location.pathname + window.location.search, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const contentType = response.headers.get("content-type") || "";
+        if (!response.ok || !contentType.includes("application/json")) {
+          throw new Error(`Autosave failed with ${response.status}`);
+        }
+        const payload = await response.json();
+        if (!payload?.ok) {
+          throw new Error("Invalid autosave response");
+        }
+        autosaveDirty = false;
+        lastAutosaveAt = String(payload.updated_at || "");
+        const label = formatAutosaveTimestamp(lastAutosaveAt);
+        setAutosaveState("saved", label ? `Autoguardado a las ${label}.` : "Todos los cambios están guardados.");
+      } catch (error) {
+        console.warn("Autosave failed:", error);
+        setAutosaveState("error", "No se ha podido autoguardar. Usa Guardar página.");
+      } finally {
+        if (pageAutosaveFlag) {
+          pageAutosaveFlag.value = "0";
+        }
+        autosaveInFlight = false;
+        if (autosaveQueued || autosaveDirty) {
+          autosaveQueued = false;
+          window.clearTimeout(autosaveTimer);
+          autosaveTimer = window.setTimeout(() => {
+            performAutosave();
+          }, 700);
+        }
+      }
     }
 
     function renderBuilderGlobalStyle() {
@@ -796,6 +905,7 @@ const cspNonce = bootstrap.cspNonce || "";
           capsuleState.blocks[activeBuilderBlockIndex].style.button_variant = variantValue;
         }
       }
+      markAutosaveDirty("Se actualizó el estilo del botón.");
       renderBuilderBlocks();
       selectBuilderBlock(activeBuilderBlockIndex, { scroll: false, syncPreview: true });
       return true;
@@ -1263,6 +1373,7 @@ const cspNonce = bootstrap.cspNonce || "";
         props: deepClone(template.props || {}),
         style: {},
       });
+      markAutosaveDirty("Se añadió una sección.");
       selectBuilderBlock(insertAt, { scroll: true, syncPreview: true });
     }
 
@@ -1336,6 +1447,7 @@ const cspNonce = bootstrap.cspNonce || "";
 
     async function refreshPreview() {
       if (!preview || !pageEditorForm) return;
+      setPreviewLoading(true);
       try {
         const formData = new FormData(pageEditorForm);
         const response = await fetch(previewEndpoint, {
@@ -1352,6 +1464,7 @@ const cspNonce = bootstrap.cspNonce || "";
         console.warn("Preview fallback:", error);
         if (!htmlEditor) return;
         preview.srcdoc = buildPreviewDoc(pageTitle ? pageTitle.value : "", htmlEditor.value);
+        setPreviewLoading(false);
       }
     }
 
@@ -1395,15 +1508,59 @@ const cspNonce = bootstrap.cspNonce || "";
       button.addEventListener("click", async () => {
         const url = button.dataset.copyUrl || "";
         if (!url) return;
+        const originalLabel = button.dataset.copyLabelHtml || button.innerHTML;
+        const successLabel = button.dataset.copySuccessLabel || "URL copiada";
         try {
           await navigator.clipboard.writeText(url);
-          button.textContent = "URL copiada";
-          setTimeout(() => { button.textContent = "Copiar URL"; }, 1400);
+          button.innerHTML = successLabel;
+          setTimeout(() => { button.innerHTML = originalLabel; }, 1400);
         } catch (error) {
           console.error(error);
         }
       });
     });
+
+    const pagesSearchInput = document.getElementById("searchPages");
+    const mediaSearchInput = document.getElementById("searchMedia");
+    const inboxSearchInput = document.getElementById("searchInbox");
+    const inboxStatusFilter = document.getElementById("filterInboxStatus");
+
+    function filterPageList() {
+      const query = normalizeSearchText(pagesSearchInput?.value || "");
+      document.querySelectorAll("#pageList .page-item").forEach((item) => {
+        const haystack = normalizeSearchText(item.dataset.pageSearch || item.textContent || "");
+        item.classList.toggle("is-filter-hidden", !!query && !haystack.includes(query));
+      });
+    }
+
+    function filterMediaGrid() {
+      const query = normalizeSearchText(mediaSearchInput?.value || "");
+      document.querySelectorAll("#mediaGrid .media-card").forEach((card) => {
+        const haystack = normalizeSearchText(card.dataset.mediaSearch || card.textContent || "");
+        card.classList.toggle("is-filter-hidden", !!query && !haystack.includes(query));
+      });
+    }
+
+    function filterInboxList() {
+      const query = normalizeSearchText(inboxSearchInput?.value || "");
+      const wantedStatus = normalizeSearchText(inboxStatusFilter?.value || "");
+      document.querySelectorAll("[data-submission-id]").forEach((card) => {
+        const haystack = normalizeSearchText(card.dataset.submissionSearch || card.textContent || "");
+        const status = normalizeSearchText(card.dataset.submissionStatus || "");
+        const matchesQuery = !query || haystack.includes(query);
+        const matchesStatus = !wantedStatus || status === wantedStatus;
+        card.classList.toggle("is-filter-hidden", !(matchesQuery && matchesStatus));
+      });
+    }
+
+    pagesSearchInput?.addEventListener("input", filterPageList);
+    mediaSearchInput?.addEventListener("input", filterMediaGrid);
+    inboxSearchInput?.addEventListener("input", filterInboxList);
+    inboxStatusFilter?.addEventListener("change", filterInboxList);
+
+    filterPageList();
+    filterMediaGrid();
+    filterInboxList();
 
     document.querySelectorAll("[data-sync-color]").forEach((colorInput) => {
       colorInput.addEventListener("input", () => {
@@ -1499,6 +1656,7 @@ const cspNonce = bootstrap.cspNonce || "";
         }
         builderDragState = null;
         clearRepeaterDragClasses();
+        markAutosaveDirty("Se reordenó una colección.");
         renderBuilderBlocks();
       });
 
@@ -1523,23 +1681,37 @@ const cspNonce = bootstrap.cspNonce || "";
         const index = Number(button.dataset.index || -1);
         if (index < 0 || index >= capsuleState.blocks.length) return;
         const action = button.dataset.builderAction;
+        let changed = false;
         if (action === "select") {
           selectBuilderBlock(index, { scroll: true, syncPreview: true });
           return;
         } else if (action === "up" && index > 0) {
           [capsuleState.blocks[index - 1], capsuleState.blocks[index]] = [capsuleState.blocks[index], capsuleState.blocks[index - 1]];
           activeBuilderBlockIndex = index - 1;
+          changed = true;
         } else if (action === "down" && index < capsuleState.blocks.length - 1) {
           [capsuleState.blocks[index + 1], capsuleState.blocks[index]] = [capsuleState.blocks[index], capsuleState.blocks[index + 1]];
           activeBuilderBlockIndex = index + 1;
+          changed = true;
         } else if (action === "duplicate") {
           const copy = deepClone(capsuleState.blocks[index]);
           copy.id = createBlockId();
           capsuleState.blocks.splice(index + 1, 0, copy);
           activeBuilderBlockIndex = index + 1;
+          changed = true;
         } else if (action === "remove") {
           capsuleState.blocks.splice(index, 1);
           activeBuilderBlockIndex = capsuleState.blocks.length ? Math.max(0, Math.min(index, capsuleState.blocks.length - 1)) : -1;
+          changed = true;
+        }
+        if (changed) {
+          const messages = {
+            up: "Se reordenó una sección.",
+            down: "Se reordenó una sección.",
+            duplicate: "Se duplicó una sección.",
+            remove: "Se eliminó una sección.",
+          };
+          markAutosaveDirty(messages[action] || "Se actualizó una sección.");
         }
         if (activeBuilderBlockIndex >= 0) {
           selectBuilderBlock(activeBuilderBlockIndex, { scroll: true, syncPreview: true });
@@ -1558,27 +1730,41 @@ const cspNonce = bootstrap.cspNonce || "";
         if (blockIndex < 0 || blockIndex >= capsuleState.blocks.length || !key) return;
         const action = button.dataset.builderArrayAction;
         const list = ensureArrayProp(blockIndex, key);
+        let changed = false;
         if (action === "add-scalar") {
           list.push(createDefaultScalarItem(key));
+          changed = true;
         } else if (action === "scalar-up" && itemIndex > 0) {
           [list[itemIndex - 1], list[itemIndex]] = [list[itemIndex], list[itemIndex - 1]];
+          changed = true;
         } else if (action === "scalar-down" && itemIndex >= 0 && itemIndex < list.length - 1) {
           [list[itemIndex + 1], list[itemIndex]] = [list[itemIndex], list[itemIndex + 1]];
+          changed = true;
         } else if (action === "scalar-duplicate" && itemIndex >= 0) {
           list.splice(itemIndex + 1, 0, deepClone(list[itemIndex]));
+          changed = true;
         } else if (action === "scalar-remove" && itemIndex >= 0) {
           list.splice(itemIndex, 1);
+          changed = true;
         } else if (action === "add-object") {
           const base = list[0] && isPlainObject(list[0]) ? deepClone(list[0]) : createDefaultObjectItem(key);
           list.push(base);
+          changed = true;
         } else if (action === "object-up" && itemIndex > 0) {
           [list[itemIndex - 1], list[itemIndex]] = [list[itemIndex], list[itemIndex - 1]];
+          changed = true;
         } else if (action === "object-down" && itemIndex >= 0 && itemIndex < list.length - 1) {
           [list[itemIndex + 1], list[itemIndex]] = [list[itemIndex], list[itemIndex + 1]];
+          changed = true;
         } else if (action === "object-duplicate" && itemIndex >= 0) {
           list.splice(itemIndex + 1, 0, deepClone(list[itemIndex]));
+          changed = true;
         } else if (action === "object-remove" && itemIndex >= 0) {
           list.splice(itemIndex, 1);
+          changed = true;
+        }
+        if (changed) {
+          markAutosaveDirty("Se actualizó una colección.");
         }
         renderBuilderBlocks();
       });
@@ -1598,24 +1784,37 @@ const cspNonce = bootstrap.cspNonce || "";
         if (!Array.isArray(list[parentIndex][nestedKey])) list[parentIndex][nestedKey] = [];
         const nestedList = list[parentIndex][nestedKey];
         const action = button.dataset.builderNestedAction;
+        let changed = false;
         if (action === "nested-scalar-add") {
           nestedList.push(createDefaultScalarItem(nestedKey));
+          changed = true;
         } else if (action === "nested-scalar-up" && itemIndex > 0) {
           [nestedList[itemIndex - 1], nestedList[itemIndex]] = [nestedList[itemIndex], nestedList[itemIndex - 1]];
+          changed = true;
         } else if (action === "nested-scalar-down" && itemIndex >= 0 && itemIndex < nestedList.length - 1) {
           [nestedList[itemIndex + 1], nestedList[itemIndex]] = [nestedList[itemIndex], nestedList[itemIndex + 1]];
+          changed = true;
         } else if (action === "nested-scalar-remove" && itemIndex >= 0) {
           nestedList.splice(itemIndex, 1);
+          changed = true;
         } else if (action === "nested-object-add") {
           nestedList.push(isPlainObject(nestedList[0]) ? deepClone(nestedList[0]) : createDefaultObjectItem(nestedKey));
+          changed = true;
         } else if (action === "nested-object-up" && itemIndex > 0) {
           [nestedList[itemIndex - 1], nestedList[itemIndex]] = [nestedList[itemIndex], nestedList[itemIndex - 1]];
+          changed = true;
         } else if (action === "nested-object-down" && itemIndex >= 0 && itemIndex < nestedList.length - 1) {
           [nestedList[itemIndex + 1], nestedList[itemIndex]] = [nestedList[itemIndex], nestedList[itemIndex + 1]];
+          changed = true;
         } else if (action === "nested-object-duplicate" && itemIndex >= 0) {
           nestedList.splice(itemIndex + 1, 0, deepClone(nestedList[itemIndex]));
+          changed = true;
         } else if (action === "nested-object-remove" && itemIndex >= 0) {
           nestedList.splice(itemIndex, 1);
+          changed = true;
+        }
+        if (changed) {
+          markAutosaveDirty("Se actualizó una colección anidada.");
         }
         renderBuilderBlocks();
       });
@@ -1867,11 +2066,13 @@ const cspNonce = bootstrap.cspNonce || "";
           const copy = deepClone(capsuleState.blocks[activeBuilderBlockIndex]);
           copy.id = createBlockId();
           capsuleState.blocks.splice(activeBuilderBlockIndex + 1, 0, copy);
+          markAutosaveDirty("Se duplicó una sección.");
           selectBuilderBlock(activeBuilderBlockIndex + 1, { scroll: true, syncPreview: true });
           return;
         }
         if (action === "remove") {
           capsuleState.blocks.splice(activeBuilderBlockIndex, 1);
+          markAutosaveDirty("Se eliminó una sección.");
           if (capsuleState.blocks.length) {
             selectBuilderBlock(Math.max(0, Math.min(activeBuilderBlockIndex, capsuleState.blocks.length - 1)), { scroll: true, syncPreview: true });
           } else {
@@ -1889,13 +2090,192 @@ const cspNonce = bootstrap.cspNonce || "";
     });
 
     if (pageEditorForm) {
+      pageEditorForm.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target === pageAutosaveFlag) return;
+        markAutosaveDirty();
+      });
+      pageEditorForm.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target === pageAutosaveFlag) return;
+        markAutosaveDirty();
+      });
       pageEditorForm.addEventListener("submit", () => {
+        window.clearTimeout(autosaveTimer);
+        autosaveDirty = false;
+        if (pageAutosaveFlag) {
+          pageAutosaveFlag.value = "0";
+        }
+        setAutosaveState("saving", "Guardando cambios manualmente…");
         syncCapsuleTextarea();
       });
     }
 
+    const toastContainer = document.getElementById("toastContainer");
+    const confirmModalBackdrop = document.getElementById("confirmModalBackdrop");
+    const confirmModalTitle = document.getElementById("confirmModalTitle");
+    const confirmModalMessage = document.getElementById("confirmModalMessage");
+    const confirmModalCancel = document.getElementById("confirmModalCancel");
+    const confirmModalConfirm = document.getElementById("confirmModalConfirm");
+    let confirmTargetForm = null;
+    let lastConfirmTrigger = null;
+
+    function createToast(type, message, title = "") {
+      if (!toastContainer || !message) return;
+      const toast = document.createElement("div");
+      toast.className = `toast toast--${type || "info"}`;
+      const copy = document.createElement("div");
+      copy.className = "toast-copy";
+      if (title) {
+        const strong = document.createElement("strong");
+        strong.textContent = title;
+        copy.appendChild(strong);
+      }
+      const text = document.createElement("span");
+      text.textContent = message;
+      copy.appendChild(text);
+      toast.appendChild(copy);
+      toastContainer.appendChild(toast);
+      window.setTimeout(() => {
+        toast.remove();
+      }, 3200);
+    }
+
+    document.querySelectorAll(".flash").forEach((flash) => {
+      const message = (flash.textContent || "").trim();
+      if (!message) return;
+      const type = flash.classList.contains("error") ? "error" : flash.classList.contains("success") ? "success" : "info";
+      createToast(type, message, type === "error" ? "Error" : type === "success" ? "Hecho" : "Aviso");
+      flash.classList.add("flash--converted");
+    });
+
+    function setButtonLoading(button, loading) {
+      if (!(button instanceof HTMLElement)) return;
+      if (loading) {
+        button.classList.add("is-loading");
+        button.setAttribute("aria-busy", "true");
+        button.dataset.originalDisabled = button.disabled ? "1" : "0";
+        button.disabled = true;
+      } else {
+        button.classList.remove("is-loading");
+        button.removeAttribute("aria-busy");
+        if (button.dataset.originalDisabled !== "1") {
+          button.disabled = false;
+        }
+        delete button.dataset.originalDisabled;
+      }
+    }
+
+    function closeConfirmModal() {
+      if (!confirmModalBackdrop) return;
+      confirmModalBackdrop.hidden = true;
+      if (lastConfirmTrigger && typeof lastConfirmTrigger.focus === "function") {
+        lastConfirmTrigger.focus();
+      }
+      confirmTargetForm = null;
+      lastConfirmTrigger = null;
+    }
+
+    function openConfirmModal(form, trigger) {
+      if (!confirmModalBackdrop || !confirmModalTitle || !confirmModalMessage) return;
+      confirmTargetForm = form;
+      lastConfirmTrigger = trigger || null;
+      confirmModalTitle.textContent = form.dataset.confirmTitle || "¿Confirmar acción?";
+      confirmModalMessage.textContent = form.dataset.confirmMessage || "Esta acción no se puede deshacer.";
+      confirmModalBackdrop.hidden = false;
+      window.setTimeout(() => confirmModalConfirm?.focus(), 0);
+    }
+
+    confirmModalCancel?.addEventListener("click", () => {
+      closeConfirmModal();
+    });
+
+    confirmModalBackdrop?.addEventListener("click", (event) => {
+      if (event.target === confirmModalBackdrop) {
+        closeConfirmModal();
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && confirmModalBackdrop && !confirmModalBackdrop.hidden) {
+        event.preventDefault();
+        closeConfirmModal();
+      }
+    });
+
+    confirmModalConfirm?.addEventListener("click", () => {
+      if (!confirmTargetForm) return;
+      confirmTargetForm.dataset.confirmed = "1";
+      const submitter = confirmTargetForm.querySelector('button[type="submit"], input[type="submit"]');
+      setButtonLoading(submitter, true);
+      closeConfirmModal();
+      if (typeof confirmTargetForm.requestSubmit === "function") {
+        confirmTargetForm.requestSubmit();
+      } else {
+        confirmTargetForm.submit();
+      }
+    });
+
+    document.addEventListener("submit", (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      if ((form.method || "get").toLowerCase() !== "post") return;
+      if (form.dataset.confirmTitle && form.dataset.confirmed !== "1") {
+        event.preventDefault();
+        openConfirmModal(form, event.submitter || document.activeElement);
+        return;
+      }
+      if (form.dataset.confirmed === "1") {
+        delete form.dataset.confirmed;
+      }
+      const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+      setButtonLoading(submitter, true);
+    }, true);
+
+    function getPrimarySubmitter(form) {
+      if (!(form instanceof HTMLFormElement)) return null;
+      return form.querySelector('button[type="submit"], input[type="submit"]');
+    }
+
+    function getPreferredSaveForm() {
+      return [pageEditorForm, postEditorForm, siteSettingsForm].find((form) => (
+        form instanceof HTMLFormElement
+        && form.offsetParent !== null
+      )) || null;
+    }
+
+    window.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        const targetForm = getPreferredSaveForm();
+        if (!targetForm) return;
+        event.preventDefault();
+        const submitter = getPrimarySubmitter(targetForm);
+        setButtonLoading(submitter, true);
+        createToast("info", "Guardando cambios…", "Atajo de teclado");
+        if (typeof targetForm.requestSubmit === "function") {
+          targetForm.requestSubmit(submitter || undefined);
+        } else {
+          targetForm.submit();
+        }
+        return;
+      }
+      if (event.key === "Escape") {
+        const mediaBackdrop = document.getElementById("media-modal-backdrop");
+        if ((confirmModalBackdrop && !confirmModalBackdrop.hidden) || (mediaBackdrop && mediaBackdrop.classList.contains("is-open"))) {
+          return;
+        }
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement.tagName)) {
+          activeElement.blur();
+        }
+      }
+    });
+
     if (preview) {
       preview.addEventListener("load", () => {
+        setPreviewLoading(false);
         if (activeBuilderBlockIndex >= 0) {
           window.setTimeout(() => highlightPreviewBlock(activeBuilderBlockIndex), 40);
         }
@@ -2006,11 +2386,13 @@ const cspNonce = bootstrap.cspNonce || "";
           const copy = deepClone(capsuleState.blocks[index]);
           copy.id = createBlockId();
           capsuleState.blocks.splice(index + 1, 0, copy);
+          markAutosaveDirty("Se duplicó una sección.");
           selectBuilderBlock(index + 1, { scroll: true, syncPreview: true });
           return;
         }
         if (action === "remove") {
           capsuleState.blocks.splice(index, 1);
+          markAutosaveDirty("Se eliminó una sección.");
           if (capsuleState.blocks.length) {
             selectBuilderBlock(Math.max(0, Math.min(index, capsuleState.blocks.length - 1)), { scroll: true, syncPreview: true });
           } else {
@@ -2025,6 +2407,9 @@ const cspNonce = bootstrap.cspNonce || "";
     renderBuilderBlocks();
     applyBuilderReadOnlyState();
     setClientMode(getInitialClientMode());
+    if (autosaveMeta && !autosaveMeta.textContent.trim()) {
+      setAutosaveState("saved", "Sin cambios pendientes.");
+    }
     if (activeBuilderBlockIndex >= 0) {
       highlightPreviewBlock(activeBuilderBlockIndex);
     }

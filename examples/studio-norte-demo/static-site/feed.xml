@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Studio Norte Blog</title>
+  <link>http://127.0.0.1:8088/blog</link>
+  <description>Brand, web and launch systems for studios and professional service firms.</description>
+<item>
+  <title>Como lanzar una web de servicios en diez dias sin perder claridad</title>
+  <link>http://127.0.0.1:8088/blog/lanzar-web-servicios-en-diez-dias</link>
+  <guid>http://127.0.0.1:8088/blog/lanzar-web-servicios-en-diez-dias</guid>
+  <description>Una estructura pequena, un CTA claro y un handoff limpio suelen valer mas que seis semanas de indecision.</description>
+  <pubDate>Fri, 13 Mar 2026 08:37:47 +0000</pubDate>
+</item>
+<item>
+  <title>Cuando conviene exportar una web estatica y cuando no</title>
+  <link>http://127.0.0.1:8088/blog/cuando-conviene-exportar-web-estatica</link>
+  <guid>http://127.0.0.1:8088/blog/cuando-conviene-exportar-web-estatica</guid>
+  <description>No todos los proyectos necesitan el mismo runtime. A veces el mejor stack es el mas pequeno.</description>
+  <pubDate>Fri, 13 Mar 2026 08:37:47 +0000</pubDate>
+</item>
+<item>
+  <title>Tres decisiones de copy que mejoran una home sin rediseñarla</title>
+  <link>http://127.0.0.1:8088/blog/tres-decisiones-de-copy-que-mejoran-una-home</link>
+  <guid>http://127.0.0.1:8088/blog/tres-decisiones-de-copy-que-mejoran-una-home</guid>
+  <description>Cambiar la promesa, el orden y el CTA suele mover mas negocio que una nueva animacion.</description>
+  <pubDate>Fri, 13 Mar 2026 08:37:47 +0000</pubDate>
+</item>
+</channel>
+</rss>

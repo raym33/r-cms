@@ -259,11 +259,384 @@ function ccms_capsule_stars(int $stars): string
     return str_repeat('&#9733;', min($stars, 5));
 }
 
+function ccms_set_current_public_page(?array $page): void
+{
+    $GLOBALS['ccms_current_public_page'] = $page;
+}
+
+function ccms_current_public_page(): ?array
+{
+    $page = $GLOBALS['ccms_current_public_page'] ?? null;
+    return is_array($page) ? $page : null;
+}
+
+function ccms_blog_archive_url(): string
+{
+    return rtrim(ccms_base_url(), '/') . '/blog';
+}
+
+function ccms_blog_category_url(string $categorySlug): string
+{
+    return ccms_blog_archive_url() . '/category/' . rawurlencode($categorySlug);
+}
+
+function ccms_blog_tag_url(string $tagSlug): string
+{
+    return ccms_blog_archive_url() . '/tag/' . rawurlencode($tagSlug);
+}
+
+function ccms_post_public_url(array $post): string
+{
+    return ccms_blog_archive_url() . '/' . rawurlencode((string) ($post['slug'] ?? ''));
+}
+
+function ccms_public_page_url(array $page): string
+{
+    $canonical = ccms_sanitize_url((string) ($page['canonical_url'] ?? ''));
+    if ($canonical !== '') {
+        return $canonical;
+    }
+    if (($page['content_type'] ?? '') === 'post') {
+        return ccms_post_public_url($page);
+    }
+    $base = rtrim(ccms_base_url(), '/');
+    if (!empty($page['is_homepage']) || trim((string) ($page['slug'] ?? '')) === '') {
+        return $base . '/';
+    }
+    return $base . '/' . rawurlencode((string) ($page['slug'] ?? ''));
+}
+
+function ccms_page_primary_image(array $page): string
+{
+    $coverImage = ccms_sanitize_url((string) ($page['cover_image'] ?? ''), true);
+    if ($coverImage !== '') {
+        return ccms_capsule_media_url($coverImage, 'og-' . ((string) ($page['id'] ?? 'post')), 1200, 630);
+    }
+    $capsule = ccms_capsule_decode($page);
+    if (!is_array($capsule)) {
+        return '';
+    }
+    foreach (($capsule['blocks'] ?? []) as $block) {
+        $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+        foreach (['image_url', 'background_image', 'image', 'photo', 'logo', 'thumbnail'] as $key) {
+            $candidate = ccms_sanitize_url((string) ($props[$key] ?? ''), true);
+            if ($candidate !== '') {
+                return ccms_capsule_media_url($candidate, 'og-' . ((string) ($block['id'] ?? 'page')), 1200, 630);
+            }
+        }
+        foreach (['images', 'items', 'posts', 'projects', 'services'] as $collectionKey) {
+            foreach ((array) ($props[$collectionKey] ?? []) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                foreach (['image', 'image_url', 'photo', 'logo', 'thumbnail', 'url'] as $itemKey) {
+                    $candidate = ccms_sanitize_url((string) ($item[$itemKey] ?? ''), true);
+                    if ($candidate !== '') {
+                        return ccms_capsule_media_url($candidate, 'og-' . ((string) ($block['id'] ?? 'page')), 1200, 630);
+                    }
+                }
+            }
+        }
+    }
+    return '';
+}
+
+function ccms_render_public_schema(array $site, array $page): string
+{
+    $contentType = (string) ($page['content_type'] ?? '');
+    if ($contentType === 'post') {
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            'headline' => trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? '')),
+            'description' => trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($page['excerpt'] ?? '')),
+            'url' => ccms_public_page_url($page),
+            'datePublished' => trim((string) ($page['published_at'] ?? $page['updated_at'] ?? '')),
+            'dateModified' => trim((string) ($page['updated_at'] ?? $page['published_at'] ?? '')),
+            'author' => [
+                '@type' => 'Person',
+                'name' => trim((string) ($page['author_name'] ?? '')) ?: trim((string) ($site['title'] ?? 'LinuxCMS')),
+            ],
+        ];
+        $siteTitle = trim((string) ($site['title'] ?? ''));
+        if ($siteTitle !== '') {
+            $schema['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
+        }
+        $image = ccms_page_primary_image($page);
+        if ($image !== '') {
+            $schema['image'] = $image;
+        }
+        if (!empty($page['categories'][0])) {
+            $schema['articleSection'] = (string) $page['categories'][0];
+        }
+        return json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+    }
+    $schema = [
+        '@context' => 'https://schema.org',
+        '@type' => !empty($page['is_homepage']) ? 'WebSite' : 'WebPage',
+        'name' => trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? $site['title'] ?? 'LinuxCMS')),
+        'description' => trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? '')),
+        'url' => ccms_public_page_url($page),
+    ];
+    $siteTitle = trim((string) ($site['title'] ?? ''));
+    $contactEmail = trim((string) ($site['contact_email'] ?? ''));
+    if ($siteTitle !== '') {
+        $schema['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
+        if ($contactEmail !== '') {
+            $schema['publisher']['email'] = $contactEmail;
+        }
+    }
+    $image = ccms_page_primary_image($page);
+    if ($image !== '') {
+        $schema['image'] = $image;
+    }
+    return json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+}
+
+function ccms_render_public_analytics(array $site): string
+{
+    $provider = trim((string) ($site['analytics_provider'] ?? ''));
+    $analyticsId = trim((string) ($site['analytics_id'] ?? ''));
+    if ($provider === '' || $analyticsId === '') {
+        return '';
+    }
+    if ($provider === 'ga4') {
+        return '<script async src="https://www.googletagmanager.com/gtag/js?id=' . ccms_h($analyticsId) . '"></script>'
+            . '<script' . ccms_script_nonce_attr() . '>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config",' . json_encode($analyticsId) . ');</script>';
+    }
+    if ($provider === 'plausible') {
+        return '<script defer data-domain="' . ccms_h($analyticsId) . '" src="https://plausible.io/js/script.js"></script>';
+    }
+    return '';
+}
+
+function ccms_render_sitemap_xml(array $data): string
+{
+    $pages = array_values(array_filter(is_array($data['pages'] ?? null) ? $data['pages'] : [], static function (array $page): bool {
+        return ccms_record_is_public($page);
+    }));
+    $posts = ccms_posts_published($data);
+    usort($pages, static function (array $a, array $b): int {
+        return strcmp((string) ($b['updated_at'] ?? ''), (string) ($a['updated_at'] ?? ''));
+    });
+    $urls = '';
+    foreach ($pages as $page) {
+        $urls .= "<url>\n"
+            . '  <loc>' . ccms_h(ccms_public_page_url($page)) . "</loc>\n"
+            . '  <lastmod>' . ccms_h((string) ($page['updated_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . "</url>\n";
+    }
+    if (!empty($posts)) {
+        $urls .= "<url>\n"
+            . '  <loc>' . ccms_h(ccms_blog_archive_url()) . "</loc>\n"
+            . '  <lastmod>' . ccms_h((string) ($posts[0]['updated_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . "</url>\n";
+    }
+    foreach ($posts as $post) {
+        $urls .= "<url>\n"
+            . '  <loc>' . ccms_h(ccms_post_public_url($post)) . "</loc>\n"
+            . '  <lastmod>' . ccms_h((string) ($post['updated_at'] ?? $post['published_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . "</url>\n";
+    }
+    foreach (ccms_blog_categories($data) as $category) {
+        $slug = ccms_taxonomy_slug($category);
+        $categoryPosts = ccms_posts_for_category_slug($data, $slug);
+        if (empty($categoryPosts)) {
+            continue;
+        }
+        $urls .= "<url>\n"
+            . '  <loc>' . ccms_h(ccms_blog_category_url($slug)) . "</loc>\n"
+            . '  <lastmod>' . ccms_h((string) ($categoryPosts[0]['updated_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . "</url>\n";
+    }
+    foreach (ccms_blog_tags($data) as $tag) {
+        $slug = ccms_taxonomy_slug($tag);
+        $tagPosts = ccms_posts_for_tag_slug($data, $slug);
+        if (empty($tagPosts)) {
+            continue;
+        }
+        $urls .= "<url>\n"
+            . '  <loc>' . ccms_h(ccms_blog_tag_url($slug)) . "</loc>\n"
+            . '  <lastmod>' . ccms_h((string) ($tagPosts[0]['updated_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . "</url>\n";
+    }
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        . "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+        . $urls
+        . "</urlset>\n";
+}
+
+function ccms_render_robots_txt(): string
+{
+    return "User-agent: *\nAllow: /\nSitemap: " . rtrim(ccms_base_url(), '/') . "/sitemap.xml\n";
+}
+
+function ccms_post_excerpt(array $post, int $limit = 180): string
+{
+    $excerpt = trim((string) ($post['excerpt'] ?? ''));
+    if ($excerpt === '') {
+        $source = trim(strip_tags((string) ($post['content_html'] ?? '')));
+        $excerpt = preg_replace('/\s+/u', ' ', $source) ?? $source;
+    }
+    if (mb_strlen($excerpt, 'UTF-8') <= $limit) {
+        return $excerpt;
+    }
+    return rtrim(mb_substr($excerpt, 0, $limit - 1, 'UTF-8')) . '…';
+}
+
+function ccms_render_blog_post_body_html(array $post): string
+{
+    $coverImage = ccms_sanitize_url((string) ($post['cover_image'] ?? ''), true);
+    $publishedLabel = trim((string) ($post['published_at'] ?? '')) !== '' ? date('j M Y', strtotime((string) $post['published_at'])) : '';
+    $categories = array_map(static function ($category): string {
+        $label = trim((string) $category);
+        if ($label === '') {
+            return '';
+        }
+        return '<a href="' . ccms_h('/blog/category/' . rawurlencode(ccms_taxonomy_slug($label))) . '" style="text-decoration:none;color:var(--primary)">' . ccms_h($label) . '</a>';
+    }, (array) ($post['categories'] ?? []));
+    $categories = array_values(array_filter($categories));
+    $tags = array_map(static function ($tag): string {
+        $label = trim((string) $tag);
+        if ($label === '') {
+            return '';
+        }
+        return '<a href="' . ccms_h('/blog/tag/' . rawurlencode(ccms_taxonomy_slug($label))) . '" style="display:inline-flex;padding:8px 12px;border-radius:999px;background:#f3ece6;text-decoration:none;color:var(--text);font-size:13px;font-weight:700">' . ccms_h($label) . '</a>';
+    }, (array) ($post['tags'] ?? []));
+    $tags = array_values(array_filter($tags));
+    return '<section style="padding:56px 32px 20px"><div class="shell" style="max-width:880px">'
+        . (!empty($categories) ? '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">' . implode('', $categories) . '</div>' : '')
+        . '<h1 style="font-size:52px;line-height:1.04;margin:0 0 14px">' . ccms_h((string) ($post['title'] ?? 'Untitled post')) . '</h1>'
+        . '<div style="display:flex;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:14px;margin-bottom:18px">'
+        . ($publishedLabel !== '' ? '<span>Publicado · ' . ccms_h($publishedLabel) . '</span>' : '')
+        . (trim((string) ($post['author_name'] ?? '')) !== '' ? '<span>Autor · ' . ccms_h((string) $post['author_name']) . '</span>' : '')
+        . '</div>'
+        . '<p style="font-size:19px;line-height:1.8;color:var(--muted);margin:0 0 20px">' . ccms_h(ccms_post_excerpt($post, 240)) . '</p>'
+        . ($coverImage !== '' ? '<img src="' . ccms_h($coverImage) . '" alt="' . ccms_h((string) ($post['title'] ?? '')) . '" style="width:100%;height:min(54vw,460px);object-fit:cover;border-radius:28px;box-shadow:0 30px 60px -38px rgba(0,0,0,.24);margin:0 0 28px">' : '')
+        . '<div class="page-content" style="background:var(--surface);border-radius:28px;padding:30px;box-shadow:var(--site-shadow)">' . ccms_sanitize_html((string) ($post['content_html'] ?? '')) . '</div>'
+        . (!empty($tags) ? '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">' . implode('', $tags) . '</div>' : '')
+        . '</div></section>';
+}
+
+function ccms_render_blog_archive_body_html(array $posts, ?string $categoryLabel = null, ?string $tagLabel = null): string
+{
+    $title = 'Blog';
+    $subtitle = 'Últimos artículos publicados.';
+    if ($categoryLabel !== null && $categoryLabel !== '') {
+        $title = 'Categoría: ' . $categoryLabel;
+        $subtitle = 'Artículos archivados en esta categoría.';
+    } elseif ($tagLabel !== null && $tagLabel !== '') {
+        $title = 'Etiqueta: ' . $tagLabel;
+        $subtitle = 'Artículos relacionados con esta etiqueta.';
+    }
+    $items = '';
+    foreach ($posts as $post) {
+        $url = '/blog/' . rawurlencode((string) ($post['slug'] ?? ''));
+        $image = ccms_sanitize_url((string) ($post['cover_image'] ?? ''), true);
+        $publishedLabel = trim((string) ($post['published_at'] ?? '')) !== '' ? date('j M Y', strtotime((string) $post['published_at'])) : '';
+        $categories = implode(' · ', array_map('strval', (array) ($post['categories'] ?? [])));
+        $items .= '<article style="background:var(--surface);border-radius:26px;box-shadow:var(--site-shadow);overflow:hidden">'
+            . ($image !== '' ? '<a href="' . ccms_h($url) . '" style="display:block"><img src="' . ccms_h($image) . '" alt="' . ccms_h((string) ($post['title'] ?? '')) . '" style="width:100%;height:280px;object-fit:cover"></a>' : '')
+            . '<div style="padding:24px">'
+            . ($categories !== '' ? '<div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin-bottom:10px">' . ccms_h($categories) . '</div>' : '')
+            . '<h2 style="font-size:30px;line-height:1.08;margin:0 0 12px"><a href="' . ccms_h($url) . '" style="text-decoration:none">' . ccms_h((string) ($post['title'] ?? 'Untitled post')) . '</a></h2>'
+            . '<p style="font-size:17px;line-height:1.75;color:var(--muted);margin:0 0 16px">' . ccms_h(ccms_post_excerpt($post)) . '</p>'
+            . '<div style="display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap">'
+            . '<span style="color:var(--muted);font-size:14px">' . ccms_h($publishedLabel) . '</span>'
+            . '<a href="' . ccms_h($url) . '" style="font-weight:800;text-decoration:none;color:var(--primary)">Leer artículo</a>'
+            . '</div></div></article>';
+    }
+    if ($items === '') {
+        $items = '<div style="background:var(--surface);border-radius:26px;box-shadow:var(--site-shadow);padding:28px;color:var(--muted)">Todavía no hay artículos publicados.</div>';
+    }
+    return '<section style="padding:56px 32px"><div class="shell"><div style="max-width:760px;margin-bottom:28px"><span class="ccms-chip">Blog</span><h1 style="font-size:48px;line-height:1.04;margin:16px 0 14px">' . ccms_h($title) . '</h1><p style="font-size:18px;line-height:1.75;color:var(--muted);margin:0">' . ccms_h($subtitle) . '</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">' . $items . '</div></div></section>';
+}
+
+function ccms_render_blog_archive_page(array $site, array $posts, array $menuPages, ?string $categoryLabel = null, ?string $tagLabel = null): string
+{
+    $path = '/blog';
+    $title = 'Blog';
+    $description = 'Archivo de artículos del sitio.';
+    if ($categoryLabel !== null && $categoryLabel !== '') {
+        $title = 'Blog · ' . $categoryLabel;
+        $description = 'Archivo de artículos de la categoría ' . $categoryLabel . '.';
+        $path = '/blog/category/' . rawurlencode(ccms_taxonomy_slug($categoryLabel));
+    } elseif ($tagLabel !== null && $tagLabel !== '') {
+        $title = 'Blog · ' . $tagLabel;
+        $description = 'Archivo de artículos con la etiqueta ' . $tagLabel . '.';
+        $path = '/blog/tag/' . rawurlencode(ccms_taxonomy_slug($tagLabel));
+    }
+    $pseudoPage = [
+        'id' => 'blog_archive_' . md5($path),
+        'title' => $title,
+        'meta_title' => $title,
+        'meta_description' => $description,
+        'html_content' => ccms_render_blog_archive_body_html($posts, $categoryLabel, $tagLabel),
+        'canonical_url' => rtrim(ccms_base_url(), '/') . $path,
+        'content_type' => 'blog_archive',
+        'updated_at' => $posts[0]['updated_at'] ?? ccms_now_iso(),
+    ];
+    return ccms_render_public_page($site, $pseudoPage, $menuPages);
+}
+
+function ccms_render_blog_post_page(array $site, array $post, array $menuPages): string
+{
+    $pseudoPage = [
+        'id' => (string) ($post['id'] ?? ccms_next_id('post')),
+        'slug' => (string) ($post['slug'] ?? ''),
+        'title' => (string) ($post['title'] ?? 'Untitled post'),
+        'meta_title' => trim((string) ($post['meta_title'] ?? '')) ?: (string) ($post['title'] ?? 'Untitled post'),
+        'meta_description' => trim((string) ($post['meta_description'] ?? '')) ?: ccms_post_excerpt($post),
+        'html_content' => ccms_render_blog_post_body_html($post),
+        'content_type' => 'post',
+        'cover_image' => (string) ($post['cover_image'] ?? ''),
+        'author_name' => (string) ($post['author_name'] ?? ''),
+        'categories' => (array) ($post['categories'] ?? []),
+        'excerpt' => (string) ($post['excerpt'] ?? ''),
+        'published_at' => (string) ($post['published_at'] ?? ''),
+        'updated_at' => (string) ($post['updated_at'] ?? ccms_now_iso()),
+    ];
+    return ccms_render_public_page($site, $pseudoPage, $menuPages);
+}
+
+function ccms_render_blog_rss(array $site, array $posts): string
+{
+    $siteTitle = trim((string) ($site['title'] ?? 'LinuxCMS'));
+    $siteTagline = trim((string) ($site['tagline'] ?? ''));
+    $siteLink = ccms_blog_archive_url();
+    $items = '';
+    foreach ($posts as $post) {
+        $description = ccms_post_excerpt($post, 400);
+        $publishedAt = trim((string) ($post['published_at'] ?? $post['updated_at'] ?? ''));
+        $items .= "<item>\n"
+            . '  <title>' . ccms_h((string) ($post['title'] ?? 'Untitled post')) . "</title>\n"
+            . '  <link>' . ccms_h(ccms_post_public_url($post)) . "</link>\n"
+            . '  <guid>' . ccms_h(ccms_post_public_url($post)) . "</guid>\n"
+            . '  <description>' . ccms_h($description) . "</description>\n"
+            . ($publishedAt !== '' ? '  <pubDate>' . ccms_h(gmdate(DATE_RSS, strtotime($publishedAt))) . "</pubDate>\n" : '')
+            . "</item>\n";
+    }
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        . "<rss version=\"2.0\">\n"
+        . "<channel>\n"
+        . '  <title>' . ccms_h($siteTitle . ' Blog') . "</title>\n"
+        . '  <link>' . ccms_h($siteLink) . "</link>\n"
+        . '  <description>' . ccms_h($siteTagline !== '' ? $siteTagline : ('RSS feed for ' . $siteTitle)) . "</description>\n"
+        . $items
+        . "</channel>\n"
+        . "</rss>\n";
+}
+
 function ccms_page_body_html(array $page): string
 {
     $capsule = ccms_capsule_decode($page);
     if (ccms_capsule_can_render($capsule)) {
-        return ccms_render_capsule_body($capsule);
+        ccms_set_current_public_page($page);
+        try {
+            return ccms_render_capsule_body($capsule);
+        } finally {
+            ccms_set_current_public_page(null);
+        }
     }
     return ccms_sanitize_html((string) ($page['html_content'] ?? '<section><p>Empty page.</p></section>'));
 }
@@ -274,6 +647,10 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     $colors = $site['colors'] ?? [];
     $theme = ccms_site_theme_preset($site);
     $customCss = ccms_sanitize_css(trim((string) ($site['custom_css'] ?? '')));
+    $pageUrl = ccms_public_page_url($page);
+    $pageImage = ccms_page_primary_image($page);
+    $analyticsHtml = ccms_render_public_analytics($site);
+    $schemaJson = ccms_render_public_schema($site, $page);
     $pluginHead = ccms_render_plugin_fragments('public_head_end', [
         'site' => $site,
         'page' => $page,
@@ -286,6 +663,8 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     ]);
     $pageTitle = trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? ''));
     $metaDescription = trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? ''));
+    $contentType = (string) ($page['content_type'] ?? '');
+    $ogType = $contentType === 'post' ? 'article' : 'website';
     $capsule = ccms_capsule_decode($page);
     $usesNativeCapsule = ccms_capsule_can_render($capsule);
     $blockTypes = [];
@@ -296,7 +675,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     }
     $hasOwnHeader = $usesNativeCapsule && array_intersect($blockTypes, ['nav', 'sticky_header']);
     $hasOwnFooter = $usesNativeCapsule && array_intersect($blockTypes, ['footer_multi', 'contact']);
-    $content = ccms_page_body_html($page);
+    $content = ccms_optimize_public_images_html(ccms_page_body_html($page));
     $styleNonceAttr = ccms_style_nonce_attr();
     $menuHtml = '';
     foreach ($menuPages as $menuPage) {
@@ -340,6 +719,18 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>' . ccms_h($pageTitle) . '</title>
   <meta name="description" content="' . ccms_h($metaDescription) . '">
+  <link rel="canonical" href="' . ccms_h($pageUrl) . '">
+  <meta property="og:title" content="' . ccms_h($pageTitle) . '">
+  <meta property="og:description" content="' . ccms_h($metaDescription) . '">
+  <meta property="og:type" content="' . ccms_h($ogType) . '">
+  <meta property="og:url" content="' . ccms_h($pageUrl) . '">
+  <meta property="og:site_name" content="' . ccms_h((string) ($site['title'] ?? 'LinuxCMS')) . '">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="' . ccms_h($pageTitle) . '">
+  <meta name="twitter:description" content="' . ccms_h($metaDescription) . '">' . ($contentType === 'post' && trim((string) ($page['published_at'] ?? '')) !== '' ? '
+  <meta property="article:published_time" content="' . ccms_h((string) $page['published_at']) . '">' : '') . ($pageImage !== '' ? '
+  <meta property="og:image" content="' . ccms_h($pageImage) . '">
+  <meta name="twitter:image" content="' . ccms_h($pageImage) . '">' : '') . '
   <style' . $styleNonceAttr . '>
     :root{
       --bg:' . ccms_h((string) ($colors['bg'] ?? '#f7f4ee')) . ';
@@ -378,7 +769,9 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
   </style>' . ($customCss !== '' ? '
   <style' . $styleNonceAttr . ' id="ccms-custom-css">
 ' . $customCss . '
-  </style>' : '') . ($pluginHead !== '' ? '
+  </style>' : '') . '
+  <script type="application/ld+json"' . $scriptNonceAttr . '>' . $schemaJson . '</script>' . ($analyticsHtml !== '' ? '
+' . $analyticsHtml : '') . ($pluginHead !== '' ? '
 ' . $pluginHead : '') . '
 </head>
 <body>
@@ -1019,7 +1412,10 @@ function ccms_render_capsule_block(array $block, array $style): string
             return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:84px 0') . '><div class="ccms-c-inner ccms-grid-2"' . ccms_capsule_inner_style_attr($block) . '>' . $content . '</div></section>';
 
         case 'newsletter':
-            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:74px 0;background:rgba(255,255,255,.64)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div class="ccms-card" style="padding:30px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap"><div><h2 class="ccms-section-title" style="margin:0 0 8px">' . ccms_h((string) ($props['title'] ?? '')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p></div><form style="display:flex;gap:12px;flex-wrap:wrap"><input placeholder="' . ccms_h((string) ($props['placeholder'] ?? 'Enter your email')) . '" style="min-width:280px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"><button type="button" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Subscribe')) . '</button></form></div></div></section>';
+            $page = ccms_current_public_page() ?? ['slug' => '', 'title' => ''];
+            $feedback = ccms_render_public_form_feedback($blockId);
+            $hidden = ccms_render_public_form_hidden_inputs($page, 'newsletter', $blockId);
+            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:74px 0;background:rgba(255,255,255,.64)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '>' . $feedback . '<div class="ccms-card" style="padding:30px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap"><div><h2 class="ccms-section-title" style="margin:0 0 8px">' . ccms_h((string) ($props['title'] ?? '')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p></div><form method="post" action="' . ccms_h(ccms_public_form_action()) . '" style="display:flex;gap:12px;flex-wrap:wrap">' . $hidden . '<input name="email" type="email" placeholder="' . ccms_h((string) ($props['placeholder'] ?? 'Enter your email')) . '" style="min-width:280px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><button type="submit" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Subscribe')) . '</button></form></div></div></section>';
 
         case 'booking_widget':
             $services = '';
@@ -1095,7 +1491,22 @@ function ccms_render_capsule_block(array $block, array $style): string
             return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0') . '><div class="ccms-c-inner ccms-grid-2"' . ccms_capsule_inner_style_attr($block) . '>' . $mapHtml . $details . '</div></section>';
 
         case 'contact':
-            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:72px 0;background:rgba(255,255,255,.56)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div class="ccms-card" style="padding:28px;text-align:center"><h2 class="ccms-section-title">' . ccms_h((string) ($props['brand'] ?? 'Contact')) . '</h2><p class="ccms-text" style="margin:0 0 8px">' . ccms_h((string) ($props['info'] ?? '')) . '</p><p class="ccms-note" style="margin:0">' . ccms_h((string) ($props['copyright'] ?? '')) . '</p></div></div></section>';
+            $page = ccms_current_public_page() ?? ['slug' => '', 'title' => ''];
+            $feedback = ccms_render_public_form_feedback($blockId);
+            $hidden = ccms_render_public_form_hidden_inputs($page, 'contact', $blockId);
+            $contactDetails = '';
+            foreach ([
+                'Email' => (string) ($props['email'] ?? $props['contact_email'] ?? ''),
+                'Phone' => (string) ($props['phone'] ?? ''),
+                'Address' => (string) ($props['address'] ?? ''),
+                'Hours' => (string) ($props['hours'] ?? ''),
+            ] as $label => $value) {
+                if (trim($value) === '') {
+                    continue;
+                }
+                $contactDetails .= '<li><strong>' . ccms_h($label) . ':</strong> ' . ccms_h($value) . '</li>';
+            }
+            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:72px 0;background:rgba(255,255,255,.56)') . '><div class="ccms-c-inner ccms-grid-2"' . ccms_capsule_inner_style_attr($block) . '><div><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Contact')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? $props['brand'] ?? 'Contact')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? $props['info'] ?? '')) . '</p>' . ($contactDetails !== '' ? '<ul class="ccms-list" style="margin-top:18px">' . $contactDetails . '</ul>' : '') . '</div><div><div class="ccms-card" style="padding:28px">' . $feedback . '<form method="post" action="' . ccms_h(ccms_public_form_action()) . '" style="display:grid;gap:14px">' . $hidden . '<input name="name" placeholder="Name" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="email" type="email" placeholder="Email" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="phone" placeholder="Phone" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"><textarea name="message" placeholder="Message" style="width:100%;min-height:150px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08);font:inherit" required></textarea><button type="submit" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Send message')) . '</button></form></div></div></div></section>';
 
         case 'split_image_left':
         case 'split_image_right':
@@ -1290,7 +1701,10 @@ function ccms_render_capsule_block(array $block, array $style): string
             return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:28px 0') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div class="ccms-card" style="padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(229,115,115,.12) 0%,rgba(217,196,179,.4) 100%)"><p style="margin:0;font-weight:800">' . ccms_h((string) ($props['text'] ?? '')) . '</p><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="ccms-note">' . ccms_h((string) ($props['disclaimer'] ?? '')) . '</span><a class="ccms-btn" href="' . ccms_h((string) ($props['button_href'] ?? '#contact')) . '">' . ccms_h((string) ($props['button_text'] ?? 'Learn more')) . '</a></div></div></div></section>';
 
         case 'lead_form':
-            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div class="ccms-card" style="padding:34px"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Contacto')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? '')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p><form style="display:grid;gap:14px;margin-top:24px"><div class="ccms-grid-2"><input placeholder="Nombre" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"><input placeholder="Email" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"></div><textarea placeholder="Mensaje" style="width:100%;min-height:150px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08);font:inherit"></textarea><div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap"><small style="color:' . ccms_h($style['text_muted']) . ';line-height:1.6">' . ccms_h((string) ($props['privacy_text'] ?? '')) . '</small><button type="button" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Enviar')) . '</button></div></form></div></div></section>';
+            $page = ccms_current_public_page() ?? ['slug' => '', 'title' => ''];
+            $feedback = ccms_render_public_form_feedback($blockId);
+            $hidden = ccms_render_public_form_hidden_inputs($page, 'lead_form', $blockId);
+            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div class="ccms-card" style="padding:34px"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Contacto')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? '')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p>' . $feedback . '<form method="post" action="' . ccms_h(ccms_public_form_action()) . '" style="display:grid;gap:14px;margin-top:24px">' . $hidden . '<div class="ccms-grid-2"><input name="name" placeholder="Nombre" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="email" type="email" placeholder="Email" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required></div><div class="ccms-grid-2"><input name="phone" placeholder="Teléfono" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"><input name="company" placeholder="Empresa" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"></div><textarea name="message" placeholder="Mensaje" style="width:100%;min-height:150px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08);font:inherit" required></textarea><div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap"><small style="color:' . ccms_h($style['text_muted']) . ';line-height:1.6">' . ccms_h((string) ($props['privacy_text'] ?? '')) . '</small><button type="submit" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Enviar')) . '</button></div></form></div></div></section>';
 
         case 'footer_multi':
             $columns = '';

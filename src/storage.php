@@ -81,6 +81,17 @@ function ccms_set_storage_driver(string $driver): void
     );
 }
 
+function ccms_default_onboarding_state(): array
+{
+    return [
+        'dismissed' => false,
+        'completed' => false,
+        'completed_at' => null,
+        'exported_at' => null,
+        'last_step' => '',
+    ];
+}
+
 function ccms_default_data(): array
 {
     return [
@@ -90,8 +101,15 @@ function ccms_default_data(): array
             'tagline' => 'A local website studio with capsules, builder and CMS in one place.',
             'footer_text' => 'Powered by LinuxCMS',
             'contact_email' => '',
+            'white_label_enabled' => false,
+            'admin_brand_name' => '',
+            'admin_brand_tagline' => '',
+            'admin_logo_url' => '',
+            'analytics_provider' => '',
+            'analytics_id' => '',
             'theme_preset' => 'warm',
             'custom_css' => '',
+            'onboarding' => ccms_default_onboarding_state(),
             'trusted_plugins_enabled' => false,
             'enabled_plugins' => [],
             'colors' => [
@@ -119,10 +137,59 @@ function ccms_default_data(): array
         ],
         'users' => [],
         'pages' => [],
+        'posts' => [],
         'media' => [],
+        'submissions' => [],
         'audit_logs' => [],
         'password_reset_tokens' => [],
     ];
+}
+
+function ccms_normalize_submissions(array $data): array
+{
+    $data['submissions'] = array_values(array_filter(array_map(static function ($entry) {
+        if (!is_array($entry)) {
+            return null;
+        }
+        $fields = [];
+        foreach ((array) ($entry['fields'] ?? []) as $key => $value) {
+            $fieldKey = trim((string) $key);
+            if ($fieldKey === '') {
+                continue;
+            }
+            if (is_scalar($value) || $value === null) {
+                $fields[$fieldKey] = trim((string) $value);
+            }
+        }
+        return [
+            'id' => (string) ($entry['id'] ?? ccms_next_id('sub')),
+            'kind' => trim((string) ($entry['kind'] ?? 'lead_form')),
+            'status' => in_array(($entry['status'] ?? 'new'), ['new', 'reviewed', 'contacted', 'archived'], true) ? (string) $entry['status'] : 'new',
+            'created_at' => (string) ($entry['created_at'] ?? ccms_now_iso()),
+            'updated_at' => (string) ($entry['updated_at'] ?? ($entry['created_at'] ?? ccms_now_iso())),
+            'page_id' => trim((string) ($entry['page_id'] ?? '')),
+            'page_slug' => trim((string) ($entry['page_slug'] ?? '')),
+            'page_title' => trim((string) ($entry['page_title'] ?? '')),
+            'block_id' => trim((string) ($entry['block_id'] ?? '')),
+            'block_type' => trim((string) ($entry['block_type'] ?? '')),
+            'source_url' => trim((string) ($entry['source_url'] ?? '')),
+            'delivery' => [
+                'attempted' => !empty($entry['delivery']['attempted']),
+                'sent' => !empty($entry['delivery']['sent']),
+                'channel' => trim((string) ($entry['delivery']['channel'] ?? 'mail')),
+                'target' => trim((string) ($entry['delivery']['target'] ?? '')),
+            ],
+            'meta' => [
+                'ip' => trim((string) ($entry['meta']['ip'] ?? '')),
+                'user_agent' => trim((string) ($entry['meta']['user_agent'] ?? '')),
+            ],
+            'fields' => $fields,
+        ];
+    }, is_array($data['submissions'] ?? null) ? $data['submissions'] : []), static function ($entry): bool {
+        return is_array($entry) && $entry['id'] !== '';
+    }));
+
+    return $data;
 }
 
 function ccms_normalize_password_reset_tokens(array $data): array
@@ -150,10 +217,168 @@ function ccms_normalize_password_reset_tokens(array $data): array
     return $data;
 }
 
+function ccms_parse_taxonomy_input($value): array
+{
+    $items = [];
+    if (is_string($value)) {
+        $value = preg_split('/[,\\n]+/', $value) ?: [];
+    }
+    foreach ((array) $value as $entry) {
+        $label = trim((string) $entry);
+        if ($label === '') {
+            continue;
+        }
+        $items[] = $label;
+    }
+    $items = array_values(array_unique($items));
+    sort($items, SORT_NATURAL | SORT_FLAG_CASE);
+    return $items;
+}
+
+function ccms_record_publish_timestamp(array $record): ?int
+{
+    $publishedAt = trim((string) ($record['published_at'] ?? ''));
+    if ($publishedAt === '') {
+        return null;
+    }
+    $timestamp = strtotime($publishedAt);
+    return $timestamp === false ? null : $timestamp;
+}
+
+function ccms_record_is_public(array $record, ?int $now = null): bool
+{
+    $status = (string) ($record['status'] ?? 'draft');
+    if ($status === 'published') {
+        return true;
+    }
+    if ($status !== 'scheduled') {
+        return false;
+    }
+    $publishAt = ccms_record_publish_timestamp($record);
+    if ($publishAt === null) {
+        return false;
+    }
+    return $publishAt <= ($now ?? time());
+}
+
+function ccms_normalize_pages(array $data): array
+{
+    $data['pages'] = array_values(array_filter(array_map(static function ($page) {
+        if (!is_array($page)) {
+            return null;
+        }
+        $title = trim((string) ($page['title'] ?? ''));
+        $slugSource = trim((string) ($page['slug'] ?? $title));
+        if ($title === '' && $slugSource === '') {
+            return null;
+        }
+        $status = (string) ($page['status'] ?? 'draft');
+        if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+            $status = 'draft';
+        }
+        $publishedAt = trim((string) ($page['published_at'] ?? ''));
+        if ($status === 'published' && $publishedAt === '') {
+            $publishedAt = (string) ($page['updated_at'] ?? $page['created_at'] ?? ccms_now_iso());
+        }
+        return [
+            'id' => (string) ($page['id'] ?? ccms_next_id('page')),
+            'title' => $title !== '' ? $title : 'Untitled page',
+            'slug' => ccms_slugify($slugSource !== '' ? $slugSource : $title),
+            'status' => $status,
+            'published_at' => $publishedAt,
+            'is_homepage' => !empty($page['is_homepage']),
+            'show_in_menu' => array_key_exists('show_in_menu', $page) ? !empty($page['show_in_menu']) : true,
+            'menu_label' => trim((string) ($page['menu_label'] ?? $title)) ?: ($title !== '' ? $title : 'Untitled page'),
+            'meta_title' => trim((string) ($page['meta_title'] ?? '')),
+            'meta_description' => trim((string) ($page['meta_description'] ?? '')),
+            'capsule_json' => (string) ($page['capsule_json'] ?? '{}'),
+            'html_content' => ccms_sanitize_html((string) ($page['html_content'] ?? '')),
+            'created_at' => (string) ($page['created_at'] ?? ccms_now_iso()),
+            'updated_at' => (string) ($page['updated_at'] ?? ccms_now_iso()),
+            'revisions' => array_values(is_array($page['revisions'] ?? null) ? $page['revisions'] : []),
+        ];
+    }, is_array($data['pages'] ?? null) ? $data['pages'] : []), static function ($page): bool {
+        return is_array($page) && (string) ($page['slug'] ?? '') !== '';
+    }));
+
+    return $data;
+}
+
+function ccms_normalize_posts(array $data): array
+{
+    $data['posts'] = array_values(array_filter(array_map(static function ($post) {
+        if (!is_array($post)) {
+            return null;
+        }
+        $title = trim((string) ($post['title'] ?? ''));
+        $slugSource = trim((string) ($post['slug'] ?? $title));
+        if ($title === '' && $slugSource === '') {
+            return null;
+        }
+        $status = (string) ($post['status'] ?? 'draft');
+        if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+            $status = 'draft';
+        }
+        $publishedAt = trim((string) ($post['published_at'] ?? ''));
+        if ($status === 'published' && $publishedAt === '') {
+            $publishedAt = (string) ($post['updated_at'] ?? $post['created_at'] ?? ccms_now_iso());
+        }
+        return [
+            'id' => (string) ($post['id'] ?? ccms_next_id('post')),
+            'title' => $title !== '' ? $title : 'Untitled post',
+            'slug' => ccms_slugify($slugSource !== '' ? $slugSource : $title),
+            'status' => $status,
+            'excerpt' => trim((string) ($post['excerpt'] ?? '')),
+            'content_html' => ccms_sanitize_html((string) ($post['content_html'] ?? '')),
+            'cover_image' => ccms_sanitize_url((string) ($post['cover_image'] ?? ''), true),
+            'author_name' => trim((string) ($post['author_name'] ?? '')),
+            'categories' => ccms_parse_taxonomy_input($post['categories'] ?? []),
+            'tags' => ccms_parse_taxonomy_input($post['tags'] ?? []),
+            'meta_title' => trim((string) ($post['meta_title'] ?? '')),
+            'meta_description' => trim((string) ($post['meta_description'] ?? '')),
+            'published_at' => $publishedAt,
+            'created_at' => (string) ($post['created_at'] ?? ccms_now_iso()),
+            'updated_at' => (string) ($post['updated_at'] ?? ccms_now_iso()),
+        ];
+    }, is_array($data['posts'] ?? null) ? $data['posts'] : []), static function ($post): bool {
+        return is_array($post) && (string) ($post['slug'] ?? '') !== '';
+    }));
+
+    usort($data['posts'], static function (array $a, array $b): int {
+        $aDate = (string) ($a['published_at'] ?? $a['updated_at'] ?? '');
+        $bDate = (string) ($b['published_at'] ?? $b['updated_at'] ?? '');
+        return strcmp($bDate, $aDate);
+    });
+
+    return $data;
+}
+
 function ccms_normalize_users(array $data): array
 {
+    $data = ccms_normalize_pages($data);
     $data['site'] ??= [];
     $data['site']['trusted_plugins_enabled'] = !empty($data['site']['trusted_plugins_enabled']);
+    $data['site']['white_label_enabled'] = !empty($data['site']['white_label_enabled']);
+    $data['site']['admin_brand_name'] = trim((string) ($data['site']['admin_brand_name'] ?? ''));
+    $data['site']['admin_brand_tagline'] = trim((string) ($data['site']['admin_brand_tagline'] ?? ''));
+    $data['site']['admin_logo_url'] = ccms_sanitize_url((string) ($data['site']['admin_logo_url'] ?? ''), true);
+    $data['site']['analytics_provider'] = in_array(($data['site']['analytics_provider'] ?? ''), ['', 'ga4', 'plausible'], true)
+        ? (string) ($data['site']['analytics_provider'] ?? '')
+        : '';
+    $data['site']['analytics_id'] = trim((string) ($data['site']['analytics_id'] ?? ''));
+    $data['site']['onboarding'] = array_merge(
+        ccms_default_onboarding_state(),
+        is_array($data['site']['onboarding'] ?? null) ? $data['site']['onboarding'] : []
+    );
+    $data['site']['onboarding']['dismissed'] = !empty($data['site']['onboarding']['dismissed']);
+    $data['site']['onboarding']['completed'] = !empty($data['site']['onboarding']['completed']);
+    $data['site']['onboarding']['completed_at'] = ($data['site']['onboarding']['completed_at'] ?? null)
+        ? (string) $data['site']['onboarding']['completed_at']
+        : null;
+    $data['site']['onboarding']['exported_at'] = ($data['site']['onboarding']['exported_at'] ?? null)
+        ? (string) $data['site']['onboarding']['exported_at']
+        : null;
+    $data['site']['onboarding']['last_step'] = trim((string) ($data['site']['onboarding']['last_step'] ?? ''));
     $data['users'] = array_values(array_filter(array_map(static function ($user) {
         if (!is_array($user)) {
             return null;
@@ -211,7 +436,7 @@ function ccms_normalize_users(array $data): array
         ];
     }
 
-    return ccms_normalize_password_reset_tokens($data);
+    return ccms_normalize_password_reset_tokens(ccms_normalize_posts($data));
 }
 
 function ccms_audit_log_entry(string $action, string $label, ?array $user = null, array $meta = []): array
@@ -379,21 +604,22 @@ function ccms_load_data(): array
     $driver = ccms_storage_driver();
     if ($driver === 'sqlite') {
         if (ccms_sqlite_has_install()) {
-            return ccms_normalize_users(ccms_load_sqlite_data());
+            return ccms_normalize_submissions(ccms_normalize_users(ccms_load_sqlite_data()));
         }
         if (is_file(ccms_data_file())) {
-            $data = ccms_normalize_users(ccms_load_json_data_file());
+            $data = ccms_normalize_submissions(ccms_normalize_users(ccms_load_json_data_file()));
             ccms_save_sqlite_data($data);
             return $data;
         }
-        return ccms_normalize_users(ccms_default_data());
+        return ccms_normalize_submissions(ccms_normalize_users(ccms_default_data()));
     }
-    return ccms_normalize_users(ccms_load_json_data_file());
+    return ccms_normalize_submissions(ccms_normalize_users(ccms_load_json_data_file()));
 }
 
 function ccms_save_data(array $data): void
 {
     ccms_ensure_runtime_dirs();
+    $data = ccms_normalize_submissions(ccms_normalize_users($data));
     $driver = ccms_storage_driver();
     if ($driver === 'sqlite') {
         ccms_save_sqlite_data($data);
@@ -465,11 +691,32 @@ function ccms_import_backup_payload(array $payload): array
         $data['site']['tagline'] = trim((string) ($site['tagline'] ?? $data['site']['tagline']));
         $data['site']['footer_text'] = trim((string) ($site['footer_text'] ?? $data['site']['footer_text']));
         $data['site']['contact_email'] = trim((string) ($site['contact_email'] ?? $data['site']['contact_email']));
+        $data['site']['white_label_enabled'] = !empty($site['white_label_enabled']);
+        $data['site']['admin_brand_name'] = trim((string) ($site['admin_brand_name'] ?? ''));
+        $data['site']['admin_brand_tagline'] = trim((string) ($site['admin_brand_tagline'] ?? ''));
+        $data['site']['admin_logo_url'] = ccms_sanitize_url((string) ($site['admin_logo_url'] ?? ''), true);
+        $data['site']['analytics_provider'] = in_array(($site['analytics_provider'] ?? ''), ['', 'ga4', 'plausible'], true)
+            ? (string) ($site['analytics_provider'] ?? '')
+            : '';
+        $data['site']['analytics_id'] = trim((string) ($site['analytics_id'] ?? ''));
         $themePreset = trim((string) ($site['theme_preset'] ?? $data['site']['theme_preset']));
         if (in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
             $data['site']['theme_preset'] = $themePreset;
         }
         $data['site']['custom_css'] = ccms_sanitize_css((string) ($site['custom_css'] ?? ''));
+        if (is_array($site['onboarding'] ?? null)) {
+            $onboarding = $site['onboarding'];
+            $data['site']['onboarding'] = array_merge(
+                ccms_default_onboarding_state(),
+                [
+                    'dismissed' => !empty($onboarding['dismissed']),
+                    'completed' => !empty($onboarding['completed']),
+                    'completed_at' => ($onboarding['completed_at'] ?? null) ? (string) $onboarding['completed_at'] : null,
+                    'exported_at' => ($onboarding['exported_at'] ?? null) ? (string) $onboarding['exported_at'] : null,
+                    'last_step' => trim((string) ($onboarding['last_step'] ?? '')),
+                ]
+            );
+        }
         $data['site']['trusted_plugins_enabled'] = !empty($site['trusted_plugins_enabled']);
         $requestedPlugins = array_values(array_filter(array_map('strval', is_array($site['enabled_plugins'] ?? null) ? $site['enabled_plugins'] : [])));
         $availablePlugins = ccms_discover_plugins();
@@ -499,8 +746,14 @@ function ccms_import_backup_payload(array $payload): array
     if (is_array($payloadData['pages'] ?? null)) {
         $data['pages'] = $payloadData['pages'];
     }
+    if (is_array($payloadData['posts'] ?? null)) {
+        $data['posts'] = $payloadData['posts'];
+    }
     if (is_array($payloadData['media'] ?? null)) {
         $data['media'] = $payloadData['media'];
+    }
+    if (is_array($payloadData['submissions'] ?? null)) {
+        $data['submissions'] = $payloadData['submissions'];
     }
     if (is_array($payloadData['audit_logs'] ?? null)) {
         $data['audit_logs'] = $payloadData['audit_logs'];
@@ -509,7 +762,7 @@ function ccms_import_backup_payload(array $payload): array
         $data['password_reset_tokens'] = $payloadData['password_reset_tokens'];
     }
 
-    $data = ccms_normalize_users($data);
+    $data = ccms_normalize_submissions(ccms_normalize_users($data));
 
     $uploadsDir = ccms_uploads_dir();
     $backupDir = $uploadsDir . '_backup_' . gmdate('Ymd_His');
@@ -579,6 +832,17 @@ function ccms_load_page_by_slug(string $slug): ?array
     return null;
 }
 
+function ccms_load_post_by_slug(string $slug): ?array
+{
+    $data = ccms_load_data();
+    foreach (($data['posts'] ?? []) as $post) {
+        if (($post['slug'] ?? '') === $slug) {
+            return $post;
+        }
+    }
+    return null;
+}
+
 function ccms_load_site_config(): array
 {
     $data = ccms_load_data();
@@ -610,20 +874,45 @@ function ccms_find_page_index(array $data, string $id): ?int
     return null;
 }
 
+function ccms_find_post(array $data, string $id): ?array
+{
+    foreach ($data['posts'] ?? [] as $post) {
+        if (($post['id'] ?? '') === $id) {
+            return $post;
+        }
+    }
+    return null;
+}
+
+function ccms_find_post_index(array $data, string $id): ?int
+{
+    foreach ($data['posts'] ?? [] as $index => $post) {
+        if (($post['id'] ?? '') === $id) {
+            return $index;
+        }
+    }
+    return null;
+}
+
 function ccms_homepage(array $data): ?array
 {
     foreach ($data['pages'] as $page) {
-        if (!empty($page['is_homepage']) && ($page['status'] ?? 'draft') === 'published') {
+        if (!empty($page['is_homepage']) && ccms_record_is_public($page)) {
             return $page;
         }
     }
-    return $data['pages'][0] ?? null;
+    foreach ($data['pages'] as $page) {
+        if (ccms_record_is_public($page)) {
+            return $page;
+        }
+    }
+    return null;
 }
 
 function ccms_page_by_slug(array $data, string $slug): ?array
 {
     foreach ($data['pages'] as $page) {
-        if (($page['slug'] ?? '') === $slug && ($page['status'] ?? 'draft') === 'published') {
+        if (($page['slug'] ?? '') === $slug && ccms_record_is_public($page)) {
             return $page;
         }
     }
@@ -633,10 +922,92 @@ function ccms_page_by_slug(array $data, string $slug): ?array
 function ccms_menu_pages(array $data): array
 {
     $pages = array_values(array_filter($data['pages'], static function (array $page): bool {
-        return ($page['status'] ?? 'draft') === 'published' && !empty($page['show_in_menu']);
+        return ccms_record_is_public($page) && !empty($page['show_in_menu']);
     }));
     usort($pages, static function (array $a, array $b): int {
         return strcmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? ''));
     });
     return $pages;
+}
+
+function ccms_posts_published(array $data): array
+{
+    $posts = array_values(array_filter($data['posts'] ?? [], static function (array $post): bool {
+        return ccms_record_is_public($post);
+    }));
+    usort($posts, static function (array $a, array $b): int {
+        $aDate = (string) ($a['published_at'] ?? $a['updated_at'] ?? '');
+        $bDate = (string) ($b['published_at'] ?? $b['updated_at'] ?? '');
+        return strcmp($bDate, $aDate);
+    });
+    return $posts;
+}
+
+function ccms_post_by_slug(array $data, string $slug): ?array
+{
+    foreach (ccms_posts_published($data) as $post) {
+        if (($post['slug'] ?? '') === $slug) {
+            return $post;
+        }
+    }
+    return null;
+}
+
+function ccms_taxonomy_slug(string $label): string
+{
+    return ccms_slugify($label);
+}
+
+function ccms_posts_for_category_slug(array $data, string $categorySlug): array
+{
+    return array_values(array_filter(ccms_posts_published($data), static function (array $post) use ($categorySlug): bool {
+        foreach ((array) ($post['categories'] ?? []) as $category) {
+            if (ccms_taxonomy_slug((string) $category) === $categorySlug) {
+                return true;
+            }
+        }
+        return false;
+    }));
+}
+
+function ccms_posts_for_tag_slug(array $data, string $tagSlug): array
+{
+    return array_values(array_filter(ccms_posts_published($data), static function (array $post) use ($tagSlug): bool {
+        foreach ((array) ($post['tags'] ?? []) as $tag) {
+            if (ccms_taxonomy_slug((string) $tag) === $tagSlug) {
+                return true;
+            }
+        }
+        return false;
+    }));
+}
+
+function ccms_blog_categories(array $data): array
+{
+    $labels = [];
+    foreach (ccms_posts_published($data) as $post) {
+        foreach ((array) ($post['categories'] ?? []) as $category) {
+            $category = trim((string) $category);
+            if ($category !== '') {
+                $labels[$category] = $category;
+            }
+        }
+    }
+    ksort($labels, SORT_NATURAL | SORT_FLAG_CASE);
+    return array_values($labels);
+}
+
+function ccms_blog_tags(array $data): array
+{
+    $labels = [];
+    foreach (ccms_posts_published($data) as $post) {
+        foreach ((array) ($post['tags'] ?? []) as $tag) {
+            $tag = trim((string) $tag);
+            if ($tag !== '') {
+                $labels[$tag] = $tag;
+            }
+        }
+    }
+    ksort($labels, SORT_NATURAL | SORT_FLAG_CASE);
+    return array_values($labels);
 }

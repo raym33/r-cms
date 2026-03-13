@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Norte - sitio de ejemplo completo para LinuxCMS</title>
+  <meta name="description" content="Ejemplo completo de web de agencia con paginas, blog, formularios, SEO y export estatico.">
+  <link rel="canonical" href="http://127.0.0.1:8088/">
+  <meta property="og:title" content="Studio Norte - sitio de ejemplo completo para LinuxCMS">
+  <meta property="og:description" content="Ejemplo completo de web de agencia con paginas, blog, formularios, SEO y export estatico.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="http://127.0.0.1:8088/">
+  <meta property="og:site_name" content="Studio Norte">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Studio Norte - sitio de ejemplo completo para LinuxCMS">
+  <meta name="twitter:description" content="Ejemplo completo de web de agencia con paginas, blog, formularios, SEO y export estatico.">
+  <style nonce="FYi9Ko6eDGhjE0qGPzfI1uGI">
+    :root{
+      --bg:#f5efe7;
+      --surface:#fffdf9;
+      --text:#2d241f;
+      --muted:#6e6158;
+      --primary:#c86f5c;
+      --secondary:#dcc4b2;
+      --max:1200px;
+      --site-surface-radius:16px;
+      --site-button-radius:14px;
+      --site-shadow:0 24px 52px -34px rgba(47,36,31,.28);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia, &quot;Times New Roman&quot;, serif}
+    a{color:inherit}
+    .shell{width:min(var(--max),calc(100% - 28px));margin:0 auto}
+    .site-header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid rgba(47,36,31,.09)}
+    .site-header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px}
+    .brand{font-weight:800;font-size:20px;text-decoration:none;font-family:Inter, Arial, Helvetica, sans-serif}
+    .menu{display:flex;flex-wrap:wrap;gap:14px}
+    .menu a{text-decoration:none;color:var(--muted);font-weight:700}
+    .menu a:hover{color:var(--text)}
+    .page-shell{padding:32px 0 48px}
+    .page-surface{background:var(--surface);border-radius:var(--site-surface-radius);box-shadow:var(--site-shadow);overflow:hidden}
+    .page-content{padding:0}
+    .site-footer{padding:22px 0 42px;color:var(--muted);font-size:14px;text-align:center}
+    .site-footer a{text-decoration:none;color:var(--text)}
+    .ccms-btn{border-radius:var(--site-button-radius)}
+    h1,h2,h3,h4,h5,h6,.ccms-title,.ccms-section-title{font-family:Inter, Arial, Helvetica, sans-serif}
+    @media (max-width:800px){
+      .site-header-inner{display:block;padding:12px 0}
+      .brand{display:block;margin-bottom:10px}
+      .menu{gap:10px}
+    }
+  </style>
+  <script type="application/ld+json" nonce="FYi9Ko6eDGhjE0qGPzfI1uGI">{"@context":"https://schema.org","@type":"WebSite","name":"Studio Norte - sitio de ejemplo completo para LinuxCMS","description":"Ejemplo completo de web de agencia con paginas, blog, formularios, SEO y export estatico.","url":"http://127.0.0.1:8088/","publisher":{"@type":"Organization","name":"Studio Norte","email":"hello@studionorte.test"}}</script>
+<script defer data-domain="studio-norte-demo.local" src="https://plausible.io/js/script.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell site-header-inner">
+      <a class="brand" href="/">Studio Norte</a>
+      <nav class="menu"><a href="/contact">Contacto</a><a href="/">Inicio</a><a href="/services">Servicios</a><a href="/about">Sobre nosotros</a></nav>
+    </div>
+  </header>
+  <main class="shell page-shell">
+    <div class="page-surface">
+      <div class="page-content"><section style="padding:72px 0 36px">
+  <div class="shell" style="display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center">
+    <div>
+      <span class="ccms-chip">Ejemplo completo LinuxCMS</span>
+      <h1 style="font-size:64px;line-height:1.02;margin:18px 0 18px">Web de agencia con blog, formularios, SEO y paginas publicas listas para vender.</h1>
+      <p style="font-size:20px;line-height:1.8;color:var(--muted);margin:0 0 26px">Studio Norte combina estrategia, identidad y lanzamiento tecnico para estudios creativos, despachos y marcas de autor. Este ejemplo ensena lo que LinuxCMS ya puede entregar hoy sin depender de WordPress.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:14px">
+        <a class="ccms-btn" href="/contact">Pedir propuesta</a>
+        <a class="ccms-btn ccms-btn--ghost" href="/services">Ver servicios</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:28px">
+        <div style="background:#fff;border-radius:20px;padding:18px;border:1px solid rgba(0,0,0,.08)"><strong style="display:block;font-size:34px;line-height:1">18</strong><span style="color:var(--muted)">sitios lanzados en 12 meses</span></div>
+        <div style="background:#fff;border-radius:20px;padding:18px;border:1px solid rgba(0,0,0,.08)"><strong style="display:block;font-size:34px;line-height:1">9 dias</strong><span style="color:var(--muted)">para una home lista</span></div>
+        <div style="background:#fff;border-radius:20px;padding:18px;border:1px solid rgba(0,0,0,.08)"><strong style="display:block;font-size:34px;line-height:1">100%</strong><span style="color:var(--muted)">editable desde LinuxCMS</span></div>
+      </div>
+    </div>
+    <div>
+      <img src="/uploads/studio-norte-hero.svg" alt="Studio Norte hero" style="width:100%;height:560px;object-fit:cover;border-radius:30px;box-shadow:0 30px 60px -36px rgba(0,0,0,.24)" loading="lazy" decoding="async">
+    </div>
+  </div>
+</section>
+
+<section style="padding:18px 0 36px">
+  <div class="shell" style="background:#fff;border-radius:28px;padding:28px;border:1px solid rgba(0,0,0,.08);box-shadow:0 20px 45px -38px rgba(0,0,0,.18)">
+    <div style="display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:end;margin-bottom:18px">
+      <div>
+        <span class="ccms-chip">Servicios</span>
+        <h2 style="font-size:42px;line-height:1.06;margin:14px 0 10px">Una oferta pequena, clara y rentable.</h2>
+      </div>
+      <a href="/services" style="font-weight:800;color:var(--primary)">Ver detalle completo</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+      <h3 style="margin:0 0 10px;font-size:24px">Sprint de lanzamiento</h3><p style="margin:0;color:var(--muted);line-height:1.75">Home, estructura, copy base y checklist tecnico en menos de dos semanas.</p>
+      <h3 style="margin:0 0 10px;font-size:24px">Sistema de contenidos</h3><p style="margin:0;color:var(--muted);line-height:1.75">Paginas, blog, leads, SEO y handoff listo para un equipo pequeno.</p>
+      <h3 style="margin:0 0 10px;font-size:24px">Retainer mensual</h3><p style="margin:0;color:var(--muted);line-height:1.75">Cambios, nuevas paginas, optimizacion de mensajes y revisiones continuas.</p>
+    </div>
+  </div>
+</section>
+
+<section style="padding:18px 0 36px">
+  <div class="shell">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+      <img src="/uploads/studio-norte-case-sierra.svg" alt="Caso Sierra" style="width:100%;height:220px;object-fit:cover" loading="lazy" decoding="async"><div style="padding:20px"><h3 style="margin:0 0 8px;font-size:26px">Sierra Atelier</h3><p style="margin:0 0 14px;color:var(--muted);line-height:1.75">Nueva web editorial para un estudio de interiores con leads semanales consistentes.</p><a href="/contact" style="font-weight:800;color:var(--primary);text-decoration:none">Quiero algo asi</a></div>
+      <img src="/uploads/studio-norte-case-atlas.svg" alt="Caso Atlas" style="width:100%;height:220px;object-fit:cover" loading="lazy" decoding="async"><div style="padding:20px"><h3 style="margin:0 0 8px;font-size:26px">Atlas Legal</h3><p style="margin:0 0 14px;color:var(--muted);line-height:1.75">Sitio para despacho boutique con servicios claros, blog y formulario de consultas.</p><a href="/services" style="font-weight:800;color:var(--primary);text-decoration:none">Ver stack</a></div>
+      <img src="/uploads/studio-norte-case-vela.svg" alt="Caso Vela" style="width:100%;height:220px;object-fit:cover" loading="lazy" decoding="async"><div style="padding:20px"><h3 style="margin:0 0 8px;font-size:26px">Vela Product</h3><p style="margin:0 0 14px;color:var(--muted);line-height:1.75">Landing de producto con narrativa de lanzamiento y seguimiento desde analytics.</p><a href="/blog" style="font-weight:800;color:var(--primary);text-decoration:none">Leer insights</a></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:22px 0 40px">
+  <div class="shell" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+    
+      <span class="ccms-chip">Proceso</span>
+      <h2 style="font-size:40px;line-height:1.06;margin:16px 0 14px">Un flujo pequeno, claro y repetible.</h2>
+      <ol style="margin:0;padding-left:20px;display:grid;gap:12px;color:var(--muted);line-height:1.8">
+        <li>Brief de negocio, publico y objetivo comercial.</li>
+        <li>Arquitectura de paginas, mensajes y estilo.</li>
+        <li>Lanzamiento rapido con LinuxCMS y handoff limpio.</li>
+      </ol>
+    
+    
+      <span style="display:inline-block;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800">Newsletter</span>
+      <h2 style="font-size:38px;line-height:1.06;margin:16px 0 12px">Recibe ideas para lanzar una web mejor en menos tiempo.</h2>
+      <p style="color:rgba(255,255,255,.76);line-height:1.8;margin:0 0 18px">Una secuencia corta sobre estructura, copy, entregables y handoff. Este bloque usa el formulario real de LinuxCMS.</p>
+      <form action="/api/forms/submit" method="post" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center"><input type="hidden" name="kind" value="newsletter"><input type="hidden" name="page_id" value="page_1613d6d5cca9"><input type="hidden" name="page_slug" value="inicio"><input type="hidden" name="page_title" value="Inicio"><input type="hidden" name="block_id" value="newsletter-home"><input type="hidden" name="block_type" value="newsletter"><input type="hidden" name="return_to" value="/"><input type="text" name="company_website" value="" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true"><label style="display:block"><span style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">Email</span><input type="email" name="email" required placeholder="tu@empresa.com" style="width:100%;padding:16px 18px;border:1px solid rgba(0,0,0,.12);border-radius:999px;font:inherit;background:#fff"></label><button class="ccms-btn" type="submit">Recibir novedades</button></form>
+    
+  </div>
+</section>
+
+<section style="padding:22px 0 72px">
+  <div class="shell">
+    <div style="display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:end;margin-bottom:18px">
+      <div>
+        <span class="ccms-chip">Blog</span>
+        <h2 style="font-size:42px;line-height:1.06;margin:16px 0 10px">Contenido publico, categorias, tags y feed RSS.</h2>
+      </div>
+      <a href="/blog" style="font-weight:800;color:var(--primary)">Ver archivo completo</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+      <img src="/uploads/studio-norte-case-sierra.svg" alt="Como lanzar una web de servicios en diez dias sin perder claridad" style="width:100%;height:220px;object-fit:cover" loading="lazy" decoding="async"><div style="padding:22px"><div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--primary);margin-bottom:10px">Estrategia</div><h3 style="font-size:28px;line-height:1.1;margin:0 0 12px">Como lanzar una web de servicios en diez dias sin perder claridad</h3><p style="font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 16px">Una estructura pequena, un CTA claro y un handoff limpio suelen valer mas que seis semanas de indecision.</p><a href="/blog/lanzar-web-servicios-en-diez-dias" style="font-weight:800;color:var(--primary);text-decoration:none">Leer articulo</a></div><img src="/uploads/studio-norte-case-atlas.svg" alt="Cuando conviene exportar una web estatica y cuando no" style="width:100%;height:220px;object-fit:cover" loading="lazy" decoding="async"><div style="padding:22px"><div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--primary);margin-bottom:10px">Tecnico</div><h3 style="font-size:28px;line-height:1.1;margin:0 0 12px">Cuando conviene exportar una web estatica y cuando no</h3><p style="font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 16px">No todos los proyectos necesitan el mismo runtime. A veces el mejor stack es el mas pequeno.</p><a href="/blog/cuando-conviene-exportar-web-estatica" style="font-weight:800;color:var(--primary);text-decoration:none">Leer articulo</a></div><img src="/uploads/studio-norte-case-vela.svg" alt="Tres decisiones de copy que mejoran una home sin rediseñarla" style="width:100%;height:220px;object-fit:cover" loading="lazy" decoding="async"><div style="padding:22px"><div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--primary);margin-bottom:10px">Copy</div><h3 style="font-size:28px;line-height:1.1;margin:0 0 12px">Tres decisiones de copy que mejoran una home sin rediseñarla</h3><p style="font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 16px">Cambiar la promesa, el orden y el CTA suele mover mas negocio que una nueva animacion.</p><a href="/blog/tres-decisiones-de-copy-que-mejoran-una-home" style="font-weight:800;color:var(--primary);text-decoration:none">Leer articulo</a></div>
+    </div>
+  </div>
+</section></div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="shell">Studio Norte - ejemplo completo creado con LinuxCMS.</div>
+  </footer>
+  
+</body>
+</html>

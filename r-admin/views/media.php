@@ -17,7 +17,7 @@
             <label>Archivo</label>
             <input type="file" name="media_file" accept=".jpg,.jpeg,.png,.webp,.gif,.svg" required>
           </div>
-          <button class="btn" type="submit">Subir a la librería</button>
+          <button class="btn" type="submit"><?= ccms_icon('upload', 16) ?>Subir a la librería</button>
         </form>
       </div>
       <div class="help-box">
@@ -32,16 +32,36 @@
   </div>
   <div class="card editor-card">
     <h2>Librería media</h2>
-    <div class="media-grid">
+    <div class="search-toolbar">
+      <div class="search-input-wrap">
+        <?= ccms_icon('search', 16) ?>
+        <input id="searchMedia" class="search-input search-media" type="search" placeholder="Buscar por nombre o URL">
+      </div>
+    </div>
+    <div class="media-grid" id="mediaGrid">
       <?php foreach ($data['media'] as $asset): ?>
-        <article class="media-card">
+        <?php
+          $mediaSearch = trim(implode(' ', array_filter([
+              (string) ($asset['original_name'] ?? ''),
+              (string) ($asset['url'] ?? ''),
+          ])));
+        ?>
+        <article class="media-card" data-media-search="<?= ccms_h($mediaSearch) ?>">
           <img src="<?= ccms_h((string) $asset['url']) ?>" alt="">
           <div class="small"><strong><?= ccms_h((string) $asset['original_name']) ?></strong><br><?= ccms_h((string) $asset['url']) ?></div>
-          <button class="btn btn-secondary" type="button" data-copy-url="<?= ccms_h((string) $asset['url']) ?>">Copiar URL</button>
+          <button
+            class="btn btn-secondary"
+            type="button"
+            data-copy-url="<?= ccms_h((string) $asset['url']) ?>"
+            data-copy-success-label="URL copiada"
+          ><?= ccms_icon('copy', 16) ?>Copiar URL</button>
         </article>
       <?php endforeach; ?>
       <?php if (empty($data['media'])): ?>
-        <p class="muted">Todavía no hay imágenes subidas.</p>
+        <div class="empty-state">
+          <div class="empty-state-title">Todavía no hay imágenes subidas</div>
+          <p class="empty-state-desc">Sube tu primera imagen para reutilizarla luego en páginas y bloques.</p>
+        </div>
       <?php endif; ?>
     </div>
   </div>

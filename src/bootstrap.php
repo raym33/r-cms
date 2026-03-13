@@ -2,10 +2,13 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/icons.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/plugins.php';
 require_once __DIR__ . '/render.php';
+require_once __DIR__ . '/forms.php';
+require_once __DIR__ . '/images.php';
 require_once __DIR__ . '/export.php';
 require_once __DIR__ . '/ai.php';
 require_once __DIR__ . '/admin_context.php';

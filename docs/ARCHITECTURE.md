@@ -27,6 +27,13 @@ LinuxCMS uses:
 
 This keeps the hosted runtime compatible with generic shared hosting.
 
+There is also a container packaging layer for the same runtime:
+
+- Apache + PHP 8.3
+- `.htaccess` enabled through `AllowOverride All`
+- persistent volumes for `data/`, `uploads/`, and `.linuxcms-runtime`
+- same public/admin routes as generic hosting
+
 ## Testing layers
 
 LinuxCMS now has two complementary test layers:
@@ -48,6 +55,14 @@ LinuxCMS adds a local-only authoring layer through LM Studio:
 
 This means the same project can still function on hosting where LM Studio does not exist.
 
+## Deployment surfaces
+
+LinuxCMS currently supports:
+
+1. built-in PHP server for local authoring
+2. generic Apache/PHP hosting
+3. Docker/Apache deployment through `compose.yaml`
+
 ## Data model
 
 Application data is stored as one payload in:
@@ -62,7 +77,9 @@ Main structures:
 - `admin` (legacy compatibility)
 - `users`
 - `pages`
+- `posts`
 - `media`
+- `submissions`
 
 ## Roles
 
@@ -113,10 +130,18 @@ This keeps migration from older tools practical while progressively expanding PH
   - builder
   - preview
   - revisions
+- `Posts`
+  - post CRUD
+  - categories and tags
+  - preview
+  - archive/public post flow
 - `Site`
   - site-wide branding and palette
+  - white-label admin branding for agencies
 - `Media`
   - upload and reuse images
+  - generate responsive local variants on upload
+  - serve best-effort WebP variants when available
 - `Import`
   - import from older capsule/html workflows
 - `Users`
@@ -135,7 +160,7 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
 - `r-admin/views/backups.php`
   - dedicated view module for the `Backups` tab, including full backup export, restore, and static hosting package export
 - `r-admin/views/site.php`
-  - dedicated view module for the `Site` tab, including branding, theme preset, colors, and custom CSS settings
+  - dedicated view module for the `Site` tab, including branding, theme preset, colors, custom CSS settings, and agency white-label admin branding
 - `r-admin/views/audit.php`
   - dedicated view module for the `Audit` tab, focused on recent privileged actions and metadata inspection
 - `r-admin/views/extensions.php`
@@ -169,6 +194,7 @@ The admin is still UI-heavy in a single entry file, but the first structural cut
 - `src/admin_context.php`
   - centralizes admin read-side context building
   - resolves permissions, selected page, preview HTML, builder templates, and JSON bootstrap payloads
+  - resolves agency/admin white-label branding for the login shell, admin chrome, and page titles
 
 This is the first step toward splitting the admin into smaller modules such as pages, media, users, site settings and backups.
 
@@ -191,6 +217,32 @@ Recent hardening work added these runtime protections:
   - `ccms_load_site_config()`
 - public cache support
   - short-lived `ETag` + `Cache-Control` on rendered pages
+
+## Public routing surfaces
+
+The public runtime is reachable through:
+
+- `index.php`
+  - main page resolver
+  - pages
+  - `/blog`
+  - `/blog/{slug}`
+  - `/blog/category/{slug}`
+  - `/blog/tag/{slug}`
+- `router.php`
+  - built-in PHP server router for local development
+- `.htaccess`
+  - Apache rewrite layer for shared hosting and Docker Apache
+- `api/health/index.php`
+  - Apache-compatible health endpoint
+- `api/forms/submit/index.php`
+  - Apache-compatible public forms endpoint
+- `feed.php`
+  - Apache-compatible RSS endpoint for posts
+- `sitemap.php`
+  - Apache-compatible sitemap endpoint
+- `robots.php`
+  - Apache-compatible robots endpoint
 
 ## Builder direction
 
@@ -218,6 +270,25 @@ The current builder already supports:
 - permanent preview hints explaining the edit model without requiring external docs
 - friendlier UI language in client mode (`Sections`, `Advanced JSON`) to reduce builder jargon
 - lightweight site themes with preset styling and optional custom CSS at the site level
+
+## Product-side runtime additions
+
+LinuxCMS now also includes the first commercial baseline features:
+
+- public forms submitted to `/api/forms/submit`
+- lead storage in `submissions`
+- inbox review inside `/r-admin`
+- delivery attempt through PHP `mail()` to `site.contact_email`
+- analytics injection at the site level:
+  - Google Analytics 4
+  - Plausible
+- public SEO baseline:
+  - canonical
+  - Open Graph
+  - Twitter cards
+  - JSON-LD
+  - `sitemap.xml`
+  - `robots.txt`
 - lightweight plugins/extensions discovered from `plugins/` and enabled from the admin
   - disabled by default
   - only loaded in trusted mode
@@ -226,6 +297,11 @@ The current builder already supports:
 - backup restore preserves the previous `uploads/` files in a timestamped backup directory before replacement
 - public runtime sends `ETag` and short-lived cache headers for rendered pages
 - static export packaging that writes a hosting-ready site with `index.html`, slug folders and `uploads/`
+- public HTML image post-processing:
+  - adds `loading="lazy"`
+  - adds `decoding="async"`
+  - injects `srcset`/`sizes` for local uploads when generated variants exist
+  - wraps local images in `<picture>` when WebP variants exist
 
 It is not yet a full Elementor/Figma-style page canvas, but it is already beyond a raw JSON editor.
 
@@ -238,4 +314,15 @@ LinuxCMS is the first branch that aligns with the actual product requirement:
 - no voice required
 - editable by keyboard
 - exportable/deployable to basic hosting
+
+## Product readiness notes
+
+LinuxCMS now has the first practical product-facing layer beyond raw architecture:
+
+- user quickstart documentation
+- user admin guide
+- terms of service template
+- privacy policy template
+
+That does not replace legal review, but it reduces one of the main blockers between "technical project" and "sellable self-hosted product".
 - client still gets `/r-admin`

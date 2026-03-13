@@ -1,0 +1,18 @@
+services:
+  linuxcms:
+    build:
+      context: .
+    ports:
+      - "8088:80"
+    environment:
+      CCMS_ROOT: /var/www/html
+    volumes:
+      - ./data:/var/www/html/data
+      - ./uploads:/var/www/html/uploads
+      - ./.linuxcms-runtime:/var/www/html/.linuxcms-runtime
+    healthcheck:
+      test: ["CMD", "php", "-r", "$ctx=stream_context_create(['http'=>['timeout'=>3]]); $json=@file_get_contents('http://127.0.0.1/api/health', false, $ctx); if ($json===false) exit(1); $data=json_decode($json, true); exit((is_array($data) && !empty($data['ok'])) ? 0 : 1);"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

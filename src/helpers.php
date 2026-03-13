@@ -51,6 +51,34 @@ function ccms_base_url(): string
     return $scheme . '://' . $host;
 }
 
+function ccms_admin_branding(array $site): array
+{
+    $enabled = !empty($site['white_label_enabled']);
+    $brandName = trim((string) ($site['admin_brand_name'] ?? ''));
+    $brandTagline = trim((string) ($site['admin_brand_tagline'] ?? ''));
+    $logoUrl = ccms_sanitize_url((string) ($site['admin_logo_url'] ?? ''), true);
+
+    if (!$enabled || $brandName === '') {
+        return [
+            'enabled' => false,
+            'name' => 'LinuxCMS',
+            'tagline' => 'Bienvenido, este panel ya se comporta más como un pequeño WordPress para hosting genérico.',
+            'logo_url' => '',
+            'admin_title' => 'r-admin',
+            'page_title' => 'r-admin | LinuxCMS',
+        ];
+    }
+
+    return [
+        'enabled' => true,
+        'name' => $brandName,
+        'tagline' => $brandTagline !== '' ? $brandTagline : 'Panel privado para gestionar contenido, páginas y medios.',
+        'logo_url' => $logoUrl,
+        'admin_title' => $brandName,
+        'page_title' => $brandName . ' | Admin',
+    ];
+}
+
 function ccms_send_common_security_headers(): void
 {
     if (headers_sent()) {
@@ -62,7 +90,7 @@ function ccms_send_common_security_headers(): void
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: same-origin');
     header("Permissions-Policy: camera=(), microphone=(), geolocation=()");
-    header("Content-Security-Policy: default-src 'self' https:; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' https: data: blob:; style-src 'self' 'nonce-{$nonce}' https:; style-src-attr 'unsafe-inline'; script-src 'self' 'nonce-{$nonce}'; frame-src 'self'; connect-src 'self' http://127.0.0.1:1234 http://localhost:1234 https:;");
+    header("Content-Security-Policy: default-src 'self' https:; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' https: data: blob:; style-src 'self' 'nonce-{$nonce}' https:; style-src-attr 'unsafe-inline'; script-src 'self' 'nonce-{$nonce}' https://www.googletagmanager.com https://plausible.io; frame-src 'self'; connect-src 'self' http://127.0.0.1:1234 http://localhost:1234 https://www.google-analytics.com https://region1.google-analytics.com https://plausible.io https:;");
 }
 
 function ccms_send_admin_headers(): void

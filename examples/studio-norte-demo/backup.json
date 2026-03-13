@@ -1,0 +1,314 @@
+{
+    "format": "linuxcms-backup",
+    "version": 1,
+    "exported_at": "2026-03-13T08:37:47+00:00",
+    "storage_driver": "json",
+    "data": {
+        "installed_at": "2026-03-13T08:37:47+00:00",
+        "site": {
+            "title": "Studio Norte",
+            "tagline": "Brand, web and launch systems for studios and professional service firms.",
+            "footer_text": "Studio Norte - ejemplo completo creado con LinuxCMS.",
+            "contact_email": "hello@studionorte.test",
+            "white_label_enabled": false,
+            "admin_brand_name": "",
+            "admin_brand_tagline": "",
+            "admin_logo_url": "",
+            "analytics_provider": "plausible",
+            "analytics_id": "studio-norte-demo.local",
+            "theme_preset": "editorial",
+            "custom_css": "",
+            "onboarding": {
+                "dismissed": false,
+                "completed": false,
+                "completed_at": null,
+                "exported_at": null,
+                "last_step": ""
+            },
+            "trusted_plugins_enabled": false,
+            "enabled_plugins": [],
+            "colors": {
+                "bg": "#f5efe7",
+                "surface": "#fffdf9",
+                "text": "#2d241f",
+                "muted": "#6e6158",
+                "primary": "#c86f5c",
+                "secondary": "#dcc4b2"
+            }
+        },
+        "local_ai": {
+            "endpoint": "http://127.0.0.1:1234/v1",
+            "model": "",
+            "temperature": 0.2,
+            "max_tokens": 2800,
+            "timeout": 20
+        },
+        "admin": {
+            "id": "user_0b17db7ea650",
+            "username": "demo",
+            "email": "demo@studionorte.test",
+            "password_hash": "$2y$12$QrhNa/1.UMG3bUKaGIgf.OeaW5L6ug3HsXb0K6EcC5bFABaUNW/5y",
+            "created_at": "2026-03-13T08:37:47+00:00"
+        },
+        "users": [
+            {
+                "id": "user_0b17db7ea650",
+                "username": "demo",
+                "email": "demo@studionorte.test",
+                "password_hash": "$2y$12$QrhNa/1.UMG3bUKaGIgf.OeaW5L6ug3HsXb0K6EcC5bFABaUNW/5y",
+                "role": "owner",
+                "must_change_password": false,
+                "last_login_at": null,
+                "totp_secret": "",
+                "totp_enabled": false,
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00"
+            }
+        ],
+        "pages": [
+            {
+                "id": "page_1613d6d5cca9",
+                "title": "Inicio",
+                "slug": "inicio",
+                "status": "published",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "is_homepage": true,
+                "show_in_menu": true,
+                "menu_label": "Inicio",
+                "meta_title": "Studio Norte - sitio de ejemplo completo para LinuxCMS",
+                "meta_description": "Ejemplo completo de web de agencia con paginas, blog, formularios, SEO y export estatico.",
+                "capsule_json": "{}",
+                "html_content": "<section style=\"padding:72px 0 36px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center\">\n    <div>\n      <span class=\"ccms-chip\">Ejemplo completo LinuxCMS</span>\n      <h1 style=\"font-size:64px;line-height:1.02;margin:18px 0 18px\">Web de agencia con blog, formularios, SEO y paginas publicas listas para vender.</h1>\n      <p style=\"font-size:20px;line-height:1.8;color:var(--muted);margin:0 0 26px\">Studio Norte combina estrategia, identidad y lanzamiento tecnico para estudios creativos, despachos y marcas de autor. Este ejemplo ensena lo que LinuxCMS ya puede entregar hoy sin depender de WordPress.</p>\n      <div style=\"display:flex;flex-wrap:wrap;gap:14px\">\n        <a class=\"ccms-btn\" href=\"/contact\">Pedir propuesta</a>\n        <a class=\"ccms-btn ccms-btn--ghost\" href=\"/services\">Ver servicios</a>\n      </div>\n      <div style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:28px\">\n        <div style=\"background:#fff;border-radius:20px;padding:18px;border:1px solid rgba(0,0,0,.08)\"><strong style=\"display:block;font-size:34px;line-height:1\">18</strong><span style=\"color:var(--muted)\">sitios lanzados en 12 meses</span></div>\n        <div style=\"background:#fff;border-radius:20px;padding:18px;border:1px solid rgba(0,0,0,.08)\"><strong style=\"display:block;font-size:34px;line-height:1\">9 dias</strong><span style=\"color:var(--muted)\">para una home lista</span></div>\n        <div style=\"background:#fff;border-radius:20px;padding:18px;border:1px solid rgba(0,0,0,.08)\"><strong style=\"display:block;font-size:34px;line-height:1\">100%</strong><span style=\"color:var(--muted)\">editable desde LinuxCMS</span></div>\n      </div>\n    </div>\n    <div>\n      <img src=\"/uploads/studio-norte-hero.svg\" alt=\"Studio Norte hero\" style=\"width:100%;height:560px;object-fit:cover;border-radius:30px;box-shadow:0 30px 60px -36px rgba(0,0,0,.24)\">\n    </div>\n  </div>\n</section>\n\n<section style=\"padding:18px 0 36px\">\n  <div class=\"shell\" style=\"background:#fff;border-radius:28px;padding:28px;border:1px solid rgba(0,0,0,.08);box-shadow:0 20px 45px -38px rgba(0,0,0,.18)\">\n    <div style=\"display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:end;margin-bottom:18px\">\n      <div>\n        <span class=\"ccms-chip\">Servicios</span>\n        <h2 style=\"font-size:42px;line-height:1.06;margin:14px 0 10px\">Una oferta pequena, clara y rentable.</h2>\n      </div>\n      <a href=\"/services\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Ver detalle completo</a>\n    </div>\n    <div style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px\">\n      <article style=\"padding:22px;border-radius:22px;background:#f8f3ee\"><h3 style=\"margin:0 0 10px;font-size:24px\">Sprint de lanzamiento</h3><p style=\"margin:0;color:var(--muted);line-height:1.75\">Home, estructura, copy base y checklist tecnico en menos de dos semanas.</p></article>\n      <article style=\"padding:22px;border-radius:22px;background:#f8f3ee\"><h3 style=\"margin:0 0 10px;font-size:24px\">Sistema de contenidos</h3><p style=\"margin:0;color:var(--muted);line-height:1.75\">Paginas, blog, leads, SEO y handoff listo para un equipo pequeno.</p></article>\n      <article style=\"padding:22px;border-radius:22px;background:#f8f3ee\"><h3 style=\"margin:0 0 10px;font-size:24px\">Retainer mensual</h3><p style=\"margin:0;color:var(--muted);line-height:1.75\">Cambios, nuevas paginas, optimizacion de mensajes y revisiones continuas.</p></article>\n    </div>\n  </div>\n</section>\n\n<section style=\"padding:18px 0 36px\">\n  <div class=\"shell\">\n    <div style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px\">\n      <article style=\"background:#fff;border-radius:26px;overflow:hidden;border:1px solid rgba(0,0,0,.08)\"><img src=\"/uploads/studio-norte-case-sierra.svg\" alt=\"Caso Sierra\" style=\"width:100%;height:220px;object-fit:cover\"><div style=\"padding:20px\"><h3 style=\"margin:0 0 8px;font-size:26px\">Sierra Atelier</h3><p style=\"margin:0 0 14px;color:var(--muted);line-height:1.75\">Nueva web editorial para un estudio de interiores con leads semanales consistentes.</p><a href=\"/contact\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Quiero algo asi</a></div></article>\n      <article style=\"background:#fff;border-radius:26px;overflow:hidden;border:1px solid rgba(0,0,0,.08)\"><img src=\"/uploads/studio-norte-case-atlas.svg\" alt=\"Caso Atlas\" style=\"width:100%;height:220px;object-fit:cover\"><div style=\"padding:20px\"><h3 style=\"margin:0 0 8px;font-size:26px\">Atlas Legal</h3><p style=\"margin:0 0 14px;color:var(--muted);line-height:1.75\">Sitio para despacho boutique con servicios claros, blog y formulario de consultas.</p><a href=\"/services\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Ver stack</a></div></article>\n      <article style=\"background:#fff;border-radius:26px;overflow:hidden;border:1px solid rgba(0,0,0,.08)\"><img src=\"/uploads/studio-norte-case-vela.svg\" alt=\"Caso Vela\" style=\"width:100%;height:220px;object-fit:cover\"><div style=\"padding:20px\"><h3 style=\"margin:0 0 8px;font-size:26px\">Vela Product</h3><p style=\"margin:0 0 14px;color:var(--muted);line-height:1.75\">Landing de producto con narrativa de lanzamiento y seguimiento desde analytics.</p><a href=\"/blog\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Leer insights</a></div></article>\n    </div>\n  </div>\n</section>\n\n<section style=\"padding:22px 0 40px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start\">\n    <article style=\"background:#fff;border-radius:28px;padding:28px;border:1px solid rgba(0,0,0,.08)\">\n      <span class=\"ccms-chip\">Proceso</span>\n      <h2 style=\"font-size:40px;line-height:1.06;margin:16px 0 14px\">Un flujo pequeno, claro y repetible.</h2>\n      <ol style=\"margin:0;padding-left:20px;display:grid;gap:12px;color:var(--muted);line-height:1.8\">\n        <li>Brief de negocio, publico y objetivo comercial.</li>\n        <li>Arquitectura de paginas, mensajes y estilo.</li>\n        <li>Lanzamiento rapido con LinuxCMS y handoff limpio.</li>\n      </ol>\n    </article>\n    <article style=\"background:#2f241f;color:#fff;border-radius:28px;padding:28px;box-shadow:0 28px 55px -34px rgba(0,0,0,.35)\">\n      <span style=\"display:inline-block;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800\">Newsletter</span>\n      <h2 style=\"font-size:38px;line-height:1.06;margin:16px 0 12px\">Recibe ideas para lanzar una web mejor en menos tiempo.</h2>\n      <p style=\"color:rgba(255,255,255,.76);line-height:1.8;margin:0 0 18px\">Una secuencia corta sobre estructura, copy, entregables y handoff. Este bloque usa el formulario real de LinuxCMS.</p>\n      <form action=\"/api/forms/submit\" method=\"post\" style=\"display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center\"><input type=\"hidden\" name=\"kind\" value=\"newsletter\"><input type=\"hidden\" name=\"page_id\" value=\"page_1613d6d5cca9\"><input type=\"hidden\" name=\"page_slug\" value=\"inicio\"><input type=\"hidden\" name=\"page_title\" value=\"Inicio\"><input type=\"hidden\" name=\"block_id\" value=\"newsletter-home\"><input type=\"hidden\" name=\"block_type\" value=\"newsletter\"><input type=\"hidden\" name=\"return_to\" value=\"/\"><input type=\"text\" name=\"company_website\" value=\"\" tabindex=\"-1\" autocomplete=\"off\" style=\"position:absolute;left:-9999px;opacity:0;pointer-events:none\" aria-hidden=\"true\"><label style=\"display:block\"><span style=\"display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px\">Email</span><input type=\"email\" name=\"email\" required placeholder=\"tu@empresa.com\" style=\"width:100%;padding:16px 18px;border:1px solid rgba(0,0,0,.12);border-radius:999px;font:inherit;background:#fff\"></label><button class=\"ccms-btn\" type=\"submit\">Recibir novedades</button></form>\n    </article>\n  </div>\n</section>\n\n<section style=\"padding:22px 0 72px\">\n  <div class=\"shell\">\n    <div style=\"display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:end;margin-bottom:18px\">\n      <div>\n        <span class=\"ccms-chip\">Blog</span>\n        <h2 style=\"font-size:42px;line-height:1.06;margin:16px 0 10px\">Contenido publico, categorias, tags y feed RSS.</h2>\n      </div>\n      <a href=\"/blog\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Ver archivo completo</a>\n    </div>\n    <div style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px\">\n      <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:24px;overflow:hidden;box-shadow:0 20px 40px -34px rgba(0,0,0,.18)\"><img src=\"/uploads/studio-norte-case-sierra.svg\" alt=\"Como lanzar una web de servicios en diez dias sin perder claridad\" style=\"width:100%;height:220px;object-fit:cover\"><div style=\"padding:22px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--primary);margin-bottom:10px\">Estrategia</div><h3 style=\"font-size:28px;line-height:1.1;margin:0 0 12px\">Como lanzar una web de servicios en diez dias sin perder claridad</h3><p style=\"font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 16px\">Una estructura pequena, un CTA claro y un handoff limpio suelen valer mas que seis semanas de indecision.</p><a href=\"/blog/lanzar-web-servicios-en-diez-dias\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Leer articulo</a></div></article><article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:24px;overflow:hidden;box-shadow:0 20px 40px -34px rgba(0,0,0,.18)\"><img src=\"/uploads/studio-norte-case-atlas.svg\" alt=\"Cuando conviene exportar una web estatica y cuando no\" style=\"width:100%;height:220px;object-fit:cover\"><div style=\"padding:22px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--primary);margin-bottom:10px\">Tecnico</div><h3 style=\"font-size:28px;line-height:1.1;margin:0 0 12px\">Cuando conviene exportar una web estatica y cuando no</h3><p style=\"font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 16px\">No todos los proyectos necesitan el mismo runtime. A veces el mejor stack es el mas pequeno.</p><a href=\"/blog/cuando-conviene-exportar-web-estatica\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Leer articulo</a></div></article><article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:24px;overflow:hidden;box-shadow:0 20px 40px -34px rgba(0,0,0,.18)\"><img src=\"/uploads/studio-norte-case-vela.svg\" alt=\"Tres decisiones de copy que mejoran una home sin rediseñarla\" style=\"width:100%;height:220px;object-fit:cover\"><div style=\"padding:22px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--primary);margin-bottom:10px\">Copy</div><h3 style=\"font-size:28px;line-height:1.1;margin:0 0 12px\">Tres decisiones de copy que mejoran una home sin rediseñarla</h3><p style=\"font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 16px\">Cambiar la promesa, el orden y el CTA suele mover mas negocio que una nueva animacion.</p><a href=\"/blog/tres-decisiones-de-copy-que-mejoran-una-home\" style=\"font-weight:800;color:var(--primary);text-decoration:none\">Leer articulo</a></div></article>\n    </div>\n  </div>\n</section>",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00",
+                "revisions": []
+            },
+            {
+                "id": "page_448190a193da",
+                "title": "Servicios",
+                "slug": "services",
+                "status": "published",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "is_homepage": false,
+                "show_in_menu": true,
+                "menu_label": "Servicios",
+                "meta_title": "Servicios - Studio Norte",
+                "meta_description": "Paquetes de lanzamiento, sistema de contenidos y soporte mensual.",
+                "capsule_json": "{}",
+                "html_content": "<section style=\"padding:64px 0 28px\">\n  <div class=\"shell\">\n    <span class=\"ccms-chip\">Servicios</span>\n    <h1 style=\"font-size:56px;line-height:1.04;margin:16px 0 14px\">Paquetes pensados para entregar una web clara, bonita y mantenible.</h1>\n    <p style=\"font-size:19px;line-height:1.8;color:var(--muted);max-width:760px;margin:0\">Este ejemplo ensena que LinuxCMS puede vivir como web corporativa, blog, generador de leads y paquete estatico para hosting basico.</p>\n  </div>\n</section>\n<section style=\"padding:18px 0 36px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px\">\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:26px;padding:24px\"><h2 style=\"font-size:28px;margin:0 0 10px\">Launch Sprint</h2><p style=\"color:var(--muted);line-height:1.75;margin:0 0 16px\">Home, servicios, contacto y configuracion SEO minima.</p><strong style=\"font-size:32px\">2.900 EUR</strong><ul style=\"line-height:1.8;color:var(--muted)\"><li>Arquitectura de mensajes</li><li>4 paginas</li><li>Formulario funcionando</li></ul></article>\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:26px;padding:24px;box-shadow:0 26px 50px -38px rgba(0,0,0,.24)\"><div style=\"display:inline-flex;padding:8px 12px;border-radius:999px;background:rgba(200,111,92,.12);color:var(--primary);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px\">Mas vendido</div><h2 style=\"font-size:28px;margin:0 0 10px\">Site System</h2><p style=\"color:var(--muted);line-height:1.75;margin:0 0 16px\">Web completa con blog, handoff y export estatico.</p><strong style=\"font-size:32px\">5.800 EUR</strong><ul style=\"line-height:1.8;color:var(--muted)\"><li>Paginas + blog</li><li>SEO + analytics</li><li>Documentacion de handoff</li></ul></article>\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:26px;padding:24px\"><h2 style=\"font-size:28px;margin:0 0 10px\">Monthly Ops</h2><p style=\"color:var(--muted);line-height:1.75;margin:0 0 16px\">Soporte para nuevas landings, articulos y optimizacion.</p><strong style=\"font-size:32px\">780 EUR/mes</strong><ul style=\"line-height:1.8;color:var(--muted)\"><li>1 sprint mensual</li><li>Cambios priorizados</li><li>Revision de conversion</li></ul></article>\n  </div>\n</section>\n<section style=\"padding:12px 0 64px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center\">\n    <div>\n      <h2 style=\"font-size:40px;line-height:1.06;margin:0 0 14px\">Lo que se entrega al final</h2>\n      <ul style=\"line-height:1.9;color:var(--muted);font-size:18px;padding-left:20px\">\n        <li>Web publicada y editable desde LinuxCMS.</li>\n        <li>Blog con categorias, tags y RSS.</li>\n        <li>SEO tecnico minimo y analytics activados.</li>\n        <li>Export estatico listo para hosting basico.</li>\n      </ul>\n    </div>\n    <img src=\"/uploads/studio-norte-case-atlas.svg\" alt=\"Services\" style=\"width:100%;height:420px;object-fit:cover;border-radius:30px;box-shadow:0 30px 60px -36px rgba(0,0,0,.24)\">\n  </div>\n</section>",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00",
+                "revisions": []
+            },
+            {
+                "id": "page_83db6f3c46be",
+                "title": "Sobre nosotros",
+                "slug": "about",
+                "status": "published",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "is_homepage": false,
+                "show_in_menu": true,
+                "menu_label": "Sobre nosotros",
+                "meta_title": "Sobre Studio Norte",
+                "meta_description": "Equipo, enfoque y principios del ejemplo de agencia creado con LinuxCMS.",
+                "capsule_json": "{}",
+                "html_content": "<section style=\"padding:64px 0 26px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:center\">\n    <img src=\"/uploads/studio-norte-portrait.svg\" alt=\"Camila Norte\" style=\"width:100%;height:520px;object-fit:cover;border-radius:30px;box-shadow:0 30px 60px -36px rgba(0,0,0,.24)\">\n    <div>\n      <span class=\"ccms-chip\">Sobre Studio Norte</span>\n      <h1 style=\"font-size:54px;line-height:1.04;margin:18px 0 14px\">Un equipo pequeno para marcas que no quieren otra web generica.</h1>\n      <p style=\"font-size:19px;line-height:1.8;color:var(--muted);margin:0 0 18px\">Studio Norte nace para reducir el salto entre estrategia, diseno y lanzamiento. Este ejemplo muestra una marca de servicios con narrativa clara, formularios reales y blog integrado.</p>\n      <p style=\"font-size:18px;line-height:1.8;color:var(--muted);margin:0\">Trabajamos con estudios, despachos y equipos fundadores que necesitan una web sobria, comercial y facil de mantener sin cargar con un stack enorme.</p>\n    </div>\n  </div>\n</section>\n<section style=\"padding:18px 0 64px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px\">\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:24px;padding:22px\"><h2 style=\"font-size:26px;margin:0 0 10px\">Clarity first</h2><p style=\"margin:0;color:var(--muted);line-height:1.8\">Lo primero es ordenar oferta, publico y CTA antes de hablar de animaciones o adornos.</p></article>\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:24px;padding:22px\"><h2 style=\"font-size:26px;margin:0 0 10px\">Small systems</h2><p style=\"margin:0;color:var(--muted);line-height:1.8\">Preferimos sistemas pequenos, bien documentados y faciles de entregar a un cliente real.</p></article>\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:24px;padding:22px\"><h2 style=\"font-size:26px;margin:0 0 10px\">Shipping over polish</h2><p style=\"margin:0;color:var(--muted);line-height:1.8\">La mejor web es la que sale a tiempo, convierte y el cliente puede mantener sin miedo.</p></article>\n  </div>\n</section>",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00",
+                "revisions": []
+            },
+            {
+                "id": "page_6020d79cf923",
+                "title": "Contacto",
+                "slug": "contact",
+                "status": "published",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "is_homepage": false,
+                "show_in_menu": true,
+                "menu_label": "Contacto",
+                "meta_title": "Contacto - Studio Norte",
+                "meta_description": "Formulario real de contacto y siguientes pasos comerciales.",
+                "capsule_json": "{}",
+                "html_content": "<section style=\"padding:64px 0 28px\">\n  <div class=\"shell\" style=\"display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start\">\n    <article style=\"background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:30px;padding:28px\">\n      <span class=\"ccms-chip\">Contacto</span>\n      <h1 style=\"font-size:50px;line-height:1.04;margin:16px 0 14px\">Cuéntanos el proyecto y te respondemos con un siguiente paso concreto.</h1>\n      <p style=\"font-size:18px;line-height:1.8;color:var(--muted);margin:0 0 18px\">Este formulario usa el flujo real de LinuxCMS: guarda el lead, lo deja en Inbox y tambien intenta enviar email a la direccion del sitio.</p>\n      <div style=\"display:grid;gap:12px;color:var(--muted);font-size:16px;line-height:1.8;margin:0 0 22px\">\n        <div><strong style=\"color:var(--text)\">Email:</strong> hello@studionorte.test</div>\n        <div><strong style=\"color:var(--text)\">Ciudad:</strong> Madrid, trabajo remoto para toda Espana</div>\n        <div><strong style=\"color:var(--text)\">Tiempo de respuesta:</strong> 1 dia laborable</div>\n      </div>\n      <form action=\"/api/forms/submit\" method=\"post\" style=\"display:grid;gap:14px\"><input type=\"hidden\" name=\"kind\" value=\"contact\"><input type=\"hidden\" name=\"page_id\" value=\"page_6020d79cf923\"><input type=\"hidden\" name=\"page_slug\" value=\"contact\"><input type=\"hidden\" name=\"page_title\" value=\"Contacto\"><input type=\"hidden\" name=\"block_id\" value=\"contact-main\"><input type=\"hidden\" name=\"block_type\" value=\"contact\"><input type=\"hidden\" name=\"return_to\" value=\"/contact\"><input type=\"text\" name=\"company_website\" value=\"\" tabindex=\"-1\" autocomplete=\"off\" style=\"position:absolute;left:-9999px;opacity:0;pointer-events:none\" aria-hidden=\"true\"><div style=\"display:grid;grid-template-columns:1fr 1fr;gap:14px\"><label style=\"display:block\"><span style=\"display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px\">Nombre</span><input type=\"text\" name=\"name\" required placeholder=\"Tu nombre\" style=\"width:100%;padding:15px 16px;border:1px solid rgba(0,0,0,.12);border-radius:16px;font:inherit;background:#fff\"></label><label style=\"display:block\"><span style=\"display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px\">Email</span><input type=\"email\" name=\"email\" required placeholder=\"tu@empresa.com\" style=\"width:100%;padding:15px 16px;border:1px solid rgba(0,0,0,.12);border-radius:16px;font:inherit;background:#fff\"></label></div><div style=\"display:grid;grid-template-columns:1fr 1fr;gap:14px\"><label style=\"display:block\"><span style=\"display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px\">Telefono</span><input type=\"text\" name=\"phone\" placeholder=\"+34 600 000 000\" style=\"width:100%;padding:15px 16px;border:1px solid rgba(0,0,0,.12);border-radius:16px;font:inherit;background:#fff\"></label><label style=\"display:block\"><span style=\"display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px\">Empresa</span><input type=\"text\" name=\"company\" placeholder=\"Nombre de tu estudio\" style=\"width:100%;padding:15px 16px;border:1px solid rgba(0,0,0,.12);border-radius:16px;font:inherit;background:#fff\"></label></div><label style=\"display:block\"><span style=\"display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px\">Que quieres lanzar</span><textarea name=\"message\" rows=\"6\" required placeholder=\"Cuantanos el proyecto, el plazo y el objetivo comercial.\" style=\"width:100%;padding:16px;border:1px solid rgba(0,0,0,.12);border-radius:18px;font:inherit;background:#fff;resize:vertical\"></textarea></label><button class=\"ccms-btn\" type=\"submit\" style=\"justify-self:start\">Pedir propuesta</button></form>\n    </article>\n    <div style=\"display:grid;gap:18px\">\n      <img src=\"/uploads/studio-norte-case-sierra.svg\" alt=\"Contacto\" style=\"width:100%;height:280px;object-fit:cover;border-radius:28px;box-shadow:0 30px 60px -36px rgba(0,0,0,.24)\">\n      <article style=\"background:#2f241f;color:#fff;border-radius:28px;padding:24px\">\n        <h2 style=\"font-size:28px;margin:0 0 10px\">Que suele salir de la primera llamada</h2>\n        <ul style=\"margin:0;padding-left:18px;line-height:1.9;color:rgba(255,255,255,.78)\">\n          <li>prioridad real de la web</li>\n          <li>estructura minima de paginas</li>\n          <li>que se puede lanzar primero y que no</li>\n          <li>si conviene LinuxCMS + export o mantenimiento continuo</li>\n        </ul>\n      </article>\n    </div>\n  </div>\n</section>",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00",
+                "revisions": []
+            }
+        ],
+        "posts": [
+            {
+                "id": "post_67cce992cc1c",
+                "title": "Como lanzar una web de servicios en diez dias sin perder claridad",
+                "slug": "lanzar-web-servicios-en-diez-dias",
+                "status": "published",
+                "excerpt": "Una estructura pequena, un CTA claro y un handoff limpio suelen valer mas que seis semanas de indecision.",
+                "content_html": "<p style=\"font-size:20px;line-height:1.8;color:var(--muted)\">Cuando una web tarda demasiado en salir, normalmente no falta diseno: falta decidir que se quiere vender primero.</p><p><img src=\"/uploads/studio-norte-case-sierra.svg\" alt=\"Como lanzar una web de servicios en diez dias sin perder claridad\" style=\"width:100%;height:auto;border-radius:24px;box-shadow:0 20px 45px -34px rgba(0,0,0,.18)\"></p><h2>Empieza por la oferta</h2><p>Antes de hablar de layouts, define una oferta principal y una accion clara. Si la web intenta vender todo al mismo tiempo, el visitante no sabe por donde entrar.</p><p>En LinuxCMS esto se traduce muy bien a una home, una pagina de servicios y una pagina de contacto con mensajes simples.</p><ul><li>una promesa principal</li><li>un publico claro</li><li>un CTA visible</li></ul><h2>Entrega ligera</h2><p>Para muchos clientes, una entrega ligera con blog, formularios y export estatico es mas util que una instalacion pesada con demasiadas dependencias.</p>",
+                "cover_image": "/uploads/studio-norte-case-sierra.svg",
+                "author_name": "Camila Norte",
+                "categories": [
+                    "Estrategia"
+                ],
+                "tags": [
+                    "Lanzamiento",
+                    "Servicios",
+                    "Conversion"
+                ],
+                "meta_title": "Lanzar una web de servicios en 10 dias",
+                "meta_description": "Guia corta sobre estructura, CTA y lanzamiento para webs de servicios.",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00"
+            },
+            {
+                "id": "post_128b583ae481",
+                "title": "Cuando conviene exportar una web estatica y cuando no",
+                "slug": "cuando-conviene-exportar-web-estatica",
+                "status": "published",
+                "excerpt": "No todos los proyectos necesitan el mismo runtime. A veces el mejor stack es el mas pequeno.",
+                "content_html": "<p style=\"font-size:20px;line-height:1.8;color:var(--muted)\">Una exportacion estatica no es una version pobre del sitio. En muchos proyectos pequenos es la opcion mas estable y barata.</p><p><img src=\"/uploads/studio-norte-case-atlas.svg\" alt=\"Cuando conviene exportar una web estatica y cuando no\" style=\"width:100%;height:auto;border-radius:24px;box-shadow:0 20px 45px -34px rgba(0,0,0,.18)\"></p><h2>Cuatro casos claros</h2><p>Si el sitio tiene pocas paginas, pocas actualizaciones y un formulario sencillo, una exportacion estatica suele ser suficiente.</p><ul><li>microsites</li><li>landings de campana</li><li>sites corporativos pequenos</li><li>proyectos con hosting basico</li></ul><h2>Cuando necesitas CMS vivo</h2><p>Si el cliente va a publicar posts a menudo, revisar leads o tocar secciones, conviene mantener LinuxCMS como backend activo.</p>",
+                "cover_image": "/uploads/studio-norte-case-atlas.svg",
+                "author_name": "Camila Norte",
+                "categories": [
+                    "Tecnico"
+                ],
+                "tags": [
+                    "Hosting",
+                    "Static Export",
+                    "LinuxCMS"
+                ],
+                "meta_title": "Cuando exportar una web estatica",
+                "meta_description": "Criterios practicos para elegir entre CMS activo y export estatico.",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00"
+            },
+            {
+                "id": "post_891568359171",
+                "title": "Tres decisiones de copy que mejoran una home sin rediseñarla",
+                "slug": "tres-decisiones-de-copy-que-mejoran-una-home",
+                "status": "published",
+                "excerpt": "Cambiar la promesa, el orden y el CTA suele mover mas negocio que una nueva animacion.",
+                "content_html": "<p style=\"font-size:20px;line-height:1.8;color:var(--muted)\">El mejor upgrade de una home no suele ser visual. Suele ser verbal.</p><p><img src=\"/uploads/studio-norte-case-vela.svg\" alt=\"Tres decisiones de copy que mejoran una home sin redisenarla\" style=\"width:100%;height:auto;border-radius:24px;box-shadow:0 20px 45px -34px rgba(0,0,0,.18)\"></p><h2>Promesa primero</h2><p>La primera frase debe decir con claridad que problema resuelves y para quien.</p><h2>El CTA no puede ser abstracto</h2><p>Evita botones como &quot;Saber mas&quot; si lo que en realidad quieres es una llamada, una demo o una consulta.</p><ul><li>Reservar llamada</li><li>Pedir propuesta</li><li>Descargar dossier</li></ul>",
+                "cover_image": "/uploads/studio-norte-case-vela.svg",
+                "author_name": "Camila Norte",
+                "categories": [
+                    "Copy"
+                ],
+                "tags": [
+                    "Home",
+                    "CTA",
+                    "Mensajes"
+                ],
+                "meta_title": "Tres decisiones de copy para mejorar una home",
+                "meta_description": "Promesa, orden y CTA: tres cambios concretos para una home mas clara.",
+                "published_at": "2026-03-13T08:37:47+00:00",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "updated_at": "2026-03-13T08:37:47+00:00"
+            }
+        ],
+        "media": [
+            {
+                "id": "media_81e0447465c1",
+                "filename": "studio-norte-hero.svg",
+                "original_name": "studio-norte-hero.svg",
+                "url": "/uploads/studio-norte-hero.svg",
+                "uploaded_at": "2026-03-13T08:37:47+00:00",
+                "optimized": {
+                    "available": false,
+                    "variants": 0,
+                    "webp_variants": 0
+                }
+            },
+            {
+                "id": "media_9bed90768504",
+                "filename": "studio-norte-case-sierra.svg",
+                "original_name": "studio-norte-case-sierra.svg",
+                "url": "/uploads/studio-norte-case-sierra.svg",
+                "uploaded_at": "2026-03-13T08:37:47+00:00",
+                "optimized": {
+                    "available": false,
+                    "variants": 0,
+                    "webp_variants": 0
+                }
+            },
+            {
+                "id": "media_12ee71c365f0",
+                "filename": "studio-norte-case-atlas.svg",
+                "original_name": "studio-norte-case-atlas.svg",
+                "url": "/uploads/studio-norte-case-atlas.svg",
+                "uploaded_at": "2026-03-13T08:37:47+00:00",
+                "optimized": {
+                    "available": false,
+                    "variants": 0,
+                    "webp_variants": 0
+                }
+            },
+            {
+                "id": "media_8d9fd8cd4cb1",
+                "filename": "studio-norte-case-vela.svg",
+                "original_name": "studio-norte-case-vela.svg",
+                "url": "/uploads/studio-norte-case-vela.svg",
+                "uploaded_at": "2026-03-13T08:37:47+00:00",
+                "optimized": {
+                    "available": false,
+                    "variants": 0,
+                    "webp_variants": 0
+                }
+            },
+            {
+                "id": "media_6eae828a60e1",
+                "filename": "studio-norte-portrait.svg",
+                "original_name": "studio-norte-portrait.svg",
+                "url": "/uploads/studio-norte-portrait.svg",
+                "uploaded_at": "2026-03-13T08:37:47+00:00",
+                "optimized": {
+                    "available": false,
+                    "variants": 0,
+                    "webp_variants": 0
+                }
+            }
+        ],
+        "submissions": [],
+        "audit_logs": [
+            {
+                "id": "audit_bbd819bdfeab",
+                "action": "example.seeded",
+                "label": "Example site generated",
+                "created_at": "2026-03-13T08:37:47+00:00",
+                "user": {
+                    "id": "user_0b17db7ea650",
+                    "username": "demo",
+                    "role": "owner"
+                },
+                "meta": {
+                    "example_slug": "studio-norte-demo",
+                    "pages": 4,
+                    "posts": 3
+                }
+            }
+        ],
+        "password_reset_tokens": []
+    },
+    "uploads": [
+        {
+            "filename": "studio-norte-case-atlas.svg",
+            "content_base64": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDEwMDAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iQXRsYXMgTGVnYWwiPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM4ZjdkNzMiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMmEyNjIzIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGZpbHRlciBpZD0iYmx1ciI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjQwIi8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyODAiIGN5PSIyMjAiIHI9IjE2MCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuMTgpIiBmaWx0ZXI9InVybCgjYmx1cikiLz4KICA8Y2lyY2xlIGN4PSIxMjgwIiBjeT0iNzgwIiByPSIyMjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEyKSIgZmlsdGVyPSJ1cmwoI2JsdXIpIi8+CiAgPHBhdGggZD0iTTAgNzYwIEMyNjAgNjYwIDQzMCA5MzAgNzYwIDgyMCBDMTA2MCA3MjAgMTI0MCA1MjAgMTYwMCA2NTAgTDE2MDAgMTAwMCBMMCAxMDAwIFoiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjE0KSIvPgogIDxyZWN0IHg9IjExOCIgeT0iMTE4IiB3aWR0aD0iMTM2NCIgaGVpZ2h0PSI3NjQiIHJ4PSI0MiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuMTApIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsLjI4KSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHRleHQgeD0iMTYwIiB5PSIyNDAiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJJbnRlcixBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iNzAwIiBvcGFjaXR5PSIuODQiPkxpbnV4Q01TIGV4YW1wbGU8L3RleHQ+CiAgPHRleHQgeD0iMTYwIiB5PSI0MjAiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLFRpbWVzIE5ldyBSb21hbixzZXJpZiIgZm9udC1zaXplPSI5NCIgZm9udC13ZWlnaHQ9IjcwMCI+QXRsYXMgTGVnYWw8L3RleHQ+CiAgPHRleHQgeD0iMTYwIiB5PSI1MDAiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJJbnRlcixBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjM0IiBmb250LXdlaWdodD0iNTAwIiBvcGFjaXR5PSIuOTIiPkJvdXRpcXVlIGxhdyBmaXJtIHNpdGUgd2l0aCBibG9nIGFuZCBpbnF1aXJpZXMuPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iODIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjcyIj5zdHVkaW8tbm9ydGUtZGVtbzwvdGV4dD4KPC9zdmc+"
+        },
+        {
+            "filename": "studio-norte-case-sierra.svg",
+            "content_base64": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDEwMDAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iU2llcnJhIEF0ZWxpZXIiPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNkMDkzN2EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNDczODMxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGZpbHRlciBpZD0iYmx1ciI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjQwIi8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyODAiIGN5PSIyMjAiIHI9IjE2MCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuMTgpIiBmaWx0ZXI9InVybCgjYmx1cikiLz4KICA8Y2lyY2xlIGN4PSIxMjgwIiBjeT0iNzgwIiByPSIyMjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEyKSIgZmlsdGVyPSJ1cmwoI2JsdXIpIi8+CiAgPHBhdGggZD0iTTAgNzYwIEMyNjAgNjYwIDQzMCA5MzAgNzYwIDgyMCBDMTA2MCA3MjAgMTI0MCA1MjAgMTYwMCA2NTAgTDE2MDAgMTAwMCBMMCAxMDAwIFoiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjE0KSIvPgogIDxyZWN0IHg9IjExOCIgeT0iMTE4IiB3aWR0aD0iMTM2NCIgaGVpZ2h0PSI3NjQiIHJ4PSI0MiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuMTApIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsLjI4KSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHRleHQgeD0iMTYwIiB5PSIyNDAiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJJbnRlcixBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iNzAwIiBvcGFjaXR5PSIuODQiPkxpbnV4Q01TIGV4YW1wbGU8L3RleHQ+CiAgPHRleHQgeD0iMTYwIiB5PSI0MjAiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLFRpbWVzIE5ldyBSb21hbixzZXJpZiIgZm9udC1zaXplPSI5NCIgZm9udC13ZWlnaHQ9IjcwMCI+U2llcnJhIEF0ZWxpZXI8L3RleHQ+CiAgPHRleHQgeD0iMTYwIiB5PSI1MDAiIGZpbGw9IiNmZmZmZmYiIGZvbnQtZmFtaWx5PSJJbnRlcixBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjM0IiBmb250LXdlaWdodD0iNTAwIiBvcGFjaXR5PSIuOTIiPkludGVyaW9yIGRlc2lnbiBzaXRlLCBlZGl0b3JpYWwgYW5kIGxlYWQtZHJpdmVuLjwvdGV4dD4KICA8dGV4dCB4PSIxNjAiIHk9IjgyMCIgZmlsbD0iI2ZmZmZmZiIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIG9wYWNpdHk9Ii43MiI+c3R1ZGlvLW5vcnRlLWRlbW88L3RleHQ+Cjwvc3ZnPg=="
+        },
+        {
+            "filename": "studio-norte-case-vela.svg",
+            "content_base64": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDEwMDAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iVmVsYSBQcm9kdWN0Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2Y5ZDc4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzNhMmYyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9ImJsdXIiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSI0MCIvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9InVybCgjYmcpIi8+CiAgPGNpcmNsZSBjeD0iMjgwIiBjeT0iMjIwIiByPSIxNjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjE4KSIgZmlsdGVyPSJ1cmwoI2JsdXIpIi8+CiAgPGNpcmNsZSBjeD0iMTI4MCIgY3k9Ijc4MCIgcj0iMjIwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LC4xMikiIGZpbHRlcj0idXJsKCNibHVyKSIvPgogIDxwYXRoIGQ9Ik0wIDc2MCBDMjYwIDY2MCA0MzAgOTMwIDc2MCA4MjAgQzEwNjAgNzIwIDEyNDAgNTIwIDE2MDAgNjUwIEwxNjAwIDEwMDAgTDAgMTAwMCBaIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LC4xNCkiLz4KICA8cmVjdCB4PSIxMTgiIHk9IjExOCIgd2lkdGg9IjEzNjQiIGhlaWdodD0iNzY0IiByeD0iNDIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEwKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LC4yOCkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjE2MCIgeT0iMjQwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjg0Ij5MaW51eENNUyBleGFtcGxlPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iNDIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iR2VvcmdpYSxUaW1lcyBOZXcgUm9tYW4sc2VyaWYiIGZvbnQtc2l6ZT0iOTQiIGZvbnQtd2VpZ2h0PSI3MDAiPlZlbGEgUHJvZHVjdDwvdGV4dD4KICA8dGV4dCB4PSIxNjAiIHk9IjUwMCIgZmlsbD0iI2ZmZmZmZiIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzQiIGZvbnQtd2VpZ2h0PSI1MDAiIG9wYWNpdHk9Ii45MiI+TGF1bmNoIHBhZ2UsIGFydGljbGVzIGFuZCBhbmFseXRpY3MuPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iODIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjcyIj5zdHVkaW8tbm9ydGUtZGVtbzwvdGV4dD4KPC9zdmc+"
+        },
+        {
+            "filename": "studio-norte-hero.svg",
+            "content_base64": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDEwMDAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iU3R1ZGlvIE5vcnRlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjYjU2YzU4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzJmMjQxZiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9ImJsdXIiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSI0MCIvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9InVybCgjYmcpIi8+CiAgPGNpcmNsZSBjeD0iMjgwIiBjeT0iMjIwIiByPSIxNjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjE4KSIgZmlsdGVyPSJ1cmwoI2JsdXIpIi8+CiAgPGNpcmNsZSBjeD0iMTI4MCIgY3k9Ijc4MCIgcj0iMjIwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LC4xMikiIGZpbHRlcj0idXJsKCNibHVyKSIvPgogIDxwYXRoIGQ9Ik0wIDc2MCBDMjYwIDY2MCA0MzAgOTMwIDc2MCA4MjAgQzEwNjAgNzIwIDEyNDAgNTIwIDE2MDAgNjUwIEwxNjAwIDEwMDAgTDAgMTAwMCBaIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LC4xNCkiLz4KICA8cmVjdCB4PSIxMTgiIHk9IjExOCIgd2lkdGg9IjEzNjQiIGhlaWdodD0iNzY0IiByeD0iNDIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEwKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LC4yOCkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjE2MCIgeT0iMjQwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjg0Ij5MaW51eENNUyBleGFtcGxlPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iNDIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iR2VvcmdpYSxUaW1lcyBOZXcgUm9tYW4sc2VyaWYiIGZvbnQtc2l6ZT0iOTQiIGZvbnQtd2VpZ2h0PSI3MDAiPlN0dWRpbyBOb3J0ZTwvdGV4dD4KICA8dGV4dCB4PSIxNjAiIHk9IjUwMCIgZmlsbD0iI2ZmZmZmZiIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzQiIGZvbnQtd2VpZ2h0PSI1MDAiIG9wYWNpdHk9Ii45MiI+QnJhbmQgc3lzdGVtcywgbGF1bmNoIHBhZ2VzIGFuZCBjb250ZW50IG9wZXJhdGlvbnMuPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iODIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjcyIj5zdHVkaW8tbm9ydGUtZGVtbzwvdGV4dD4KPC9zdmc+"
+        },
+        {
+            "filename": "studio-norte-portrait.svg",
+            "content_base64": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDEwMDAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iQ2FtaWxhIE5vcnRlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjYzZhMjhjIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzQzMzQyZCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9ImJsdXIiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSI0MCIvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9InVybCgjYmcpIi8+CiAgPGNpcmNsZSBjeD0iMjgwIiBjeT0iMjIwIiByPSIxNjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjE4KSIgZmlsdGVyPSJ1cmwoI2JsdXIpIi8+CiAgPGNpcmNsZSBjeD0iMTI4MCIgY3k9Ijc4MCIgcj0iMjIwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LC4xMikiIGZpbHRlcj0idXJsKCNibHVyKSIvPgogIDxwYXRoIGQ9Ik0wIDc2MCBDMjYwIDY2MCA0MzAgOTMwIDc2MCA4MjAgQzEwNjAgNzIwIDEyNDAgNTIwIDE2MDAgNjUwIEwxNjAwIDEwMDAgTDAgMTAwMCBaIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LC4xNCkiLz4KICA8cmVjdCB4PSIxMTgiIHk9IjExOCIgd2lkdGg9IjEzNjQiIGhlaWdodD0iNzY0IiByeD0iNDIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEwKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LC4yOCkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjE2MCIgeT0iMjQwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjg0Ij5MaW51eENNUyBleGFtcGxlPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iNDIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iR2VvcmdpYSxUaW1lcyBOZXcgUm9tYW4sc2VyaWYiIGZvbnQtc2l6ZT0iOTQiIGZvbnQtd2VpZ2h0PSI3MDAiPkNhbWlsYSBOb3J0ZTwvdGV4dD4KICA8dGV4dCB4PSIxNjAiIHk9IjUwMCIgZmlsbD0iI2ZmZmZmZiIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzQiIGZvbnQtd2VpZ2h0PSI1MDAiIG9wYWNpdHk9Ii45MiI+Rm91bmRlciBhbmQgbGF1bmNoIHN0cmF0ZWdpc3QuPC90ZXh0PgogIDx0ZXh0IHg9IjE2MCIgeT0iODIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iSW50ZXIsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCIgb3BhY2l0eT0iLjcyIj5zdHVkaW8tbm9ydGUtZGVtbzwvdGV4dD4KPC9zdmc+"
+        }
+    ]
+}

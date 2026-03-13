@@ -78,11 +78,24 @@ function ccms_admin_find_selected_page(array $data, string $selectedSlug): ?arra
     return !empty($data['pages']) ? $data['pages'][0] : null;
 }
 
+function ccms_admin_find_selected_post(array $data, string $selectedSlug): ?array
+{
+    if ($selectedSlug !== '') {
+        foreach ($data['posts'] ?? [] as $post) {
+            if (($post['slug'] ?? '') === $selectedSlug || ($post['id'] ?? '') === $selectedSlug) {
+                return $post;
+            }
+        }
+    }
+    return !empty($data['posts']) ? $data['posts'][0] : null;
+}
+
 function ccms_admin_tab_for_user(?array $currentAdmin): string
 {
     $canManageSite = ccms_user_can('site_manage');
     $canManageUsers = ccms_user_can('users_manage');
     $canManageMedia = ccms_user_can('media_manage');
+    $canManagePages = ccms_user_can('pages_manage');
     $canImportCapsules = ccms_user_can('import_capsules');
     $canGenerateAi = ccms_user_can('ai_generate');
     $tab = (string) ($_GET['tab'] ?? ($canGenerateAi ? 'studio' : 'pages'));
@@ -93,7 +106,9 @@ function ccms_admin_tab_for_user(?array $currentAdmin): string
         || ($tab === 'media' && !$canManageMedia)
         || ($tab === 'import' && !$canImportCapsules)
         || ($tab === 'studio' && !$canGenerateAi)
-        || ($tab === 'audit' && !$canManageUsers)) {
+        || ($tab === 'audit' && !$canManageUsers)
+        || ($tab === 'inbox' && !$canManagePages)
+        || ($tab === 'posts' && !$canManagePages)) {
         $tab = 'pages';
     }
     if (!empty($currentAdmin['must_change_password'])) {
@@ -125,6 +140,107 @@ function ccms_admin_default_capsule_state(?array $selectedPage): array
     return ['meta' => ['business_name' => 'Untitled'], 'style' => [], 'blocks' => []];
 }
 
+function ccms_admin_onboarding_state(array $data): array
+{
+    $persisted = array_merge(
+        ccms_default_onboarding_state(),
+        is_array($data['site']['onboarding'] ?? null) ? $data['site']['onboarding'] : []
+    );
+    $homepage = ccms_homepage($data);
+    $hasHomepage = is_array($homepage)
+        && (
+            trim((string) ($homepage['title'] ?? '')) !== ''
+            || trim((string) ($homepage['html_content'] ?? '')) !== ''
+            || trim((string) ($homepage['capsule_json'] ?? '')) !== ''
+        );
+    $hasMedia = !empty($data['media']);
+    $hasPublicPages = !empty(array_filter(is_array($data['pages'] ?? null) ? $data['pages'] : [], static function (array $page): bool {
+        return ccms_record_is_public($page);
+    }));
+    $hasPublicPosts = !empty(array_filter(is_array($data['posts'] ?? null) ? $data['posts'] : [], static function (array $post): bool {
+        return ccms_record_is_public($post);
+    }));
+    $siteTitle = trim((string) ($data['site']['title'] ?? ''));
+    $contactEmail = trim((string) ($data['site']['contact_email'] ?? ''));
+    $hasPublishedOutput = $hasPublicPages || $hasPublicPosts || !empty($persisted['exported_at']);
+    $steps = [
+        [
+            'key' => 'branding',
+            'label' => 'Configura tu marca',
+            'description' => 'Define nombre del sitio, email de contacto y branding básico.',
+            'tab' => 'site',
+            'href' => '/r-admin/?tab=site',
+            'done' => $siteTitle !== '' && $contactEmail !== '',
+        ],
+        [
+            'key' => 'homepage',
+            'label' => 'Prepara tu home',
+            'description' => 'Crea o edita la página principal con contenido real.',
+            'tab' => 'pages',
+            'href' => '/r-admin/?tab=pages',
+            'done' => $hasHomepage,
+        ],
+        [
+            'key' => 'media',
+            'label' => 'Sube fotos',
+            'description' => 'Carga al menos una imagen para empezar a personalizar el sitio.',
+            'tab' => 'media',
+            'href' => '/r-admin/?tab=media',
+            'done' => $hasMedia,
+        ],
+        [
+            'key' => 'publish',
+            'label' => 'Publica o exporta',
+            'description' => 'Deja una página o post público, o exporta el paquete estático.',
+            'tab' => 'backups',
+            'href' => '/r-admin/?tab=backups',
+            'done' => $hasPublishedOutput,
+        ],
+    ];
+    $completedCount = count(array_filter($steps, static function (array $step): bool {
+        return !empty($step['done']);
+    }));
+    $allDone = $completedCount === count($steps);
+    $nextStep = 'done';
+    foreach ($steps as $step) {
+        if (empty($step['done'])) {
+            $nextStep = (string) $step['key'];
+            break;
+        }
+    }
+
+    return [
+        'dismissed' => !$allDone && !empty($persisted['dismissed']),
+        'completed' => !empty($persisted['completed']) || $allDone,
+        'completed_at' => ($persisted['completed_at'] ?? null) ? (string) $persisted['completed_at'] : null,
+        'exported_at' => ($persisted['exported_at'] ?? null) ? (string) $persisted['exported_at'] : null,
+        'last_step' => trim((string) ($persisted['last_step'] ?? '')),
+        'next_step' => $nextStep,
+        'steps' => $steps,
+        'completed_count' => $completedCount,
+        'total_steps' => count($steps),
+        'progress_percent' => count($steps) > 0 ? (int) round(($completedCount / count($steps)) * 100) : 0,
+        'all_done' => $allDone,
+    ];
+}
+
+function ccms_admin_sync_onboarding(array &$data): void
+{
+    $persisted = array_merge(
+        ccms_default_onboarding_state(),
+        is_array($data['site']['onboarding'] ?? null) ? $data['site']['onboarding'] : []
+    );
+    $state = ccms_admin_onboarding_state($data);
+    $data['site']['onboarding'] = array_merge($persisted, [
+        'dismissed' => $state['all_done'] ? false : !empty($persisted['dismissed']),
+        'completed' => !empty($persisted['completed']) || $state['all_done'],
+        'completed_at' => ($state['all_done'] && empty($persisted['completed_at']))
+            ? ccms_now_iso()
+            : (($persisted['completed_at'] ?? null) ? (string) $persisted['completed_at'] : null),
+        'last_step' => (string) $state['next_step'],
+    ]);
+}
+
 function ccms_build_admin_context(string $error = ''): array
 {
     $data = ccms_load_data();
@@ -134,7 +250,9 @@ function ccms_build_admin_context(string $error = ''): array
     $canManageSite = ccms_user_can('site_manage');
     $canManageUsers = ccms_user_can('users_manage');
     $canManagePages = ccms_user_can('pages_manage');
+    $canManagePosts = $canManagePages;
     $canManageMedia = ccms_user_can('media_manage');
+    $canViewInbox = $canManagePages;
     $canImportCapsules = ccms_user_can('import_capsules');
     $canGenerateAi = ccms_user_can('ai_generate');
     $canViewAudit = $canManageUsers;
@@ -143,12 +261,24 @@ function ccms_build_admin_context(string $error = ''): array
     $mustChangePassword = !empty($currentAdmin['must_change_password']);
     $tab = ccms_admin_tab_for_user($currentAdmin);
     $selectedPage = ccms_admin_find_selected_page($data, trim((string) ($_GET['page'] ?? '')));
+    $selectedPost = ccms_admin_find_selected_post($data, trim((string) ($_GET['post'] ?? '')));
     $menuPages = ccms_menu_pages($data);
     $previewHtml = $selectedPage ? ccms_admin_preview_html(ccms_render_public_page($data['site'], $selectedPage, $menuPages)) : '';
+    $postPreviewHtml = $selectedPost ? ccms_admin_preview_html(ccms_render_blog_post_page($data['site'], $selectedPost, $menuPages)) : '';
     $selectedRevisions = $selectedPage && is_array($selectedPage['revisions'] ?? null) ? $selectedPage['revisions'] : [];
+    $selectedPostRevisions = $selectedPost && is_array($selectedPost['revisions'] ?? null) ? $selectedPost['revisions'] : [];
     $storageInfo = ccms_storage_runtime_info();
     $aiSettings = ccms_ai_settings($data);
     $auditLogs = array_slice(is_array($data['audit_logs'] ?? null) ? $data['audit_logs'] : [], 0, 80);
+    $submissions = array_slice(is_array($data['submissions'] ?? null) ? $data['submissions'] : [], 0, 200);
+    $submissionCounts = ['new' => 0, 'reviewed' => 0, 'contacted' => 0, 'archived' => 0];
+    foreach ($submissions as $submission) {
+        $status = trim((string) ($submission['status'] ?? 'new'));
+        if (!array_key_exists($status, $submissionCounts)) {
+            $submissionCounts[$status] = 0;
+        }
+        $submissionCounts[$status]++;
+    }
     $availablePlugins = ccms_discover_plugins();
     $totpSetupSecret = $currentAdmin ? ccms_totp_setup_secret() : null;
     $resetTokenValue = !$currentAdmin ? trim((string) ($_GET['reset'] ?? '')) : '';
@@ -158,13 +288,19 @@ function ccms_build_admin_context(string $error = ''): array
     $sectionTemplatesJson = json_encode($sectionTemplates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $capsuleBuilderTemplatesJson = json_encode($capsuleBuilderTemplates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $mediaItemsJson = json_encode($data['media'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $adminBrand = ccms_admin_branding($data['site']);
     $previewSiteConfigJson = json_encode([
         'site' => $data['site'],
         'menu' => ccms_admin_menu_payload($menuPages),
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $selectedCapsuleStateJson = json_encode(ccms_admin_default_capsule_state($selectedPage), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $onboarding = ccms_admin_onboarding_state($data);
+    $forceOnboarding = !empty($_GET['onboarding']);
+    $showOnboarding = ($canManageSite || $canManagePages) && ($forceOnboarding || (!$onboarding['dismissed'] && !$onboarding['completed']));
+    $showOnboardingLauncher = ($canManageSite || $canManagePages) && !$showOnboarding && !$onboarding['completed'];
 
     return compact(
+        'adminBrand',
         'aiSettings',
         'auditLogs',
         'availablePlugins',
@@ -174,8 +310,10 @@ function ccms_build_admin_context(string $error = ''): array
         'canManageBackups',
         'canManageMedia',
         'canManagePages',
+        'canManagePosts',
         'canManageSite',
         'canManageUsers',
+        'canViewInbox',
         'canViewAudit',
         'capsuleBuilderTemplatesJson',
         'currentAdmin',
@@ -185,8 +323,10 @@ function ccms_build_admin_context(string $error = ''): array
         'mediaItemsJson',
         'menuPages',
         'mustChangePassword',
+        'onboarding',
         'pendingTwoFactor',
         'previewHtml',
+        'postPreviewHtml',
         'previewSiteConfigJson',
         'resetTokenEntry',
         'resetTokenValue',
@@ -194,8 +334,14 @@ function ccms_build_admin_context(string $error = ''): array
         'sectionTemplatesJson',
         'selectedCapsuleStateJson',
         'selectedPage',
+        'selectedPost',
+        'selectedPostRevisions',
         'selectedRevisions',
+        'showOnboarding',
+        'showOnboardingLauncher',
         'storageInfo',
+        'submissionCounts',
+        'submissions',
         'tab',
         'totpSetupSecret'
     ) + ['csrfToken' => ccms_csrf_token()];

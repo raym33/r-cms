@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+  <loc>http://127.0.0.1:8088/</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/services</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/about</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/contact</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/lanzar-web-servicios-en-diez-dias</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/cuando-conviene-exportar-web-estatica</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tres-decisiones-de-copy-que-mejoran-una-home</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/category/copy</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/category/estrategia</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/category/tecnico</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/conversion</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/cta</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/home</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/hosting</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/lanzamiento</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/linuxcms</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/mensajes</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/servicios</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+<url>
+  <loc>http://127.0.0.1:8088/blog/tag/static-export</loc>
+  <lastmod>2026-03-13T08:37:47+00:00</lastmod>
+</url>
+</urlset>

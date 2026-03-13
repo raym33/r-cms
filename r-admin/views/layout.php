@@ -6,7 +6,7 @@ declare(strict_types=1);
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>r-admin | LinuxCMS</title>
+  <title><?= ccms_h((string) ($adminBrand['page_title'] ?? 'r-admin | LinuxCMS')) ?></title>
   <link rel="stylesheet" href="<?= htmlspecialchars(ccms_base_url() . '/r-admin/assets/admin.css', ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>

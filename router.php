@@ -48,6 +48,33 @@ if ($path === '/api/health' || $path === '/api/health/') {
     return true;
 }
 
+if ($path === '/api/forms/submit' || $path === '/api/forms/submit/') {
+    require __DIR__ . '/src/bootstrap.php';
+    ccms_handle_public_form_submission();
+}
+
+if ($path === '/feed.xml') {
+    require __DIR__ . '/src/bootstrap.php';
+    header('Content-Type: application/rss+xml; charset=utf-8');
+    $data = ccms_load_data();
+    echo ccms_render_blog_rss($data['site'], ccms_posts_published($data));
+    return true;
+}
+
+if ($path === '/sitemap.xml') {
+    require __DIR__ . '/src/bootstrap.php';
+    header('Content-Type: application/xml; charset=utf-8');
+    echo ccms_render_sitemap_xml(ccms_load_data());
+    return true;
+}
+
+if ($path === '/robots.txt') {
+    require __DIR__ . '/src/bootstrap.php';
+    header('Content-Type: text/plain; charset=utf-8');
+    echo ccms_render_robots_txt();
+    return true;
+}
+
 if ($path === '/install' || $path === '/install.php') {
     require __DIR__ . '/install.php';
     return true;

@@ -35,6 +35,10 @@ function ccms_admin_handle_post(): void
         require ccms_root_path('r-admin/handlers/pages.php');
         throw new RuntimeException('Acción no válida.');
     }
+    if (in_array($action, ['create_post', 'save_post', 'duplicate_post', 'delete_post'], true)) {
+        require ccms_root_path('r-admin/handlers/posts.php');
+        throw new RuntimeException('Acción no válida.');
+    }
     if (in_array($action, ['create_user', 'update_user', 'create_password_reset_token', 'delete_user'], true)) {
         require ccms_root_path('r-admin/handlers/users.php');
         throw new RuntimeException('Acción no válida.');
@@ -219,6 +223,16 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             $data['site']['tagline'] = trim((string) ($_POST['site_tagline'] ?? ''));
             $data['site']['footer_text'] = trim((string) ($_POST['footer_text'] ?? ''));
             $data['site']['contact_email'] = trim((string) ($_POST['contact_email'] ?? ''));
+            $data['site']['white_label_enabled'] = !empty($_POST['white_label_enabled']);
+            $data['site']['admin_brand_name'] = trim((string) ($_POST['admin_brand_name'] ?? ''));
+            $data['site']['admin_brand_tagline'] = trim((string) ($_POST['admin_brand_tagline'] ?? ''));
+            $data['site']['admin_logo_url'] = ccms_sanitize_url((string) ($_POST['admin_logo_url'] ?? ''), true);
+            $analyticsProvider = trim((string) ($_POST['analytics_provider'] ?? ''));
+            if (!in_array($analyticsProvider, ['', 'ga4', 'plausible'], true)) {
+                $analyticsProvider = '';
+            }
+            $data['site']['analytics_provider'] = $analyticsProvider;
+            $data['site']['analytics_id'] = trim((string) ($_POST['analytics_id'] ?? ''));
             $themePreset = trim((string) ($_POST['theme_preset'] ?? 'warm'));
             if (!in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
                 $themePreset = 'warm';
@@ -236,10 +250,44 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             ccms_push_audit_log($data, 'site.updated', 'Site settings updated', $currentAdmin, [
                 'contact_email' => $data['site']['contact_email'],
                 'theme_preset' => $data['site']['theme_preset'],
+                'analytics_provider' => $data['site']['analytics_provider'],
+                'white_label_enabled' => $data['site']['white_label_enabled'],
+                'admin_brand_name' => $data['site']['admin_brand_name'],
             ]);
             ccms_save_data($data);
             ccms_flash('success', 'Configuración del sitio guardada.');
             ccms_redirect('/r-admin/?tab=site');
+
+        case 'update_submission_status':
+            ccms_require_capability('pages_manage');
+            $submissionId = trim((string) ($_POST['submission_id'] ?? ''));
+            $nextStatus = trim((string) ($_POST['submission_status'] ?? 'new'));
+            if ($submissionId === '') {
+                throw new RuntimeException('Falta el identificador del contacto.');
+            }
+            if (!in_array($nextStatus, ['new', 'reviewed', 'contacted', 'archived'], true)) {
+                throw new RuntimeException('Estado de contacto no válido.');
+            }
+            $updated = false;
+            foreach (($data['submissions'] ?? []) as $submissionIndex => $submission) {
+                if (trim((string) ($submission['id'] ?? '')) !== $submissionId) {
+                    continue;
+                }
+                $data['submissions'][$submissionIndex]['status'] = $nextStatus;
+                $data['submissions'][$submissionIndex]['updated_at'] = ccms_now_iso();
+                ccms_push_audit_log($data, 'forms.submission_updated', 'Submission status updated', $currentAdmin, [
+                    'submission_id' => $submissionId,
+                    'status' => $nextStatus,
+                ]);
+                $updated = true;
+                break;
+            }
+            if (!$updated) {
+                throw new RuntimeException('No se ha encontrado el contacto indicado.');
+            }
+            ccms_save_data($data);
+            ccms_flash('success', 'Estado del contacto actualizado.');
+            ccms_redirect('/r-admin/?tab=inbox');
 
         case 'save_plugins':
             ccms_require_capability('site_manage');
@@ -327,6 +375,139 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             ccms_flash('success', 'Página generada con ' . $modeLabel . '. Ya puedes pulirla desde Páginas.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode((string) $pageRecord['slug']));
 
+        case 'create_post':
+            ccms_require_capability('pages_manage');
+            $title = trim((string) ($_POST['post_title'] ?? ''));
+            if ($title === '') {
+                throw new RuntimeException('El título del post es obligatorio.');
+            }
+            $slug = ccms_slugify((string) ($_POST['post_slug'] ?? $title));
+            $authorName = trim((string) ($currentAdmin['username'] ?? '')) ?: trim((string) ($data['site']['title'] ?? 'LinuxCMS'));
+            $newPost = [
+                'id' => ccms_next_id('post'),
+                'title' => $title,
+                'slug' => $slug,
+                'status' => 'draft',
+                'excerpt' => '',
+                'content_html' => '<section><h1>' . ccms_h($title) . '</h1><p>Empieza a escribir aquí el contenido del artículo.</p></section>',
+                'cover_image' => '',
+                'author_name' => $authorName,
+                'categories' => [],
+                'tags' => [],
+                'meta_title' => $title,
+                'meta_description' => '',
+                'published_at' => '',
+                'created_at' => ccms_now_iso(),
+                'updated_at' => ccms_now_iso(),
+                'revisions' => [],
+            ];
+            $data['posts'][] = $newPost;
+            ccms_push_audit_log($data, 'post.created', 'Post created', $currentAdmin, [
+                'post_slug' => $slug,
+            ]);
+            ccms_save_data($data);
+            ccms_flash('success', 'Post creado.');
+            ccms_redirect('/r-admin/?tab=posts&post=' . rawurlencode($slug));
+
+        case 'save_post':
+            ccms_require_capability('pages_manage');
+            $postId = trim((string) ($_POST['post_id'] ?? ''));
+            $index = ccms_find_post_index($data, $postId);
+            if ($index === null) {
+                throw new RuntimeException('Post no encontrado.');
+            }
+            $title = trim((string) ($_POST['post_title'] ?? ''));
+            if ($title === '') {
+                throw new RuntimeException('El título del post es obligatorio.');
+            }
+            $slug = ccms_slugify((string) ($_POST['post_slug'] ?? $title));
+            $status = trim((string) ($_POST['post_status'] ?? 'draft'));
+            if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+                $status = 'draft';
+            }
+            $publishedAtInput = trim((string) ($_POST['published_at'] ?? ''));
+            $publishedAt = '';
+            if ($publishedAtInput !== '') {
+                $timestamp = strtotime($publishedAtInput);
+                if ($timestamp === false) {
+                    throw new RuntimeException('La fecha de publicación no es válida.');
+                }
+                $publishedAt = gmdate('c', $timestamp);
+            }
+            if ($status === 'scheduled' && $publishedAt === '') {
+                throw new RuntimeException('Debes indicar una fecha de publicación para programar el post.');
+            }
+            if ($status === 'published' && $publishedAt === '') {
+                $publishedAt = !empty($data['posts'][$index]['published_at']) ? (string) $data['posts'][$index]['published_at'] : ccms_now_iso();
+            }
+            if ($status === 'draft') {
+                $publishedAt = $publishedAt !== '' ? $publishedAt : (string) ($data['posts'][$index]['published_at'] ?? '');
+            }
+            $data['posts'][$index]['title'] = $title;
+            $data['posts'][$index]['slug'] = $slug;
+            $data['posts'][$index]['status'] = $status;
+            $data['posts'][$index]['excerpt'] = trim((string) ($_POST['excerpt'] ?? ''));
+            $data['posts'][$index]['content_html'] = ccms_sanitize_html((string) ($_POST['content_html'] ?? ''));
+            $data['posts'][$index]['cover_image'] = trim((string) ($_POST['cover_image'] ?? ''));
+            $data['posts'][$index]['author_name'] = trim((string) ($_POST['author_name'] ?? ''));
+            $data['posts'][$index]['categories'] = ccms_parse_taxonomy_input($_POST['categories'] ?? '');
+            $data['posts'][$index]['tags'] = ccms_parse_taxonomy_input($_POST['tags'] ?? '');
+            $data['posts'][$index]['meta_title'] = trim((string) ($_POST['meta_title'] ?? ''));
+            $data['posts'][$index]['meta_description'] = trim((string) ($_POST['meta_description'] ?? ''));
+            $data['posts'][$index]['published_at'] = $publishedAt;
+            $data['posts'][$index]['updated_at'] = ccms_now_iso();
+            $data = ccms_normalize_posts($data);
+            ccms_push_audit_log($data, 'post.saved', 'Post saved', $currentAdmin, [
+                'post_slug' => $slug,
+                'status' => $status,
+            ]);
+            ccms_save_data($data);
+            ccms_flash('success', 'Post guardado.');
+            ccms_redirect('/r-admin/?tab=posts&post=' . rawurlencode($slug));
+
+        case 'duplicate_post':
+            ccms_require_capability('pages_manage');
+            $postId = trim((string) ($_POST['post_id'] ?? ''));
+            $index = ccms_find_post_index($data, $postId);
+            if ($index === null) {
+                throw new RuntimeException('Post no encontrado.');
+            }
+            $source = $data['posts'][$index];
+            $copy = $source;
+            $copy['id'] = ccms_next_id('post');
+            $copy['title'] = trim((string) ($source['title'] ?? 'Post')) . ' (copia)';
+            $copy['slug'] = ccms_slugify((string) ($source['slug'] ?? 'post') . '-copia');
+            $copy['status'] = 'draft';
+            $copy['published_at'] = '';
+            $copy['created_at'] = ccms_now_iso();
+            $copy['updated_at'] = ccms_now_iso();
+            $copy['revisions'] = [];
+            $data['posts'][] = $copy;
+            $data = ccms_normalize_posts($data);
+            ccms_push_audit_log($data, 'post.duplicated', 'Post duplicated', $currentAdmin, [
+                'post_slug' => $copy['slug'],
+                'source_slug' => $source['slug'] ?? '',
+            ]);
+            ccms_save_data($data);
+            ccms_flash('success', 'Post duplicado.');
+            ccms_redirect('/r-admin/?tab=posts&post=' . rawurlencode((string) $copy['slug']));
+
+        case 'delete_post':
+            ccms_require_capability('pages_manage');
+            $postId = trim((string) ($_POST['post_id'] ?? ''));
+            $index = ccms_find_post_index($data, $postId);
+            if ($index === null) {
+                throw new RuntimeException('Post no encontrado.');
+            }
+            $deletedSlug = (string) ($data['posts'][$index]['slug'] ?? '');
+            array_splice($data['posts'], $index, 1);
+            ccms_push_audit_log($data, 'post.deleted', 'Post deleted', $currentAdmin, [
+                'post_slug' => $deletedSlug,
+            ]);
+            ccms_save_data($data);
+            ccms_flash('success', 'Post eliminado.');
+            ccms_redirect('/r-admin/?tab=posts');
+
         case 'create_page':
             ccms_require_capability('pages_manage');
             $title = trim((string) ($_POST['title'] ?? ''));
@@ -339,6 +520,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
                 'title' => $title,
                 'slug' => $slug,
                 'status' => 'draft',
+                'published_at' => '',
                 'is_homepage' => false,
                 'show_in_menu' => true,
                 'menu_label' => $title,
@@ -366,16 +548,42 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             if ($index === null) {
                 throw new RuntimeException('Página no encontrada.');
             }
+            $isAutosave = (string) ($_POST['autosave'] ?? '0') === '1';
             $title = trim((string) ($_POST['title'] ?? ''));
             $slug = ccms_slugify((string) ($_POST['slug'] ?? $title));
             if ($title === '') {
                 throw new RuntimeException('El título es obligatorio.');
             }
-            ccms_push_page_revision($data['pages'][$index], 'Before manual save');
+            if (!$isAutosave) {
+                ccms_push_page_revision($data['pages'][$index], 'Before manual save');
+            }
+            $status = trim((string) ($_POST['status'] ?? 'draft'));
+            if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+                $status = 'draft';
+            }
+            $publishedAtInput = trim((string) ($_POST['published_at'] ?? ''));
+            $publishedAt = '';
+            if ($publishedAtInput !== '') {
+                $timestamp = strtotime($publishedAtInput);
+                if ($timestamp === false) {
+                    throw new RuntimeException('La fecha programada no es válida.');
+                }
+                $publishedAt = gmdate('c', $timestamp);
+            }
+            if ($status === 'scheduled' && $publishedAt === '') {
+                throw new RuntimeException('Debes indicar una fecha de publicación para programar la página.');
+            }
+            if ($status === 'published' && $publishedAt === '') {
+                $publishedAt = !empty($data['pages'][$index]['published_at']) ? (string) ($data['pages'][$index]['published_at']) : ccms_now_iso();
+            }
+            if ($status === 'draft') {
+                $publishedAt = $publishedAt !== '' ? $publishedAt : (string) ($data['pages'][$index]['published_at'] ?? '');
+            }
             $data['pages'][$index]['title'] = $title;
             $data['pages'][$index]['slug'] = $slug;
             $data['pages'][$index]['menu_label'] = trim((string) ($_POST['menu_label'] ?? '')) ?: $title;
-            $data['pages'][$index]['status'] = (string) ($_POST['status'] ?? 'draft') === 'published' ? 'published' : 'draft';
+            $data['pages'][$index]['status'] = $status;
+            $data['pages'][$index]['published_at'] = $publishedAt;
             $data['pages'][$index]['show_in_menu'] = isset($_POST['show_in_menu']);
             $data['pages'][$index]['is_homepage'] = isset($_POST['is_homepage']);
             $data['pages'][$index]['meta_title'] = trim((string) ($_POST['meta_title'] ?? ''));
@@ -390,11 +598,22 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
                     }
                 }
             }
+            ccms_save_data($data);
+            if ($isAutosave) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'ok' => true,
+                    'page_id' => $data['pages'][$index]['id'] ?? '',
+                    'slug' => $slug,
+                    'updated_at' => $data['pages'][$index]['updated_at'] ?? ccms_now_iso(),
+                    'status' => $data['pages'][$index]['status'] ?? 'draft',
+                ]);
+                exit;
+            }
             ccms_push_audit_log($data, 'page.saved', 'Page saved', $currentAdmin, [
                 'page_slug' => $slug,
                 'status' => $data['pages'][$index]['status'],
             ]);
-            ccms_save_data($data);
             ccms_flash('success', 'Página guardada.');
             ccms_redirect('/r-admin/?tab=pages&page=' . rawurlencode($slug));
 
@@ -411,6 +630,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             $copy['title'] = trim((string) $source['title']) . ' (copia)';
             $copy['slug'] = ccms_slugify((string) $source['slug'] . '-copia');
             $copy['status'] = 'draft';
+            $copy['published_at'] = '';
             $copy['is_homepage'] = false;
             $copy['created_at'] = ccms_now_iso();
             $copy['updated_at'] = ccms_now_iso();
@@ -506,12 +726,18 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             if (!move_uploaded_file((string) $file['tmp_name'], $target)) {
                 throw new RuntimeException('No se pudo mover el archivo subido.');
             }
+            $optimization = ccms_generate_image_variants($safeFile);
             $data['media'][] = [
                 'id' => ccms_next_id('media'),
                 'filename' => $safeFile,
                 'original_name' => $original,
                 'url' => ccms_public_upload_url($safeFile),
                 'uploaded_at' => ccms_now_iso(),
+                'optimized' => [
+                    'available' => ccms_image_optimization_available(),
+                    'variants' => count((array) ($optimization['generated'] ?? [])),
+                    'webp_variants' => count((array) ($optimization['webp_generated'] ?? [])),
+                ],
             ];
             ccms_push_audit_log($data, 'media.uploaded', 'Media uploaded', $currentAdmin, [
                 'filename' => $safeFile,
@@ -534,6 +760,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
                 'title' => $title,
                 'slug' => $slug,
                 'status' => 'published',
+                'published_at' => ccms_now_iso(),
                 'is_homepage' => empty($data['pages']),
                 'show_in_menu' => true,
                 'menu_label' => $title,

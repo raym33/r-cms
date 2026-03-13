@@ -32,7 +32,19 @@ try {
             $page['meta_description'] = trim((string) ($_POST['meta_description'] ?? $page['meta_description'] ?? ''));
             $page['capsule_json'] = (string) ($_POST['capsule_json'] ?? $page['capsule_json'] ?? '{}');
             $page['html_content'] = ccms_sanitize_html((string) ($_POST['html_content'] ?? $page['html_content'] ?? ''));
-            $page['status'] = (string) ($_POST['status'] ?? $page['status'] ?? 'draft') === 'published' ? 'published' : 'draft';
+            $pageStatus = trim((string) ($_POST['status'] ?? $page['status'] ?? 'draft'));
+            if (!in_array($pageStatus, ['draft', 'published', 'scheduled'], true)) {
+                $pageStatus = 'draft';
+            }
+            $page['status'] = $pageStatus;
+            $publishedAtInput = trim((string) ($_POST['published_at'] ?? $page['published_at'] ?? ''));
+            $page['published_at'] = '';
+            if ($publishedAtInput !== '') {
+                $timestamp = strtotime($publishedAtInput);
+                if ($timestamp !== false) {
+                    $page['published_at'] = gmdate('c', $timestamp);
+                }
+            }
             $page['show_in_menu'] = isset($_POST['show_in_menu']);
             $page['is_homepage'] = isset($_POST['is_homepage']);
             $data['pages'][$index] = $page;
@@ -53,6 +65,7 @@ try {
             'title' => trim((string) ($_POST['title'] ?? 'Preview')) ?: 'Preview',
             'slug' => ccms_slugify((string) ($_POST['slug'] ?? 'preview')),
             'status' => 'draft',
+            'published_at' => '',
             'is_homepage' => false,
             'show_in_menu' => false,
             'menu_label' => trim((string) ($_POST['menu_label'] ?? 'Preview')) ?: 'Preview',

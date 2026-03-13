@@ -17,7 +17,7 @@
           </select>
         </div>
         <p class="small">Los usuarios nuevos deberán cambiar esta contraseña al entrar por primera vez.</p>
-        <button class="btn" type="submit">Crear usuario</button>
+        <button class="btn" type="submit"><?= ccms_icon('plus', 16) ?>Crear usuario</button>
       </form>
     </div>
     <div class="help-box">
@@ -67,7 +67,7 @@
                 · 2FA: <?= !empty($user['totp_enabled']) ? 'Sí' : 'No' ?>
               </div>
               <div class="toolbar">
-                <button class="btn" type="submit">Guardar usuario</button>
+                <button class="btn" type="submit"><?= ccms_icon('save', 16) ?>Guardar usuario</button>
               </div>
             </form>
             <?php if (($user['id'] ?? '') !== ($currentAdmin['id'] ?? '')): ?>
@@ -75,15 +75,15 @@
                 <input type="hidden" name="action" value="create_password_reset_token">
                 <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
                 <input type="hidden" name="user_id" value="<?= ccms_h((string) ($user['id'] ?? '')) ?>">
-                <button class="btn btn-secondary" type="submit">Generar enlace de recuperación</button>
+                <button class="btn btn-secondary" type="submit"><?= ccms_icon('mail', 16) ?>Generar enlace de recuperación</button>
               </form>
             <?php endif; ?>
             <?php if (($user['id'] ?? '') !== ($currentAdmin['id'] ?? '')): ?>
-              <form method="post" style="margin-top:10px" onsubmit="return confirm('¿Seguro que quieres eliminar este usuario?');">
+              <form method="post" style="margin-top:10px" data-confirm-title="¿Eliminar este usuario?" data-confirm-message="Se borrará su acceso al CMS y no podrá volver a entrar con esta cuenta.">
                 <input type="hidden" name="action" value="delete_user">
                 <input type="hidden" name="csrf_token" value="<?= ccms_h($csrfToken) ?>">
                 <input type="hidden" name="user_id" value="<?= ccms_h((string) ($user['id'] ?? '')) ?>">
-                <button class="btn btn-danger" type="submit">Eliminar usuario</button>
+                <button class="btn btn-danger" type="submit"><?= ccms_icon('trash-2', 16) ?>Eliminar usuario</button>
               </form>
             <?php endif; ?>
           </div>
