@@ -92,6 +92,181 @@ function ccms_default_onboarding_state(): array
     ];
 }
 
+function ccms_business_hours_day_keys(): array
+{
+    return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+}
+
+function ccms_live_data_slot_types(): array
+{
+    return ['menu_daily', 'hours_status', 'price_list'];
+}
+
+function ccms_default_business_hours_payload(): array
+{
+    $days = [];
+    foreach (ccms_business_hours_day_keys() as $day) {
+        $days[$day] = [
+            'closed' => $day === 'sun',
+            'slots' => [],
+        ];
+    }
+
+    return [
+        'timezone' => (string) date_default_timezone_get(),
+        'closed_today' => false,
+        'closure_label' => '',
+        'reopens_on' => '',
+        'days' => $days,
+    ];
+}
+
+function ccms_live_data_default_payload(string $type): array
+{
+    return match ($type) {
+        'menu_daily' => [
+            'price' => '',
+            'currency' => 'EUR',
+            'includes' => '',
+            'sections' => [],
+        ],
+        'hours_status' => ccms_default_business_hours_payload(),
+        'price_list' => [
+            'currency' => 'EUR',
+            'note' => '',
+            'items' => [],
+        ],
+        default => [],
+    };
+}
+
+function ccms_normalize_live_data_payload(string $type, $payload): array
+{
+    $payload = is_array($payload) ? $payload : [];
+
+    if ($type === 'menu_daily') {
+        $sections = [];
+        foreach ((array) ($payload['sections'] ?? []) as $section) {
+            if (!is_array($section)) {
+                continue;
+            }
+            $name = trim((string) ($section['name'] ?? ''));
+            $items = array_values(array_filter(array_map(static function ($item): string {
+                return trim((string) $item);
+            }, is_array($section['items'] ?? null) ? $section['items'] : []), static function (string $item): bool {
+                return $item !== '';
+            }));
+            if ($name === '' && $items === []) {
+                continue;
+            }
+            $sections[] = [
+                'name' => $name !== '' ? $name : 'Sección',
+                'items' => $items,
+            ];
+        }
+
+        return [
+            'price' => trim((string) ($payload['price'] ?? '')),
+            'currency' => strtoupper(substr(trim((string) ($payload['currency'] ?? 'EUR')) ?: 'EUR', 0, 3)),
+            'includes' => trim((string) ($payload['includes'] ?? '')),
+            'sections' => $sections,
+        ];
+    }
+
+    if ($type === 'hours_status') {
+        $days = [];
+        foreach (ccms_business_hours_day_keys() as $day) {
+            $rawDay = is_array($payload['days'][$day] ?? null) ? $payload['days'][$day] : [];
+            $slots = [];
+            foreach ((array) ($rawDay['slots'] ?? []) as $slot) {
+                if (!is_array($slot)) {
+                    continue;
+                }
+                $open = trim((string) ($slot['open'] ?? ''));
+                $close = trim((string) ($slot['close'] ?? ''));
+                if ($open === '' && $close === '') {
+                    continue;
+                }
+                $slots[] = [
+                    'open' => $open,
+                    'close' => $close,
+                ];
+            }
+            $days[$day] = [
+                'closed' => !empty($rawDay['closed']) || $slots === [],
+                'slots' => $slots,
+            ];
+        }
+
+        return [
+            'timezone' => trim((string) ($payload['timezone'] ?? date_default_timezone_get())) ?: (string) date_default_timezone_get(),
+            'closed_today' => !empty($payload['closed_today']),
+            'closure_label' => trim((string) ($payload['closure_label'] ?? '')),
+            'reopens_on' => trim((string) ($payload['reopens_on'] ?? '')),
+            'days' => $days,
+        ];
+    }
+
+    if ($type === 'price_list') {
+        $items = [];
+        foreach ((array) ($payload['items'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $name = trim((string) ($item['name'] ?? ''));
+            $price = trim((string) ($item['price'] ?? ''));
+            $detail = trim((string) ($item['detail'] ?? ''));
+            if ($name === '' && $price === '' && $detail === '') {
+                continue;
+            }
+            $items[] = [
+                'name' => $name,
+                'price' => $price,
+                'detail' => $detail,
+            ];
+        }
+
+        return [
+            'currency' => strtoupper(substr(trim((string) ($payload['currency'] ?? 'EUR')) ?: 'EUR', 0, 3)),
+            'note' => trim((string) ($payload['note'] ?? '')),
+            'items' => $items,
+        ];
+    }
+
+    return [];
+}
+
+function ccms_normalize_live_data_structure($value): array
+{
+    $payload = is_array($value) ? $value : [];
+    $payload['slots'] = is_array($payload['slots'] ?? null) ? $payload['slots'] : [];
+
+    $slots = [];
+    foreach ($payload['slots'] as $slotKey => $slot) {
+        if (!is_array($slot)) {
+            continue;
+        }
+        $key = trim((string) $slotKey);
+        if ($key === '') {
+            $key = trim((string) ($slot['slot'] ?? ''));
+        }
+        if ($key === '') {
+            continue;
+        }
+        $type = trim((string) ($slot['type'] ?? ''));
+        if (!in_array($type, ccms_live_data_slot_types(), true)) {
+            continue;
+        }
+        $slots[$key] = [
+            'type' => $type,
+            'updated_at' => ($slot['updated_at'] ?? null) ? (string) $slot['updated_at'] : null,
+            'payload' => ccms_normalize_live_data_payload($type, $slot['payload'] ?? []),
+        ];
+    }
+
+    return ['slots' => $slots];
+}
+
 function ccms_default_data(): array
 {
     return [
@@ -140,6 +315,9 @@ function ccms_default_data(): array
         'pages' => [],
         'posts' => [],
         'media' => [],
+        'live_data' => [
+            'slots' => [],
+        ],
         'submissions' => [],
         'audit_logs' => [],
         'password_reset_tokens' => [],
@@ -382,6 +560,7 @@ function ccms_normalize_users(array $data): array
         ? (string) $data['site']['onboarding']['exported_at']
         : null;
     $data['site']['onboarding']['last_step'] = trim((string) ($data['site']['onboarding']['last_step'] ?? ''));
+    $data['live_data'] = ccms_normalize_live_data_structure($data['live_data'] ?? []);
     $data['users'] = array_values(array_filter(array_map(static function ($user) {
         if (!is_array($user)) {
             return null;
@@ -391,7 +570,7 @@ function ccms_normalize_users(array $data): array
             'username' => trim((string) ($user['username'] ?? '')),
             'email' => trim((string) ($user['email'] ?? '')),
             'password_hash' => (string) ($user['password_hash'] ?? ''),
-            'role' => in_array(($user['role'] ?? 'editor'), ['owner', 'editor', 'viewer'], true) ? (string) $user['role'] : 'editor',
+            'role' => ccms_normalize_user_role((string) ($user['role'] ?? 'editor')),
             'must_change_password' => !empty($user['must_change_password']),
             'last_login_at' => ($user['last_login_at'] ?? null) ? (string) $user['last_login_at'] : null,
             'totp_secret' => trim((string) ($user['totp_secret'] ?? '')),
@@ -737,6 +916,8 @@ function ccms_import_backup_payload(array $payload): array
         $data['local_ai']['max_tokens'] = is_numeric($localAi['max_tokens'] ?? null) ? (int) $localAi['max_tokens'] : $data['local_ai']['max_tokens'];
         $data['local_ai']['timeout'] = is_numeric($localAi['timeout'] ?? null) ? (int) $localAi['timeout'] : $data['local_ai']['timeout'];
     }
+
+    $data['live_data'] = ccms_normalize_live_data_structure($payloadData['live_data'] ?? []);
 
     if (is_array($payloadData['admin'] ?? null)) {
         $data['admin'] = array_merge($data['admin'], array_intersect_key($payloadData['admin'], $data['admin']));

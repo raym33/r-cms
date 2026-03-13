@@ -252,6 +252,27 @@ const cspNonce = bootstrap.cspNonce || "";
       { key: "button_ghost_border_color", label: "Ghost button border color", type: "color", placeholder: "Optional" },
     ];
 
+    const quickEditCategoryOptions = [
+      { value: "textos", label: "Textos y fotos" },
+      { value: "menu", label: "Menu" },
+      { value: "horario", label: "Horario" },
+      { value: "precios", label: "Precios" },
+      { value: "blog", label: "Blog" },
+      { value: "promos", label: "Promos" },
+    ];
+
+    const quickEditSourceOptions = [
+      { value: "capsule", label: "Campos del bloque" },
+      { value: "live_data", label: "Datos vivos" },
+    ];
+
+    const quickEditFrequencyOptions = [
+      { value: "", label: "Sin frecuencia" },
+      { value: "daily", label: "Daily" },
+      { value: "weekly", label: "Weekly" },
+      { value: "monthly", label: "Monthly" },
+    ];
+
     const blockLayoutOptions = {
       hero: [
         { value: "default", label: "Default" },
@@ -418,6 +439,39 @@ const cspNonce = bootstrap.cspNonce || "";
       return "block_" + randomPart;
     }
 
+    function normalizeQuickEdit(input, blockId = "") {
+      const quickEdit = (input && typeof input === "object") ? deepClone(input) : {};
+      const source = quickEdit.source === "live_data" ? "live_data" : "capsule";
+      const rawFields = Array.isArray(quickEdit.fields)
+        ? quickEdit.fields
+        : String(quickEdit.fields || "").split(/[,\n]+/);
+      const fields = rawFields
+        .map((field) => String(field || "").trim())
+        .filter(Boolean);
+      return {
+        enabled: !!quickEdit.enabled,
+        source,
+        category: String(quickEdit.category || "textos").trim() || "textos",
+        label: String(quickEdit.label || "").trim(),
+        slot: String(quickEdit.slot || (source === "live_data" ? blockId : "")).trim(),
+        frequency: String(quickEdit.frequency || "").trim(),
+        fields,
+      };
+    }
+
+    function cloneBuilderBlockForInsert(blockLike) {
+      const cloned = deepClone(blockLike || {});
+      const id = createBlockId();
+      return {
+        id,
+        type: cloned.type ? String(cloned.type) : "text_block",
+        props: cloned && typeof cloned.props === "object" && cloned.props ? cloned.props : {},
+        layout: cloned.layout ? String(cloned.layout) : "",
+        style: cloned && typeof cloned.style === "object" && cloned.style ? cloned.style : {},
+        quick_edit: normalizeQuickEdit(cloned.quick_edit || {}, id),
+      };
+    }
+
     function normalizeSearchText(value) {
       return String(value || "")
         .toLowerCase()
@@ -431,14 +485,35 @@ const cspNonce = bootstrap.cspNonce || "";
       if (!capsule.meta || typeof capsule.meta !== "object") capsule.meta = {};
       if (!capsule.style || typeof capsule.style !== "object") capsule.style = {};
       if (!Array.isArray(capsule.blocks)) capsule.blocks = [];
-      capsule.blocks = capsule.blocks.map((block, index) => ({
-        id: block && block.id ? String(block.id) : createBlockId(),
-        type: block && block.type ? String(block.type) : "text_block",
-        props: block && typeof block.props === "object" && block.props ? block.props : {},
-        style: block && typeof block.style === "object" && block.style ? block.style : {},
-        _order: index,
-      }));
+      capsule.blocks = capsule.blocks.map((block, index) => {
+        const normalized = cloneBuilderBlockForInsert(block);
+        normalized.id = block && block.id ? String(block.id) : normalized.id;
+        normalized.quick_edit = normalizeQuickEdit(block?.quick_edit || normalized.quick_edit, normalized.id);
+        normalized._order = index;
+        return normalized;
+      });
       return capsule;
+    }
+
+    function applyQuickEditFieldInput(field) {
+      const index = Number(field?.dataset?.builderQuickEdit || -1);
+      const key = String(field?.dataset?.key || "");
+      if (index < 0 || index >= capsuleState.blocks.length || !key) return false;
+      capsuleState.blocks[index].quick_edit = normalizeQuickEdit(capsuleState.blocks[index].quick_edit || {}, capsuleState.blocks[index].id || "");
+      const mode = field.dataset.mode || "text";
+      if (mode === "boolean") {
+        capsuleState.blocks[index].quick_edit[key] = !!field.checked;
+      } else if (mode === "list") {
+        capsuleState.blocks[index].quick_edit[key] = String(field.value || "")
+          .split(/[,\n]+/)
+          .map((entry) => entry.trim())
+          .filter(Boolean);
+      } else {
+        capsuleState.blocks[index].quick_edit[key] = String(field.value || "").trim();
+      }
+      capsuleState.blocks[index].quick_edit = normalizeQuickEdit(capsuleState.blocks[index].quick_edit, capsuleState.blocks[index].id || "");
+      syncCapsuleTextarea();
+      return true;
     }
 
     let capsuleState = normalizeCapsule(initialCapsuleState);
@@ -647,6 +722,49 @@ const cspNonce = bootstrap.cspNonce || "";
           <select data-builder-layout-field="${index}">
             ${options.map((option) => `<option value="${escapeHtml(option.value)}" ${currentValue === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
           </select>
+        </div>
+      `;
+    }
+
+    function renderQuickEditPanel(index, block) {
+      const quickEdit = normalizeQuickEdit(block?.quick_edit || {}, block?.id || "");
+      const sourceOptions = quickEditSourceOptions.map((option) => `<option value="${escapeHtml(option.value)}" ${quickEdit.source === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
+      const categoryOptions = quickEditCategoryOptions.map((option) => `<option value="${escapeHtml(option.value)}" ${quickEdit.category === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
+      const frequencyOptions = quickEditFrequencyOptions.map((option) => `<option value="${escapeHtml(option.value)}" ${quickEdit.frequency === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
+      return `
+        <div class="builder-full builder-subsection">
+          <h4>Modo Negocio</h4>
+          <div class="builder-style-grid">
+            <label class="check builder-full">
+              <input type="checkbox" data-builder-quick-edit="${index}" data-key="enabled" data-mode="boolean" ${quickEdit.enabled ? "checked" : ""}>
+              Mostrar este bloque en /mi-negocio/
+            </label>
+            <div class="field">
+              <label>Fuente</label>
+              <select data-builder-quick-edit="${index}" data-key="source" data-mode="select">${sourceOptions}</select>
+            </div>
+            <div class="field">
+              <label>Categoria</label>
+              <select data-builder-quick-edit="${index}" data-key="category" data-mode="select">${categoryOptions}</select>
+            </div>
+            <div class="field">
+              <label>Etiqueta</label>
+              <input value="${escapeHtml(quickEdit.label || "")}" data-builder-quick-edit="${index}" data-key="label" data-mode="text" placeholder="Como lo vera el cliente">
+            </div>
+            <div class="field">
+              <label>Frecuencia</label>
+              <select data-builder-quick-edit="${index}" data-key="frequency" data-mode="select">${frequencyOptions}</select>
+            </div>
+            <div class="field">
+              <label>Slot live_data</label>
+              <input value="${escapeHtml(quickEdit.slot || "")}" data-builder-quick-edit="${index}" data-key="slot" data-mode="text" placeholder="Se autocompleta con el ID del bloque">
+            </div>
+            <div class="field builder-full">
+              <label>Campos editables (coma separada)</label>
+              <input value="${escapeHtml((quickEdit.fields || []).join(", "))}" data-builder-quick-edit="${index}" data-key="fields" data-mode="list" placeholder="title, subtitle, image_url">
+              <div class="small">Si lo dejas vacio, LinuxCMS intentara inferir campos simples del bloque. Para datos vivos usa <strong>live_data</strong>.</div>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -1371,6 +1489,7 @@ const cspNonce = bootstrap.cspNonce || "";
         const complexFields = [];
         const styleFields = blockStyleFields.map((field) => renderBlockStyleField(index, field, block.style?.[field.key] ?? ""));
         const layoutField = renderBlockLayoutField(index, block);
+        const quickEditPanel = renderQuickEditPanel(index, block);
         Object.entries(block.props || {}).forEach(([key, value]) => {
           if (Array.isArray(value)) {
             complexFields.push(renderRepeaterArray(index, key, value));
@@ -1454,6 +1573,7 @@ const cspNonce = bootstrap.cspNonce || "";
               <div class="builder-fields">
                 ${scalarFields.join("")}
                 ${complexFields.length ? `<div class="builder-full builder-note">Las listas y cards del bloque ya se editan de forma visual. El JSON queda como fallback solo para estructuras especiales.</div>${complexFields.join("")}` : ""}
+                ${quickEditPanel}
                 <div class="builder-full builder-subsection">
                   <h4>Layout y estilo del bloque</h4>
                   <div class="builder-style-grid">
@@ -1477,13 +1597,13 @@ const cspNonce = bootstrap.cspNonce || "";
       const template = capsuleBuilderTemplates[templateIndex];
       if (!template) return;
       const insertAt = normalizeInsertIndex(pendingInsertIndex);
-      capsuleState.blocks.splice(insertAt, 0, {
-        id: createBlockId(),
+      capsuleState.blocks.splice(insertAt, 0, cloneBuilderBlockForInsert({
         type: template.type,
         props: deepClone(template.props || {}),
         layout: template.layout || "",
         style: {},
-      });
+        quick_edit: deepClone(template.quick_edit || {}),
+      }));
       markAutosaveDirty("Se añadió una sección.");
       selectBuilderBlock(insertAt, { scroll: true, syncPreview: true });
     }
@@ -1817,8 +1937,7 @@ const cspNonce = bootstrap.cspNonce || "";
           activeBuilderBlockIndex = index + 1;
           changed = true;
         } else if (action === "duplicate") {
-          const copy = deepClone(capsuleState.blocks[index]);
-          copy.id = createBlockId();
+          const copy = cloneBuilderBlockForInsert(capsuleState.blocks[index]);
           capsuleState.blocks.splice(index + 1, 0, copy);
           activeBuilderBlockIndex = index + 1;
           changed = true;
@@ -2017,6 +2136,20 @@ const cspNonce = bootstrap.cspNonce || "";
         syncCapsuleTextarea();
       });
 
+      builderList.addEventListener("input", (event) => {
+        if (builderReadOnly) return;
+        const field = event.target.closest("[data-builder-quick-edit]");
+        if (!field) return;
+        applyQuickEditFieldInput(field);
+      });
+
+      builderList.addEventListener("change", (event) => {
+        if (builderReadOnly) return;
+        const field = event.target.closest("[data-builder-quick-edit]");
+        if (!field) return;
+        applyQuickEditFieldInput(field);
+      });
+
       builderList.addEventListener("change", (event) => {
         if (builderReadOnly) return;
         const field = event.target.closest("[data-builder-field][data-mode='json']");
@@ -2186,8 +2319,7 @@ const cspNonce = bootstrap.cspNonce || "";
           return;
         }
         if (action === "duplicate") {
-          const copy = deepClone(capsuleState.blocks[activeBuilderBlockIndex]);
-          copy.id = createBlockId();
+          const copy = cloneBuilderBlockForInsert(capsuleState.blocks[activeBuilderBlockIndex]);
           capsuleState.blocks.splice(activeBuilderBlockIndex + 1, 0, copy);
           markAutosaveDirty("Se duplicó una sección.");
           selectBuilderBlock(activeBuilderBlockIndex + 1, { scroll: true, syncPreview: true });
@@ -2506,8 +2638,7 @@ const cspNonce = bootstrap.cspNonce || "";
           return;
         }
         if (action === "duplicate") {
-          const copy = deepClone(capsuleState.blocks[index]);
-          copy.id = createBlockId();
+          const copy = cloneBuilderBlockForInsert(capsuleState.blocks[index]);
           capsuleState.blocks.splice(index + 1, 0, copy);
           markAutosaveDirty("Se duplicó una sección.");
           selectBuilderBlock(index + 1, { scroll: true, syncPreview: true });

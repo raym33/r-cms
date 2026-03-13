@@ -90,7 +90,9 @@ function ccms_admin_handle_guest_post(string $action): void
             ccms_save_data($freshData);
         }
         ccms_flash('success', 'Sesión iniciada.');
-        ccms_redirect('/r-admin/');
+        ccms_redirect(ccms_user_can_access_business_mode($loggedUser) && !ccms_user_can('pages_manage') && !ccms_user_can('site_manage')
+            ? '/mi-negocio/'
+            : '/r-admin/');
     }
 
     if ($action === 'verify_2fa') {
@@ -109,7 +111,9 @@ function ccms_admin_handle_guest_post(string $action): void
             ccms_save_data($freshData);
         }
         ccms_flash('success', 'Sesión iniciada con 2FA.');
-        ccms_redirect('/r-admin/');
+        ccms_redirect(ccms_user_can_access_business_mode($loggedUser) && !ccms_user_can('pages_manage') && !ccms_user_can('site_manage')
+            ? '/mi-negocio/'
+            : '/r-admin/');
     }
 
     if ($action === 'complete_password_reset') {
@@ -845,7 +849,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             $username = trim((string) ($_POST['user_username'] ?? ''));
             $email = trim((string) ($_POST['user_email'] ?? ''));
             $password = (string) ($_POST['user_password'] ?? '');
-            $role = in_array((string) ($_POST['user_role'] ?? 'editor'), ['owner', 'editor', 'viewer'], true) ? (string) $_POST['user_role'] : 'editor';
+            $role = ccms_normalize_user_role((string) ($_POST['user_role'] ?? 'editor'));
             if ($username === '' || $email === '' || $password === '') {
                 throw new RuntimeException('Completa usuario, email y contraseña.');
             }
@@ -893,7 +897,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             }
             $username = trim((string) ($_POST['user_username'] ?? ''));
             $email = trim((string) ($_POST['user_email'] ?? ''));
-            $role = in_array((string) ($_POST['user_role'] ?? 'editor'), ['owner', 'editor', 'viewer'], true) ? (string) $_POST['user_role'] : 'editor';
+            $role = ccms_normalize_user_role((string) ($_POST['user_role'] ?? 'editor'));
             $password = (string) ($_POST['user_password'] ?? '');
             if ($username === '' || $email === '') {
                 throw new RuntimeException('Usuario y email son obligatorios.');

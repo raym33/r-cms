@@ -41,9 +41,10 @@ function ccms_static_export_build(array $data): array
     $posts = ccms_posts_published($data);
     $categories = ccms_blog_categories($data);
     $tags = ccms_blog_tags($data);
+    $publicSite = ccms_public_site_config($data);
 
     foreach ($pages as $page) {
-        $html = ccms_render_public_page($data['site'], $page, $menuPages);
+        $html = ccms_render_public_page($publicSite, $page, $menuPages);
         $slug = trim((string) ($page['slug'] ?? ''));
         if ($homepage && (($page['id'] ?? '') === ($homepage['id'] ?? ''))) {
             file_put_contents($dir . DIRECTORY_SEPARATOR . 'index.html', $html);
@@ -60,7 +61,7 @@ function ccms_static_export_build(array $data): array
         @mkdir($blogDir, 0775, true);
         file_put_contents(
             $blogDir . DIRECTORY_SEPARATOR . 'index.html',
-            ccms_render_blog_archive_page($data['site'], $posts, $menuPages)
+            ccms_render_blog_archive_page($publicSite, $posts, $menuPages)
         );
 
         foreach ($posts as $post) {
@@ -72,7 +73,7 @@ function ccms_static_export_build(array $data): array
             @mkdir($postDir, 0775, true);
             file_put_contents(
                 $postDir . DIRECTORY_SEPARATOR . 'index.html',
-                ccms_render_blog_post_page($data['site'], $post, $menuPages)
+                ccms_render_blog_post_page($publicSite, $post, $menuPages)
             );
         }
 
@@ -90,7 +91,7 @@ function ccms_static_export_build(array $data): array
                 file_put_contents(
                     $categoryDir . DIRECTORY_SEPARATOR . 'index.html',
                     ccms_render_blog_archive_page(
-                        $data['site'],
+                        $publicSite,
                         ccms_posts_for_category_slug($data, $categorySlug),
                         $menuPages,
                         $categoryLabel,
@@ -114,7 +115,7 @@ function ccms_static_export_build(array $data): array
                 file_put_contents(
                     $tagDir . DIRECTORY_SEPARATOR . 'index.html',
                     ccms_render_blog_archive_page(
-                        $data['site'],
+                        $publicSite,
                         ccms_posts_for_tag_slug($data, $tagSlug),
                         $menuPages,
                         null,
@@ -124,7 +125,7 @@ function ccms_static_export_build(array $data): array
             }
         }
 
-        file_put_contents($dir . DIRECTORY_SEPARATOR . 'feed.xml', ccms_render_blog_rss($data['site'], $posts));
+        file_put_contents($dir . DIRECTORY_SEPARATOR . 'feed.xml', ccms_render_blog_rss($publicSite, $posts));
     }
 
     $uploadIterator = new RecursiveIteratorIterator(

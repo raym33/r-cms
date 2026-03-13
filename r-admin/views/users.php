@@ -12,6 +12,7 @@
           <label>Rol</label>
           <select name="user_role">
             <option value="editor">Editor</option>
+            <option value="client">Client</option>
             <option value="viewer">Viewer</option>
             <option value="owner">Owner</option>
           </select>
@@ -25,6 +26,7 @@
       <ul>
         <li><strong>Owner</strong>: controla sitio, usuarios, páginas, media e importación.</li>
         <li><strong>Editor</strong>: puede editar páginas, media e importar cápsulas.</li>
+        <li><strong>Client</strong>: entra en <code>/mi-negocio/</code> para editar solo contenido rápido desde móvil.</li>
         <li><strong>Viewer</strong>: solo lectura del contenido y la vista previa.</li>
       </ul>
     </div>
@@ -51,7 +53,7 @@
                 <div class="field">
                   <label>Rol</label>
                   <select name="user_role">
-                    <?php foreach (['owner' => 'Owner', 'editor' => 'Editor', 'viewer' => 'Viewer'] as $roleKey => $roleLabel): ?>
+                    <?php foreach (['owner' => 'Owner', 'editor' => 'Editor', 'client' => 'Client', 'viewer' => 'Viewer'] as $roleKey => $roleLabel): ?>
                       <option value="<?= ccms_h($roleKey) ?>" <?= (($user['role'] ?? '') === $roleKey) ? 'selected' : '' ?>><?= ccms_h($roleLabel) ?></option>
                     <?php endforeach; ?>
                   </select>

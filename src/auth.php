@@ -459,11 +459,20 @@ function ccms_user_can(string $capability): bool
     }
     $role = (string) ($user['role'] ?? 'viewer');
     $matrix = [
-        'owner' => ['site_manage', 'users_manage', 'pages_manage', 'media_manage', 'import_capsules', 'ai_generate'],
-        'editor' => ['pages_manage', 'media_manage', 'import_capsules', 'ai_generate'],
+        'owner' => ['site_manage', 'users_manage', 'pages_manage', 'media_manage', 'import_capsules', 'ai_generate', 'business_mode'],
+        'editor' => ['pages_manage', 'media_manage', 'import_capsules', 'ai_generate', 'business_mode'],
         'viewer' => [],
+        'client' => ['business_mode'],
     ];
     return in_array($capability, $matrix[$role] ?? [], true);
+}
+
+function ccms_user_can_access_business_mode(?array $user = null): bool
+{
+    if ($user === null) {
+        return ccms_user_can('business_mode');
+    }
+    return in_array((string) ($user['role'] ?? ''), ['owner', 'editor', 'client'], true);
 }
 
 function ccms_require_capability(string $capability): array

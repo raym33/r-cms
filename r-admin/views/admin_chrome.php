@@ -14,6 +14,7 @@
   </div>
   <div class="toolbar">
     <a class="btn btn-secondary" href="/"><?= ccms_icon('globe', 16) ?>Abrir web</a>
+    <?php if (ccms_user_can('business_mode')): ?><a class="btn btn-secondary" href="/mi-negocio/"><?= ccms_icon('eye', 16) ?>Modo negocio</a><?php endif; ?>
     <button class="btn btn-secondary" type="button" id="clientModeToggle" aria-pressed="false"><?= ccms_icon('eye', 16) ?>Modo cliente</button>
     <?php if ($canGenerateAi): ?><a class="btn btn-secondary advanced-only" href="?tab=studio"><?= ccms_icon('sparkles', 16) ?>Studio local</a><?php endif; ?>
     <?php if ($canViewInbox): ?><a class="btn btn-secondary" href="?tab=inbox"><?= ccms_icon('mail', 16) ?>Inbox</a><?php endif; ?>

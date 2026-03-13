@@ -12,6 +12,7 @@ require_once __DIR__ . '/images.php';
 require_once __DIR__ . '/export.php';
 require_once __DIR__ . '/ai.php';
 require_once __DIR__ . '/admin_context.php';
+require_once __DIR__ . '/client_actions.php';
 
 ccms_start_session();
 ccms_ensure_runtime_dirs();

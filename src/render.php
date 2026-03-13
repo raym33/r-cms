@@ -3,6 +3,53 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/storage.php';
 
+function ccms_normalize_capsule_quick_edit($quickEdit, array $block = []): array
+{
+    $quickEdit = is_array($quickEdit) ? $quickEdit : [];
+    $source = in_array((string) ($quickEdit['source'] ?? 'capsule'), ['capsule', 'live_data'], true)
+        ? (string) ($quickEdit['source'] ?? 'capsule')
+        : 'capsule';
+    $fields = array_values(array_filter(array_map(static function ($field): string {
+        return trim((string) $field);
+    }, is_array($quickEdit['fields'] ?? null) ? $quickEdit['fields'] : []), static function (string $field): bool {
+        return $field !== '';
+    }));
+    $slot = trim((string) ($quickEdit['slot'] ?? ''));
+    if ($source === 'live_data' && $slot === '') {
+        $slot = trim((string) ($block['id'] ?? ''));
+    }
+
+    return [
+        'enabled' => !empty($quickEdit['enabled']),
+        'source' => $source,
+        'category' => trim((string) ($quickEdit['category'] ?? 'textos')) ?: 'textos',
+        'label' => trim((string) ($quickEdit['label'] ?? '')),
+        'slot' => $slot,
+        'frequency' => trim((string) ($quickEdit['frequency'] ?? '')),
+        'fields' => $fields,
+    ];
+}
+
+function ccms_normalize_capsule(array $capsule): array
+{
+    $capsule['meta'] = is_array($capsule['meta'] ?? null) ? $capsule['meta'] : [];
+    $capsule['style'] = is_array($capsule['style'] ?? null) ? $capsule['style'] : [];
+    $capsule['blocks'] = array_values(array_map(static function ($block): array {
+        $block = is_array($block) ? $block : [];
+        $normalized = [
+            'id' => trim((string) ($block['id'] ?? ccms_next_id('block'))),
+            'type' => trim((string) ($block['type'] ?? 'text_block')),
+            'props' => is_array($block['props'] ?? null) ? $block['props'] : [],
+            'style' => is_array($block['style'] ?? null) ? $block['style'] : [],
+            'layout' => trim((string) ($block['layout'] ?? '')),
+        ];
+        $normalized['quick_edit'] = ccms_normalize_capsule_quick_edit($block['quick_edit'] ?? [], $normalized);
+        return $normalized;
+    }, is_array($capsule['blocks'] ?? null) ? $capsule['blocks'] : []));
+
+    return $capsule;
+}
+
 function ccms_capsule_decode(array $page): ?array
 {
     $raw = trim((string) ($page['capsule_json'] ?? ''));
@@ -10,7 +57,44 @@ function ccms_capsule_decode(array $page): ?array
         return null;
     }
     $decoded = json_decode($raw, true);
-    return is_array($decoded) ? $decoded : null;
+    return is_array($decoded) ? ccms_normalize_capsule($decoded) : null;
+}
+
+function ccms_public_site_config(array $data): array
+{
+    $site = is_array($data['site'] ?? null) ? $data['site'] : [];
+    $site['live_data'] = ccms_normalize_live_data_structure($data['live_data'] ?? []);
+    return $site;
+}
+
+function ccms_site_live_data(array $site): array
+{
+    return ccms_normalize_live_data_structure($site['live_data'] ?? []);
+}
+
+function ccms_capsule_live_slot(array $block, array $site): ?array
+{
+    $quickEdit = ccms_normalize_capsule_quick_edit($block['quick_edit'] ?? [], $block);
+    if (!$quickEdit['enabled'] || $quickEdit['source'] !== 'live_data' || $quickEdit['slot'] === '') {
+        return null;
+    }
+    $liveData = ccms_site_live_data($site);
+    $slot = $liveData['slots'][$quickEdit['slot']] ?? null;
+    return is_array($slot) ? $slot : null;
+}
+
+function ccms_capsule_runtime_block(array $block, array $site): array
+{
+    $slot = ccms_capsule_live_slot($block, $site);
+    if (!$slot || !is_array($slot['payload'] ?? null)) {
+        return $block;
+    }
+
+    $block['props'] = array_replace_recursive(
+        is_array($block['props'] ?? null) ? $block['props'] : [],
+        ccms_normalize_live_data_payload((string) ($slot['type'] ?? ''), $slot['payload'])
+    );
+    return $block;
 }
 
 function ccms_capsule_supported_blocks(): array
@@ -31,6 +115,9 @@ function ccms_capsule_supported_blocks(): array
         'process',
         'faq',
         'accordion_rich',
+        'menu_daily',
+        'hours_status',
+        'price_list',
         'pricing',
         'pricing_toggle',
         'pricing_comparison',
@@ -1204,6 +1291,7 @@ function ccms_render_capsule_body(array $capsule, array $site = []): string
     try {
         $html .= '<div class="ccms-capsule">';
         foreach (($capsule['blocks'] ?? []) as $index => $block) {
+            $block = ccms_capsule_runtime_block(is_array($block) ? $block : [], $site);
             $blockType = (string) ($block['type'] ?? 'block');
             $blockId = (string) ($block['id'] ?? ($blockType . '_' . $index));
             $animationAttr = ccms_capsule_animation_attr($block);
@@ -1924,6 +2012,145 @@ function ccms_render_blog_carousel_block_variant(array $block, array $props, arr
     return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_layout_attr($layout) . ccms_capsule_section_style_attr($block, 'padding:76px 0;background:rgba(255,255,255,.52)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '>' . $header . '<div class="ccms-grid-3">' . $cards . '</div></div></section>';
 }
 
+function ccms_business_day_labels(): array
+{
+    return [
+        'mon' => 'Lunes',
+        'tue' => 'Martes',
+        'wed' => 'Miercoles',
+        'thu' => 'Jueves',
+        'fri' => 'Viernes',
+        'sat' => 'Sabado',
+        'sun' => 'Domingo',
+    ];
+}
+
+function ccms_resolve_hours_status(array $payload): array
+{
+    $timezone = trim((string) ($payload['timezone'] ?? 'UTC')) ?: 'UTC';
+    try {
+        $zone = new DateTimeZone($timezone);
+    } catch (Throwable $e) {
+        $zone = new DateTimeZone('UTC');
+    }
+
+    $now = new DateTimeImmutable('now', $zone);
+    $dayKeys = [1 => 'mon', 2 => 'tue', 3 => 'wed', 4 => 'thu', 5 => 'fri', 6 => 'sat', 7 => 'sun'];
+    $todayKey = $dayKeys[(int) $now->format('N')] ?? 'mon';
+    $today = is_array($payload['days'][$todayKey] ?? null) ? $payload['days'][$todayKey] : ['closed' => true, 'slots' => []];
+
+    if (!empty($payload['closed_today'])) {
+        $reason = trim((string) ($payload['closure_label'] ?? ''));
+        $message = $reason !== '' ? $reason : 'Cerrado hoy';
+        if (trim((string) ($payload['reopens_on'] ?? '')) !== '') {
+            $message .= ' · vuelve el ' . trim((string) $payload['reopens_on']);
+        }
+        return ['open' => false, 'label' => 'Cerrado hoy', 'message' => $message];
+    }
+
+    $nowMinutes = ((int) $now->format('H') * 60) + (int) $now->format('i');
+    foreach ((array) ($today['slots'] ?? []) as $slot) {
+        $open = trim((string) ($slot['open'] ?? ''));
+        $close = trim((string) ($slot['close'] ?? ''));
+        if (!preg_match('/^\d{2}:\d{2}$/', $open) || !preg_match('/^\d{2}:\d{2}$/', $close)) {
+            continue;
+        }
+        [$openHour, $openMinute] = array_map('intval', explode(':', $open));
+        [$closeHour, $closeMinute] = array_map('intval', explode(':', $close));
+        $openMinutes = ($openHour * 60) + $openMinute;
+        $closeMinutes = ($closeHour * 60) + $closeMinute;
+        if ($nowMinutes >= $openMinutes && $nowMinutes < $closeMinutes) {
+            return ['open' => true, 'label' => 'Abierto ahora', 'message' => 'Cierra a las ' . $close];
+        }
+    }
+
+    foreach ((array) ($today['slots'] ?? []) as $slot) {
+        $open = trim((string) ($slot['open'] ?? ''));
+        if (preg_match('/^\d{2}:\d{2}$/', $open)) {
+            [$openHour, $openMinute] = array_map('intval', explode(':', $open));
+            $openMinutes = ($openHour * 60) + $openMinute;
+            if ($nowMinutes < $openMinutes) {
+                return ['open' => false, 'label' => 'Cerrado ahora', 'message' => 'Abre a las ' . $open];
+            }
+        }
+    }
+
+    return ['open' => false, 'label' => 'Cerrado ahora', 'message' => 'Consulta el horario de hoy'];
+}
+
+function ccms_render_menu_daily_block(array $block, array $props, array $style, string $sectionId): string
+{
+    $payload = array_replace_recursive(
+        ccms_live_data_default_payload('menu_daily'),
+        ccms_normalize_live_data_payload('menu_daily', $props)
+    );
+    $sectionsHtml = '';
+    foreach (($payload['sections'] ?? []) as $section) {
+        $itemsHtml = '';
+        foreach ((array) ($section['items'] ?? []) as $item) {
+            $itemsHtml .= '<li>' . ccms_h((string) $item) . '</li>';
+        }
+        if ($itemsHtml === '') {
+            continue;
+        }
+        $sectionsHtml .= '<div class="ccms-card" style="padding:24px"><p class="ccms-kicker" style="margin-bottom:10px">' . ccms_h((string) ($section['name'] ?? 'Seccion')) . '</p><ul class="ccms-list" style="margin:0">' . $itemsHtml . '</ul></div>';
+    }
+    if ($sectionsHtml === '') {
+        $sectionsHtml = '<div class="ccms-card" style="padding:24px"><p class="ccms-note" style="margin:0">Todavia no hay platos publicados para hoy.</p></div>';
+    }
+
+    $price = trim((string) ($payload['price'] ?? ''));
+    $priceHtml = $price !== ''
+        ? '<div class="ccms-card" style="padding:26px;text-align:center"><p class="ccms-kicker" style="margin-bottom:8px">' . ccms_h((string) ($props['price_label'] ?? 'Menu del dia')) . '</p><p style="margin:0;font-size:42px;font-weight:900;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h($price) . ' ' . ccms_h((string) ($payload['currency'] ?? 'EUR')) . '</p>' . (trim((string) ($payload['includes'] ?? '')) !== '' ? '<p class="ccms-note" style="margin:12px 0 0">' . ccms_h((string) $payload['includes']) . '</p>' : '') . '</div>'
+        : '';
+
+    return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0;background:rgba(255,255,255,.52)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div style="text-align:center;max-width:820px;margin:0 auto 26px"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Actualizado hoy')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? 'Menu del dia')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p></div>' . ($priceHtml !== '' ? '<div style="max-width:380px;margin:0 auto 22px">' . $priceHtml . '</div>' : '') . '<div class="ccms-grid-3">' . $sectionsHtml . '</div></div></section>';
+}
+
+function ccms_render_hours_status_block(array $block, array $props, array $style, string $sectionId): string
+{
+    $payload = array_replace_recursive(
+        ccms_default_business_hours_payload(),
+        ccms_normalize_live_data_payload('hours_status', $props)
+    );
+    $status = ccms_resolve_hours_status($payload);
+    $daysHtml = '';
+    foreach (ccms_business_day_labels() as $dayKey => $dayLabel) {
+        $day = is_array($payload['days'][$dayKey] ?? null) ? $payload['days'][$dayKey] : ['closed' => true, 'slots' => []];
+        $ranges = [];
+        foreach ((array) ($day['slots'] ?? []) as $slot) {
+            $open = trim((string) ($slot['open'] ?? ''));
+            $close = trim((string) ($slot['close'] ?? ''));
+            if ($open !== '' || $close !== '') {
+                $ranges[] = trim($open . ' - ' . $close, ' -');
+            }
+        }
+        $daysHtml .= '<div style="display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.08)"><strong>' . ccms_h($dayLabel) . '</strong><span class="ccms-note">' . ccms_h(!empty($day['closed']) ? 'Cerrado' : implode(' · ', $ranges)) . '</span></div>';
+    }
+
+    $statusTone = !empty($status['open']) ? 'rgba(64,145,108,.12)' : 'rgba(200,111,92,.12)';
+    $statusText = !empty($status['open']) ? '#2d6a4f' : ccms_h($style['accent_dark']);
+
+    return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0') . '><div class="ccms-c-inner ccms-grid-2"' . ccms_capsule_inner_style_attr($block) . '><div><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Horario')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? 'Horario actual')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p><div class="ccms-card" style="padding:24px;margin-top:22px;background:' . $statusTone . ';border-color:transparent"><p style="margin:0 0 6px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:' . $statusText . '">' . ccms_h((string) $status['label']) . '</p><p style="margin:0;font-size:24px;font-weight:800;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) $status['message']) . '</p></div></div><div class="ccms-card" style="padding:24px">' . $daysHtml . '</div></div></section>';
+}
+
+function ccms_render_price_list_block(array $block, array $props, array $style, string $sectionId): string
+{
+    $payload = array_replace_recursive(
+        ccms_live_data_default_payload('price_list'),
+        ccms_normalize_live_data_payload('price_list', $props)
+    );
+    $itemsHtml = '';
+    foreach ((array) ($payload['items'] ?? []) as $item) {
+        $itemsHtml .= '<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:16px 0;border-bottom:1px solid rgba(0,0,0,.08)"><div><p style="margin:0;font-weight:800">' . ccms_h((string) ($item['name'] ?? 'Servicio')) . '</p>' . (trim((string) ($item['detail'] ?? '')) !== '' ? '<p class="ccms-note" style="margin:6px 0 0">' . ccms_h((string) $item['detail']) . '</p>' : '') . '</div><strong style="font-size:20px;align-self:start">' . ccms_h((string) ($item['price'] ?? '')) . ' ' . ccms_h((string) ($payload['currency'] ?? 'EUR')) . '</strong></div>';
+    }
+    if ($itemsHtml === '') {
+        $itemsHtml = '<p class="ccms-note" style="margin:0">Todavia no hay precios publicados.</p>';
+    }
+
+    return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0;background:rgba(255,255,255,.5)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div style="text-align:center;max-width:820px;margin:0 auto 26px"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Tarifas')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? 'Lista de precios')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p></div><div class="ccms-card" style="padding:24px;max-width:900px;margin:0 auto">' . $itemsHtml . (trim((string) ($payload['note'] ?? '')) !== '' ? '<p class="ccms-note" style="margin:18px 0 0">' . ccms_h((string) $payload['note']) . '</p>' : '') . '</div></div></section>';
+}
+
 function ccms_render_capsule_block(array $block, array $style): string
 {
     $type = (string) ($block['type'] ?? '');
@@ -2024,6 +2251,15 @@ function ccms_render_capsule_block(array $block, array $style): string
                 $itemsHtml .= '<details class="ccms-card" style="padding:22px 24px"><summary style="cursor:pointer;display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;list-style:none"><span style="width:38px;height:38px;border-radius:14px;background:rgba(229,115,115,.14);display:inline-flex;align-items:center;justify-content:center;font-size:18px">' . ccms_h($icon !== '' ? $icon : '•') . '</span><span>' . ccms_h((string) ($item['q'] ?? $item['title'] ?? 'Question')) . '</span></summary>' . ($media !== '' ? '<img class="ccms-media-sm" src="' . ccms_h(ccms_capsule_media_url($media, 'accordion-' . $blockId, 960, 720)) . '" alt="" style="margin-top:16px">' : '') . '<p class="ccms-text" style="margin:16px 0 0">' . ccms_h((string) ($item['a'] ?? $item['text'] ?? '')) . '</p></details>';
             }
             return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:76px 0;background:rgba(255,255,255,.58)') . '><div class="ccms-c-inner"' . ccms_capsule_inner_style_attr($block) . '><div style="text-align:center;max-width:820px;margin:0 auto 26px"><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Key questions')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? '')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? '')) . '</p></div><div style="display:grid;gap:16px">' . $itemsHtml . '</div></div></section>';
+
+        case 'menu_daily':
+            return ccms_render_menu_daily_block($block, $props, $style, $sectionId);
+
+        case 'hours_status':
+            return ccms_render_hours_status_block($block, $props, $style, $sectionId);
+
+        case 'price_list':
+            return ccms_render_price_list_block($block, $props, $style, $sectionId);
 
         case 'pricing':
             return ccms_render_pricing_block_variant($block, $props, $style, $sectionId);

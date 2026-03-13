@@ -8,6 +8,7 @@ if (!ccms_is_installed()) {
 }
 
 $data = ccms_load_data();
+$publicSite = ccms_public_site_config($data);
 $path = trim(ccms_request_path(), '/');
 $menuPages = ccms_menu_pages($data);
 
@@ -29,7 +30,7 @@ if (preg_match('#^blog/category/([^/]+)$#', $path, $matches)) {
     if ($categoryLabel === '') {
         http_response_code(404);
         echo ccms_render_public_page(
-            $data['site'],
+            $publicSite,
             [
                 'title' => 'Categoría no encontrada',
                 'meta_title' => 'Categoría no encontrada',
@@ -57,7 +58,7 @@ if (preg_match('#^blog/tag/([^/]+)$#', $path, $matches)) {
     if ($tagLabel === '') {
         http_response_code(404);
         echo ccms_render_public_page(
-            $data['site'],
+            $publicSite,
             [
                 'title' => 'Etiqueta no encontrada',
                 'meta_title' => 'Etiqueta no encontrada',
@@ -78,7 +79,7 @@ if (preg_match('#^blog/([^/]+)$#', $path, $matches)) {
     if (!$post) {
         http_response_code(404);
         echo ccms_render_public_page(
-            $data['site'],
+            $publicSite,
             [
                 'title' => 'Artículo no encontrado',
                 'meta_title' => 'Artículo no encontrado',
@@ -98,7 +99,7 @@ $page = $path === '' ? ccms_homepage($data) : ccms_page_by_slug($data, $path);
 if (!$page) {
     http_response_code(404);
     echo ccms_render_public_page(
-        $data['site'],
+        $publicSite,
         [
             'title' => 'Página no encontrada',
             'meta_title' => 'Página no encontrada',
@@ -129,6 +130,7 @@ if (!headers_sent()) {
             'custom_css' => (string) ($data['site']['custom_css'] ?? ''),
             'colors' => is_array($data['site']['colors'] ?? null) ? $data['site']['colors'] : [],
         ],
+        'live_data' => $data['live_data'] ?? [],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
     $etag = '"' . hash('sha256', $etagPayload) . '"';
     header('Cache-Control: public, max-age=300');
@@ -142,4 +144,4 @@ if (!headers_sent()) {
     }
 }
 
-echo ccms_render_public_page($data['site'], $page, $menuPages);
+echo ccms_render_public_page($publicSite, $page, $menuPages);

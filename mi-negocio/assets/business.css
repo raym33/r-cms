@@ -1,0 +1,55 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:#f6f1ea;color:#2f241f}
+a{color:inherit}
+.business-shell{width:min(980px,calc(100% - 24px));margin:0 auto;padding:18px 0 40px}
+.business-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.business-brand{display:grid;gap:6px}
+.business-brand h1{margin:0;font-size:26px;line-height:1.05}
+.business-brand p{margin:0;color:#6b5b53}
+.business-actions{display:flex;flex-wrap:wrap;gap:10px}
+.business-card,.business-panel{background:#fff;border:1px solid rgba(47,36,31,.08);border-radius:22px;box-shadow:0 18px 40px -32px rgba(47,36,31,.2)}
+.business-card{padding:18px}
+.business-panel{padding:22px}
+.business-stack{display:grid;gap:16px}
+.business-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.business-category{display:grid;gap:12px}
+.business-category-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.business-category-head h2{margin:0;font-size:18px}
+.business-category-head p{margin:6px 0 0;color:#6b5b53;font-size:14px;line-height:1.55}
+.business-chip{display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;background:#f4e7dc;color:#8b5c4e;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.business-item{display:grid;gap:12px;padding:16px;border:1px solid rgba(47,36,31,.08);border-radius:18px;background:linear-gradient(180deg,#fff 0%,#fcfaf7 100%)}
+.business-item h3{margin:0;font-size:18px}
+.business-item p{margin:0;color:#6b5b53;line-height:1.55}
+.business-item-meta{display:flex;flex-wrap:wrap;gap:8px}
+.business-pill{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f7f4ee;color:#6b5b53;font-size:12px;font-weight:700}
+.business-empty{padding:28px;text-align:center;color:#6b5b53}
+.business-form{display:grid;gap:16px}
+.business-field{display:grid;gap:8px}
+.business-field label{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6b5b53}
+.business-field input,.business-field textarea,.business-field select{width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(47,36,31,.12);background:#fff;color:#2f241f;font:inherit}
+.business-field textarea{min-height:120px;resize:vertical}
+.business-check{display:flex;align-items:center;gap:10px;font-size:14px;color:#2f241f}
+.business-check input{width:auto;padding:0}
+.business-toolbar{display:flex;flex-wrap:wrap;gap:10px}
+.business-btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 18px;border-radius:16px;border:0;background:#c86f5c;color:#fff;text-decoration:none;font-weight:800;cursor:pointer}
+.business-btn.secondary{background:#efe4d8;color:#6b5b53}
+.business-btn.ghost{background:#fff;border:1px solid rgba(47,36,31,.1);color:#2f241f}
+.business-flash{margin-bottom:16px;padding:14px 16px;border-radius:16px}
+.business-flash.success{background:#e9f6ef;color:#1f6b47}
+.business-flash.error{background:#fdeceb;color:#a23b35}
+.business-page-switcher{display:flex;flex-wrap:wrap;gap:10px}
+.business-page-link{display:inline-flex;padding:10px 14px;border-radius:14px;background:#fff;border:1px solid rgba(47,36,31,.08);text-decoration:none;font-weight:700}
+.business-page-link.is-active{background:#2f241f;color:#fff;border-color:#2f241f}
+.business-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.business-slot-grid{display:grid;gap:12px}
+.business-day-row{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:14px;border:1px solid rgba(47,36,31,.08);border-radius:18px;background:#fcfaf7}
+.business-day-times{display:grid;gap:10px}
+.business-day-times-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.business-header-note{color:#6b5b53;font-size:14px;line-height:1.6}
+.business-login{max-width:420px;margin:8vh auto 0}
+@media (max-width:768px){
+  .business-topbar,.business-category-head{flex-direction:column;align-items:flex-start}
+  .business-grid,.business-split,.business-day-row,.business-day-times-grid{grid-template-columns:1fr}
+  .business-actions,.business-toolbar,.business-page-switcher{width:100%}
+  .business-btn,.business-page-link{width:100%;text-align:center}
+}

@@ -107,6 +107,22 @@ function ccms_allowed_font_pairings(): array
     ];
 }
 
+function ccms_allowed_user_roles(): array
+{
+    return [
+        'owner',
+        'editor',
+        'viewer',
+        'client',
+    ];
+}
+
+function ccms_normalize_user_role(string $value, string $fallback = 'editor'): string
+{
+    $value = trim($value);
+    return in_array($value, ccms_allowed_user_roles(), true) ? $value : $fallback;
+}
+
 function ccms_normalize_theme_preset(string $value, string $fallback = 'warm'): string
 {
     $value = trim($value);

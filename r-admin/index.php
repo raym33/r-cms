@@ -24,4 +24,8 @@ if (!$currentAdmin) {
     return;
 }
 
+if (($currentAdmin['role'] ?? '') === 'client') {
+    ccms_redirect('/mi-negocio/');
+}
+
 require __DIR__ . '/views/layout.php';

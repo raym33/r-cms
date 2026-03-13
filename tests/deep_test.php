@@ -52,6 +52,13 @@ function lc_rcopy(string $src, string $dst): void
     }
 }
 
+function lc_capture_include(string $file): string
+{
+    ob_start();
+    include $file;
+    return (string) ob_get_clean();
+}
+
 $sourceRoot = realpath(__DIR__ . '/..');
 $runtimeRoot = sys_get_temp_dir() . '/linuxcms_deep_test_runtime';
 lc_rrmdir($runtimeRoot);
@@ -74,6 +81,8 @@ lc_assert(($defaults['site']['title'] ?? '') === 'LinuxCMS', 'default site title
 lc_assert(($defaults['site']['theme_preset'] ?? '') === 'warm', 'default site theme preset is warm');
 lc_assert(($defaults['site']['font_pairing'] ?? '') === 'auto', 'default site font pairing is auto');
 lc_assert(array_key_exists('custom_css', $defaults['site']), 'default site includes custom css');
+lc_assert(is_array($defaults['live_data'] ?? null), 'default data includes live_data');
+lc_assert(is_array($defaults['live_data']['slots'] ?? null), 'default live_data includes slots');
 lc_assert(array_key_exists('trusted_plugins_enabled', $defaults['site']), 'default site includes trusted plugins flag');
 lc_assert(array_key_exists('white_label_enabled', $defaults['site']), 'default site includes white-label flag');
 lc_assert(is_array($defaults['site']['enabled_plugins'] ?? null), 'default site includes enabled plugins array');
@@ -285,6 +294,15 @@ $data['users'][] = [
     'created_at' => ccms_now_iso(),
     'updated_at' => ccms_now_iso(),
 ];
+$data['users'][] = [
+    'id' => ccms_next_id('user'),
+    'username' => 'client-user',
+    'email' => 'client@example.com',
+    'password_hash' => password_hash('ClientPass2026!', PASSWORD_DEFAULT),
+    'role' => 'client',
+    'created_at' => ccms_now_iso(),
+    'updated_at' => ccms_now_iso(),
+];
 ccms_save_data($data);
 ccms_logout();
 lc_assert(ccms_login('editor-user', 'EditorPass2026!') === true, 'editor login works');
@@ -298,6 +316,11 @@ lc_assert(ccms_login('viewer-user', 'ViewerPass2026!') === true, 'viewer login w
 lc_assert(ccms_user_can('pages_manage') === false, 'viewer cannot manage pages');
 lc_assert(ccms_user_can('media_manage') === false, 'viewer cannot manage media');
 lc_assert(ccms_user_can('ai_generate') === false, 'viewer cannot generate with AI');
+lc_assert(ccms_user_can('business_mode') === false, 'viewer cannot access business mode');
+ccms_logout();
+lc_assert(ccms_login('client-user', 'ClientPass2026!') === true, 'client login works');
+lc_assert(ccms_user_can('pages_manage') === false, 'client cannot manage pages');
+lc_assert(ccms_user_can('business_mode') === true, 'client can access business mode');
 ccms_logout();
 ccms_login('owner', 'PasswordDemo2026!');
 
@@ -443,6 +466,154 @@ foreach ($data['pages'] as $idx => $page) {
         $data['pages'][$idx]['show_in_menu'] = true;
     }
 }
+$businessModePage = [
+    'id' => ccms_next_id('page'),
+    'title' => 'Casa Maria',
+    'slug' => 'casa-maria',
+    'status' => 'published',
+    'published_at' => ccms_now_iso(),
+    'is_homepage' => false,
+    'show_in_menu' => true,
+    'menu_label' => 'Casa Maria',
+    'meta_title' => 'Casa Maria',
+    'meta_description' => 'Restaurant quick edit page.',
+    'capsule_json' => json_encode([
+        'meta' => ['business_name' => 'Casa Maria'],
+        'style' => [],
+        'blocks' => [
+            [
+                'id' => 'hero-business',
+                'type' => 'hero_split',
+                'props' => [
+                    'badge' => 'Restaurante',
+                    'title' => 'Casa Maria',
+                    'subtitle' => 'Cocina casera desde 1987',
+                    'image_url' => '/uploads/demo.png',
+                    'cta_primary' => 'Reservar',
+                    'cta_href' => '#menu',
+                ],
+                'quick_edit' => [
+                    'enabled' => true,
+                    'source' => 'capsule',
+                    'category' => 'textos',
+                    'label' => 'Texto principal',
+                    'fields' => ['title', 'subtitle', 'image_url'],
+                ],
+            ],
+            [
+                'id' => 'menu-business',
+                'type' => 'menu_daily',
+                'props' => [
+                    'badge' => 'Actualizado hoy',
+                    'title' => 'Menu del dia',
+                    'subtitle' => 'Disponible de lunes a viernes.',
+                    'price' => '10.50',
+                    'currency' => 'EUR',
+                    'includes' => 'Pan y bebida',
+                    'sections' => [
+                        ['name' => 'Primeros', 'items' => ['Ensalada mixta']],
+                    ],
+                ],
+                'quick_edit' => [
+                    'enabled' => true,
+                    'source' => 'live_data',
+                    'category' => 'menu',
+                    'label' => 'Menu del dia',
+                    'slot' => 'business.menu.primary',
+                    'frequency' => 'daily',
+                ],
+            ],
+            [
+                'id' => 'hours-business',
+                'type' => 'hours_status',
+                'props' => [
+                    'badge' => 'Horario',
+                    'title' => 'Abierto ahora',
+                    'subtitle' => 'Consulta aperturas y cierres.',
+                ],
+                'quick_edit' => [
+                    'enabled' => true,
+                    'source' => 'live_data',
+                    'category' => 'horario',
+                    'label' => 'Horario',
+                    'slot' => 'business.hours.primary',
+                    'frequency' => 'daily',
+                ],
+            ],
+            [
+                'id' => 'prices-business',
+                'type' => 'price_list',
+                'props' => [
+                    'badge' => 'Tarifas',
+                    'title' => 'Servicios',
+                    'subtitle' => 'Lista de precios rapida.',
+                ],
+                'quick_edit' => [
+                    'enabled' => true,
+                    'source' => 'live_data',
+                    'category' => 'precios',
+                    'label' => 'Lista de precios',
+                    'slot' => 'business.prices.primary',
+                    'frequency' => 'weekly',
+                ],
+            ],
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    'html_content' => '',
+    'created_at' => ccms_now_iso(),
+    'updated_at' => ccms_now_iso(),
+    'revisions' => [],
+];
+$data['pages'][] = $businessModePage;
+$data['live_data'] = [
+    'slots' => [
+        'business.menu.primary' => [
+            'type' => 'menu_daily',
+            'updated_at' => ccms_now_iso(),
+            'payload' => [
+                'price' => '11.50',
+                'currency' => 'EUR',
+                'includes' => 'Pan y bebida',
+                'sections' => [
+                    ['name' => 'Primeros', 'items' => ['Ensalada mixta', 'Sopa del dia']],
+                    ['name' => 'Segundos', 'items' => ['Pollo al horno', 'Merluza a la plancha']],
+                    ['name' => 'Postres', 'items' => ['Flan casero']],
+                ],
+            ],
+        ],
+        'business.hours.primary' => [
+            'type' => 'hours_status',
+            'updated_at' => ccms_now_iso(),
+            'payload' => [
+                'timezone' => 'Europe/Madrid',
+                'closed_today' => false,
+                'closure_label' => '',
+                'reopens_on' => '',
+                'days' => [
+                    'mon' => ['closed' => false, 'slots' => [['open' => '09:00', 'close' => '14:00'], ['open' => '17:00', 'close' => '20:00']]],
+                    'tue' => ['closed' => false, 'slots' => [['open' => '09:00', 'close' => '14:00'], ['open' => '17:00', 'close' => '20:00']]],
+                    'wed' => ['closed' => false, 'slots' => [['open' => '09:00', 'close' => '14:00'], ['open' => '17:00', 'close' => '20:00']]],
+                    'thu' => ['closed' => false, 'slots' => [['open' => '09:00', 'close' => '14:00'], ['open' => '17:00', 'close' => '20:00']]],
+                    'fri' => ['closed' => false, 'slots' => [['open' => '09:00', 'close' => '14:00'], ['open' => '17:00', 'close' => '20:00']]],
+                    'sat' => ['closed' => false, 'slots' => [['open' => '10:00', 'close' => '14:00']]],
+                    'sun' => ['closed' => true, 'slots' => []],
+                ],
+            ],
+        ],
+        'business.prices.primary' => [
+            'type' => 'price_list',
+            'updated_at' => ccms_now_iso(),
+            'payload' => [
+                'currency' => 'EUR',
+                'note' => 'Reserva por telefono.',
+                'items' => [
+                    ['name' => 'Menu degustacion', 'price' => '32', 'detail' => 'Bajo reserva'],
+                    ['name' => 'Arroz meloso', 'price' => '18', 'detail' => 'Minimo 2 personas'],
+                ],
+            ],
+        ],
+    ],
+];
 ccms_save_data($data);
 $data = ccms_load_data();
 $homepage = ccms_homepage($data);
@@ -515,7 +686,7 @@ foreach (['sticky_header','hero_fullscreen','split_image_right','features','test
 }
 $builderTemplates = ccms_admin_capsule_builder_templates();
 $builderTemplateTypes = array_map(static fn (array $template): string => (string) ($template['type'] ?? ''), $builderTemplates);
-foreach (['pricing_toggle', 'blog_featured', 'blog_carousel'] as $type) {
+foreach (['pricing_toggle', 'blog_featured', 'blog_carousel', 'menu_daily', 'hours_status', 'price_list'] as $type) {
     lc_assert(in_array($type, $builderTemplateTypes, true), 'builder templates include ' . $type);
 }
 lc_assert(ccms_capsule_can_render($capsule) === true, 'generated capsule is fully renderable');
@@ -708,6 +879,28 @@ lc_assert(str_contains($sprint4Html, 'data-ccms-layout="spotlight"'), 'blog caro
 lc_assert(str_contains($sprint4Html, 'Spotlight lead'), 'blog carousel spotlight layout renders lead story');
 lc_assert(str_contains($sprint4Html, 'data-ccms-layout="compact"'), 'blog carousel compact layout is rendered on capsule output');
 lc_assert(substr_count($sprint4Html, 'padding:22px"><span class="ccms-kicker">') >= 3, 'blog carousel compact layout uses compact article cards');
+$businessPage = ccms_page_by_slug($data, 'casa-maria');
+lc_assert($businessPage !== null, 'business mode page fixture is available');
+$publicSiteConfig = ccms_public_site_config($data);
+lc_assert(($publicSiteConfig['live_data']['slots']['business.menu.primary']['payload']['price'] ?? '') === '11.50', 'public site config carries live data payload');
+$businessItems = ccms_business_mode_collect_items($businessPage, $data['live_data'] ?? []);
+lc_assert(count($businessItems) === 4, 'business mode collects editable items from business page');
+lc_assert(count(array_filter($businessItems, static fn (array $item): bool => ($item['source'] ?? '') === 'live_data')) === 3, 'business mode identifies live data backed items');
+$heroBusinessItem = ccms_business_mode_find_item($businessPage, $data['live_data'] ?? [], 'hero-business');
+lc_assert(($heroBusinessItem['label'] ?? '') === 'Texto principal', 'business mode keeps configured capsule quick edit label');
+lc_assert(count($heroBusinessItem['fields'] ?? []) === 3, 'business mode exposes configured capsule quick edit fields');
+$menuBusinessItem = ccms_business_mode_find_item($businessPage, $data['live_data'] ?? [], 'menu-business');
+lc_assert(($menuBusinessItem['slot_key'] ?? '') === 'business.menu.primary', 'business mode resolves live data slot keys');
+lc_assert(($menuBusinessItem['payload']['sections'][1]['items'][0] ?? '') === 'Pollo al horno', 'business mode loads live data payload into editable items');
+$businessCapsule = ccms_capsule_decode($businessPage);
+$businessBodyHtml = ccms_render_capsule_body($businessCapsule ?? [], $publicSiteConfig);
+lc_assert(str_contains($businessBodyHtml, '11.50 EUR'), 'business capsule render uses live menu price');
+lc_assert(str_contains($businessBodyHtml, 'Menu degustacion'), 'business capsule render uses live price list data');
+lc_assert(str_contains($businessBodyHtml, 'Cocina casera desde 1987'), 'business capsule render keeps capsule copy fields');
+$businessPublicHtml = ccms_render_public_page($publicSiteConfig, $businessPage, ccms_menu_pages($data));
+lc_assert(str_contains($businessPublicHtml, 'Casa Maria'), 'business public page renders business title');
+lc_assert(str_contains($businessPublicHtml, 'Merluza a la plancha'), 'business public page renders live menu sections');
+lc_assert(str_contains($businessPublicHtml, 'Reserva por telefono.'), 'business public page renders live price list note');
 $submissionFixture = [
     'id' => 'sub_fixture',
     'kind' => 'lead_form',
@@ -731,7 +924,7 @@ ccms_store_submission($data, $submissionFixture);
 lc_assert(($data['submissions'][0]['id'] ?? '') === 'sub_fixture', 'submissions can be stored in inbox');
 $data['site']['analytics_provider'] = 'ga4';
 $data['site']['analytics_id'] = 'G-DEEPTEST1';
-$previewHtml = ccms_admin_preview_html($publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data)));
+$previewHtml = ccms_admin_preview_html($publicHtml = ccms_render_public_page(ccms_public_site_config($data), $homepage, ccms_menu_pages($data)));
 lc_assert(str_contains($previewHtml, 'ccms-preview-action'), 'admin preview includes inline action hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-quick-text'), 'admin preview includes quick text hook');
 lc_assert(str_contains($previewHtml, 'ccms-preview-apply-text'), 'admin preview includes inline text apply hook');
@@ -745,11 +938,9 @@ lc_assert(str_contains($previewHtml, 'Editar media'), 'admin preview includes ed
 lc_assert(str_contains($previewHtml, 'Editar estilo'), 'admin preview includes edit style action');
 lc_assert(str_contains($previewHtml, 'Insertar después'), 'admin preview includes insert action');
 $adminHtml = ob_get_clean();
-ob_start();
 $_GET = ['tab' => 'pages'];
 $_SERVER['REQUEST_METHOD'] = 'GET';
-require $sourceRoot . '/r-admin/index.php';
-$adminPagesHtml = ob_get_clean();
+$adminPagesHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 ob_start();
 lc_assert(str_contains($adminPagesHtml, '/r-admin/assets/admin.js'), 'admin pages view includes extracted admin javascript asset');
 lc_assert(str_contains($adminPagesHtml, '/r-admin/assets/admin.css'), 'admin pages view includes extracted admin stylesheet asset');
@@ -763,7 +954,10 @@ lc_assert(str_contains($adminJsAsset, 'featured-left'), 'admin builder asset inc
 lc_assert(str_contains($adminJsAsset, 'blog_featured'), 'admin builder asset includes blog featured block layout map');
 lc_assert(str_contains($adminJsAsset, 'blog_carousel'), 'admin builder asset includes blog carousel layout map');
 lc_assert(str_contains($adminJsAsset, 'compact'), 'admin builder asset includes compact blog carousel layout option');
-$publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data));
+lc_assert(str_contains($adminJsAsset, 'data-builder-quick-edit'), 'admin builder asset includes quick edit field bindings');
+lc_assert(str_contains($adminJsAsset, 'Modo Negocio'), 'admin builder asset includes business mode panel copy');
+lc_assert(str_contains($adminJsAsset, 'Campos editables'), 'admin builder asset includes quick edit field editor');
+$publicHtml = ccms_render_public_page(ccms_public_site_config($data), $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($publicHtml, '<!doctype html>'), 'public page is full html');
 lc_assert(str_contains($publicHtml, 'Corporate Law for fast-moving businesses'), 'public page contains generated title');
 lc_assert(str_contains($publicHtml, 'OTM Lawyers'), 'public page contains business name');
@@ -781,13 +975,13 @@ lc_assert(!str_contains($publicHtml, 'Agency Console'), 'public page does not le
 $corporateSite = $data['site'];
 $corporateSite['theme_preset'] = 'corporate';
 $corporateSite['font_pairing'] = 'humanist';
-$corporateHtml = ccms_render_public_page($corporateSite, $homepage, ccms_menu_pages($data));
+$corporateHtml = ccms_render_public_page($corporateSite + ['live_data' => ccms_public_site_config($data)['live_data'] ?? []], $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($corporateHtml, '--site-surface-radius:8px'), 'corporate profile sets tight surface radius');
 lc_assert(str_contains($corporateHtml, 'Verdana, Geneva, sans-serif'), 'font pairing overrides corporate body font');
 $playfulSite = $data['site'];
 $playfulSite['theme_preset'] = 'playful';
 $playfulSite['font_pairing'] = 'modern';
-$playfulHtml = ccms_render_public_page($playfulSite, $homepage, ccms_menu_pages($data));
+$playfulHtml = ccms_render_public_page($playfulSite + ['live_data' => ccms_public_site_config($data)['live_data'] ?? []], $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($playfulHtml, '--site-surface-radius:32px'), 'playful profile sets large surface radius');
 lc_assert(str_contains($playfulHtml, '--site-space-scale:1.3'), 'playful profile increases spacing scale');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
@@ -850,6 +1044,7 @@ $staticBuild = ccms_static_export_build($data);
 lc_assert(is_dir((string) ($staticBuild['dir'] ?? '')), 'static export creates export directory');
 lc_assert(is_file($staticBuild['dir'] . '/index.html'), 'static export creates root index.html');
 lc_assert(is_file($staticBuild['dir'] . '/' . $pageRecord['slug'] . '/index.html'), 'static export creates slug folder index');
+lc_assert(is_file($staticBuild['dir'] . '/casa-maria/index.html'), 'static export creates business mode page');
 lc_assert(!is_dir($staticBuild['dir'] . '/' . $futurePageSlug), 'static export skips future scheduled page');
 lc_assert(is_file($staticBuild['dir'] . '/' . $pastPageSlug . '/index.html'), 'static export includes past scheduled page');
 lc_assert(is_file($staticBuild['dir'] . '/blog/index.html'), 'static export creates blog archive index');
@@ -870,6 +1065,7 @@ if (!empty($generatedImageVariants['webp_generated'])) {
 }
 lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/index.html'), 'Corporate Law for fast-moving businesses'), 'static export root html contains page title');
 lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/blog/index.html'), 'How founders should approach contract review'), 'static export blog archive contains post title');
+lc_assert(str_contains((string) file_get_contents($staticBuild['dir'] . '/casa-maria/index.html'), 'Menu degustacion'), 'static export keeps business live data in rendered page');
 $sitemapXml = ccms_render_sitemap_xml($data);
 lc_assert(!str_contains($sitemapXml, $futurePageSlug), 'sitemap excludes future scheduled page');
 lc_assert(str_contains($sitemapXml, $pastPageSlug), 'sitemap includes past scheduled page');
@@ -893,7 +1089,7 @@ $simplePage = [
     'capsule_json' => '{}',
     'html_content' => '<section><h1>Simple Content</h1></section>',
 ];
-$simpleHtml = ccms_render_public_page($data['site'], $simplePage, ccms_menu_pages($data));
+$simpleHtml = ccms_render_public_page(ccms_public_site_config($data), $simplePage, ccms_menu_pages($data));
 lc_assert(str_contains($simpleHtml, 'Simple Content'), 'public wrapper preserves html_content');
 lc_assert(str_contains($simpleHtml, 'site-header'), 'public wrapper adds header when capsule absent');
 lc_assert(str_contains($simpleHtml, 'site-footer'), 'public wrapper adds footer when capsule absent');
@@ -906,11 +1102,12 @@ $_SERVER['REQUEST_METHOD'] = 'GET';
 $installRoot = sys_get_temp_dir() . '/linuxcms_deep_test_install_runtime';
 lc_rrmdir($installRoot);
 lc_rcopy((string) $sourceRoot, $installRoot);
+@unlink($installRoot . '/data/app.json');
+@unlink($installRoot . '/data/app.sqlite');
+@unlink($installRoot . '/data/storage.json');
 putenv('CCMS_ROOT=' . $installRoot);
-ob_start();
 $_SERVER['REQUEST_METHOD'] = 'GET';
-include $sourceRoot . '/install.php';
-$installHtml = ob_get_clean();
+$installHtml = lc_capture_include($sourceRoot . '/install.php');
 lc_assert(str_contains($installHtml, 'Instalar LinuxCMS'), 'install page renders LinuxCMS title');
 lc_assert(str_contains($installHtml, 'Instalación rápida'), 'install page content renders');
 putenv('CCMS_ROOT=' . $runtimeRoot);
@@ -925,9 +1122,7 @@ $_SESSION['ccms_admin'] = [
     'role' => 'owner',
     'must_change_password' => false,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$adminHtml = ob_get_clean();
+$adminHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($adminHtml, 'Studio local'), 'admin shows studio tab');
 lc_assert(str_contains($adminHtml, 'Crea una web completa desde un brief'), 'studio panel is rendered');
 lc_assert(str_contains($adminHtml, 'Guardar configuración'), 'studio settings form rendered');
@@ -939,9 +1134,7 @@ lc_assert(str_contains($adminHtml, 'Modo cliente'), 'admin renders client mode t
 // Include site settings screen
 $_GET = ['tab' => 'site'];
 $_SERVER['REQUEST_METHOD'] = 'GET';
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$siteHtml = ob_get_clean();
+$siteHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($siteHtml, 'Perfil visual'), 'site settings render visual profile selector');
 lc_assert(str_contains($siteHtml, 'Tipografía'), 'site settings render font pairing selector');
 lc_assert(str_contains($siteHtml, 'CSS personalizado del sitio'), 'site settings render custom css editor');
@@ -949,11 +1142,53 @@ lc_assert(str_contains($siteHtml, 'Google Analytics 4'), 'site settings render a
 lc_assert(str_contains($siteHtml, 'ID / dominio analytics'), 'site settings render analytics id field');
 lc_assert(str_contains($siteHtml, 'Activar white-label para agencias'), 'site settings render white-label toggle');
 lc_assert(str_contains($siteHtml, 'Nombre de marca del admin'), 'site settings render white-label brand field');
+
+// Include business mode screens
+$_GET = [];
+$_POST = [];
+$_SERVER['REQUEST_METHOD'] = 'GET';
+unset($_SESSION['ccms_admin'], $_SESSION['ccms_pending_2fa']);
+$businessLoginHtml = lc_capture_include($sourceRoot . '/mi-negocio/index.php');
+lc_assert(str_contains($businessLoginHtml, 'Modo negocio'), 'business mode login screen renders');
+lc_assert(str_contains($businessLoginHtml, 'Usuario o email'), 'business mode login form renders');
+lc_assert(str_contains($businessLoginHtml, 'Entra para actualizar menu, precios, horarios y textos clave desde el movil.'), 'business mode login explains quick edit scope');
+
+$clientUser = ccms_find_user($data, (string) $data['users'][3]['id']);
+$_GET = ['page' => 'casa-maria'];
+$_SESSION['ccms_admin'] = [
+    'id' => $clientUser['id'],
+    'username' => $clientUser['username'],
+    'email' => $clientUser['email'],
+    'role' => 'client',
+    'must_change_password' => false,
+];
+$businessDashboardHtml = lc_capture_include($sourceRoot . '/mi-negocio/index.php');
+lc_assert(str_contains($businessDashboardHtml, 'Textos y fotos'), 'business mode dashboard groups capsule quick edits');
+lc_assert(str_contains($businessDashboardHtml, 'Menu del dia'), 'business mode dashboard groups menu quick edits');
+lc_assert(str_contains($businessDashboardHtml, 'Editar'), 'business mode dashboard renders edit actions');
+
+$_GET = ['page' => 'casa-maria', 'edit' => 'menu-business'];
+$businessMenuEditHtml = lc_capture_include($sourceRoot . '/mi-negocio/index.php');
+lc_assert(str_contains($businessMenuEditHtml, 'Guardar cambios'), 'business mode live data edit screen renders save action');
+lc_assert(str_contains($businessMenuEditHtml, 'Seccion 1'), 'business mode menu edit screen renders menu sections');
+lc_assert(str_contains($businessMenuEditHtml, 'Pollo al horno'), 'business mode menu edit screen loads current live data');
+
+$_GET = ['page' => 'casa-maria', 'edit' => 'hero-business'];
+$businessHeroEditHtml = lc_capture_include($sourceRoot . '/mi-negocio/index.php');
+lc_assert(str_contains($businessHeroEditHtml, 'Texto principal'), 'business mode capsule edit screen renders block label');
+lc_assert(str_contains($businessHeroEditHtml, 'Title'), 'business mode capsule edit screen renders configured field labels');
+lc_assert(str_contains($businessHeroEditHtml, '/uploads/demo.png'), 'business mode capsule edit screen loads existing image value');
+
 $_GET = ['tab' => 'extensions'];
 $_SERVER['REQUEST_METHOD'] = 'GET';
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$extensionsHtml = ob_get_clean();
+$_SESSION['ccms_admin'] = [
+    'id' => $data['users'][0]['id'],
+    'username' => $data['users'][0]['username'],
+    'email' => $data['users'][0]['email'],
+    'role' => 'owner',
+    'must_change_password' => false,
+];
+$extensionsHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($extensionsHtml, 'Extensiones ligeras del sitio'), 'extensions tab renders');
 lc_assert(str_contains($extensionsHtml, 'Announcement Chip'), 'extensions view shows available plugin');
 lc_assert(str_contains($extensionsHtml, 'Permitir trusted plugins PHP'), 'extensions view shows trusted plugins toggle');
@@ -967,9 +1202,7 @@ $_SESSION['ccms_pending_2fa'] = [
     'email' => $data['users'][0]['email'],
     'role' => 'owner',
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$twoFactorHtml = ob_get_clean();
+$twoFactorHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($twoFactorHtml, 'Verificación en dos pasos'), 'pending 2fa screen renders');
 lc_assert(str_contains($twoFactorHtml, 'Código 2FA'), 'pending 2fa form renders');
 lc_assert(str_contains($twoFactorHtml, 'Agency Console'), 'pending 2fa screen uses white-label branding');
@@ -979,9 +1212,7 @@ unset($_SESSION['ccms_pending_2fa']);
 $data = ccms_load_data();
 $_GET = ['reset' => ccms_create_password_reset_token($data, $data['users'][1], $data['users'][0])];
 ccms_save_data($data);
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$resetHtml = ob_get_clean();
+$resetHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($resetHtml, 'Restablecer contraseña'), 'password reset screen renders');
 lc_assert(str_contains($resetHtml, 'Guardar contraseña'), 'password reset form renders');
 
@@ -994,9 +1225,7 @@ $_SESSION['ccms_admin'] = [
     'role' => 'viewer',
     'must_change_password' => false,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$viewerHtml = ob_get_clean();
+$viewerHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($viewerHtml, 'Modo solo lectura'), 'viewer sees read-only banner');
 lc_assert(!str_contains($viewerHtml, 'Generar borrador con LM Studio'), 'viewer does not see studio generate form');
 lc_assert(!str_contains($viewerHtml, 'Guardar página'), 'viewer does not see save page button');
@@ -1010,13 +1239,11 @@ $_SESSION['ccms_admin'] = [
     'role' => 'owner',
     'must_change_password' => false,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$pagesHtml = ob_get_clean();
+$pagesHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($pagesHtml, 'Textos y fotos'), 'pages admin renders client quick actions');
 lc_assert(str_contains($pagesHtml, 'Empieza por aquí'), 'pages admin renders quick start guide');
 lc_assert(str_contains($pagesHtml, 'Cómo editar desde la vista previa'), 'pages admin renders preview helper guidance');
-lc_assert(str_contains($pagesHtml, 'data-tab-target="builder">Secciones<'), 'pages admin uses friendly sections label');
+lc_assert(str_contains($pagesHtml, 'data-tab-target="builder"') && str_contains($pagesHtml, 'Secciones'), 'pages admin uses friendly sections label');
 lc_assert(str_contains($pagesHtml, 'data-tab-target="publish"'), 'pages admin keeps publish tab');
 lc_assert(str_contains($pagesHtml, 'id="clientModeToggle"'), 'pages admin includes client mode button');
 
@@ -1033,9 +1260,7 @@ $_SESSION['ccms_admin'] = [
     'role' => 'editor',
     'must_change_password' => true,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$forcedHtml = ob_get_clean();
+$forcedHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($forcedHtml, 'Tu cuenta usa una contraseña temporal'), 'forced-password banner is visible');
 lc_assert(str_contains($forcedHtml, 'Guardar nueva contraseña'), 'forced-password form is rendered');
 lc_assert(!str_contains($forcedHtml, 'Generar borrador con LM Studio'), 'forced-password mode hides the studio view');
@@ -1055,9 +1280,7 @@ $ownerIndex = ccms_find_user_index($data, (string) $data['users'][0]['id']);
 $data['users'][$ownerIndex]['totp_secret'] = ccms_generate_totp_secret();
 $data['users'][$ownerIndex]['totp_enabled'] = true;
 ccms_save_data($data);
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$account2faHtml = ob_get_clean();
+$account2faHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($account2faHtml, 'Autenticación en dos pasos'), 'account tab renders 2fa section');
 lc_assert(str_contains($account2faHtml, 'Desactivar 2FA'), 'account tab renders disable 2fa action');
 $totpUri = ccms_totp_otpauth_uri($data['users'][0], ccms_generate_totp_secret());
@@ -1072,9 +1295,7 @@ $_SESSION['ccms_admin'] = [
     'role' => 'owner',
     'must_change_password' => false,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$auditHtml = ob_get_clean();
+$auditHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($auditHtml, 'Actividad reciente'), 'audit tab renders for owner');
 lc_assert(str_contains($auditHtml, 'Synthetic audit entry'), 'audit tab includes stored entries');
 
@@ -1087,9 +1308,7 @@ $_SESSION['ccms_admin'] = [
     'role' => 'owner',
     'must_change_password' => false,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$inboxHtml = ob_get_clean();
+$inboxHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($inboxHtml, 'Contactos recibidos'), 'inbox tab renders');
 lc_assert(str_contains($inboxHtml, 'Lead Fixture'), 'inbox tab shows stored lead');
 lc_assert(str_contains($inboxHtml, 'Guardar estado'), 'inbox tab allows status updates');
@@ -1103,9 +1322,7 @@ $_SESSION['ccms_admin'] = [
     'role' => 'owner',
     'must_change_password' => false,
 ];
-ob_start();
-include $sourceRoot . '/r-admin/index.php';
-$postsAdminHtml = ob_get_clean();
+$postsAdminHtml = lc_capture_include($sourceRoot . '/r-admin/index.php');
 lc_assert(str_contains($postsAdminHtml, 'Nuevo post'), 'posts tab renders creation form');
 lc_assert(str_contains($postsAdminHtml, 'How founders should approach contract review'), 'posts tab renders selected post title');
 lc_assert(str_contains($postsAdminHtml, 'Abrir post'), 'posts tab renders public post action');
