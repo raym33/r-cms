@@ -210,6 +210,25 @@ function ccms_format_decimal(float $value): string
     return $formatted === '-0' ? '0' : $formatted;
 }
 
+function ccms_sanitize_google_font_url(string $url): string
+{
+    $url = trim($url);
+    if ($url === '') {
+        return '';
+    }
+    return preg_match('#^https://fonts\.googleapis\.com/css2\?#i', $url) ? $url : '';
+}
+
+function ccms_legacy_section_padding_scale(string $value): ?float
+{
+    $value = trim($value);
+    if ($value === '' || !preg_match('/^(\d+(?:\.\d+)?)rem$/i', $value, $matches)) {
+        return null;
+    }
+    $rem = (float) $matches[1];
+    return max(0.75, min(1.6, $rem / 5));
+}
+
 function ccms_font_pairing_tokens(string $pairing): array
 {
     return match ($pairing) {
@@ -327,8 +346,23 @@ function ccms_capsule_style(array $capsule, array $site = []): array
         $headingTransform = $theme['text_transform_heading'];
     }
 
-    $spacingScale = ccms_float_in_range($style['spacing_scale'] ?? $theme['spacing_scale'], (float) $theme['spacing_scale'], 0.75, 1.6);
+    $legacySpacingScale = ccms_legacy_section_padding_scale((string) ($style['section_padding'] ?? ''));
+    $spacingScale = ccms_float_in_range($style['spacing_scale'] ?? $legacySpacingScale ?? $theme['spacing_scale'], (float) $theme['spacing_scale'], 0.75, 1.6);
     $lineHeightBody = ccms_float_in_range($style['line_height_body'] ?? $theme['line_height_body'], (float) $theme['line_height_body'], 1.35, 2.1);
+    $shadowIntensity = ccms_float_in_range($style['shadow_intensity'] ?? 0.18, 0.18, 0, 0.6);
+    $cardStyle = trim((string) ($style['card_style'] ?? ''));
+    if (!in_array($cardStyle, ['', 'glass', 'flat', 'bordered', 'elevated'], true)) {
+        $cardStyle = '';
+    }
+    $animationPreset = trim((string) ($style['animation_preset'] ?? ''));
+    if (!in_array($animationPreset, ['', 'fade', 'slide', 'zoom', 'none'], true)) {
+        $animationPreset = '';
+    }
+    $navStyle = trim((string) ($style['nav_style'] ?? ''));
+    if (!in_array($navStyle, ['', 'glass', 'solid', 'transparent'], true)) {
+        $navStyle = '';
+    }
+    $fontUrl = ccms_sanitize_google_font_url((string) ($style['font_url'] ?? ''));
 
     return [
         'accent' => (string) ($style['accent'] ?? $siteColors['primary'] ?? '#c86f5c'),
@@ -344,17 +378,23 @@ function ccms_capsule_style(array $capsule, array $site = []): array
         'nav_bg' => (string) ($style['nav_bg'] ?? 'rgba(255,255,255,0.92)'),
         'font_family' => (string) ($style['font_family'] ?? $theme['font_body']),
         'font_heading' => (string) ($style['font_heading'] ?? $theme['font_heading']),
+        'font_url' => $fontUrl,
         'surface_radius' => (string) ($style['surface_radius'] ?? $theme['surface_radius']),
         'card_radius' => (string) ($style['card_radius'] ?? $theme['card_radius']),
         'button_radius' => (string) ($style['button_radius'] ?? $theme['button_radius']),
         'image_radius' => (string) ($style['image_radius'] ?? $theme['image_radius']),
         'shadow_style' => $shadowStyle,
         'shadow' => ccms_shadow_css($shadowStyle),
+        'card_shadow' => '0 22px 48px -30px rgba(0,0,0,' . ccms_format_decimal($shadowIntensity) . ')',
+        'card_style' => $cardStyle,
+        'nav_style' => $navStyle,
+        'animation_preset' => $animationPreset,
         'spacing_scale' => ccms_format_decimal($spacingScale),
         'font_weight_heading' => $headingWeight,
         'letter_spacing_heading' => (string) ($style['letter_spacing_heading'] ?? $theme['letter_spacing_heading']),
         'text_transform_heading' => $headingTransform,
         'line_height_body' => ccms_format_decimal($lineHeightBody),
+        'shadow_intensity' => ccms_format_decimal($shadowIntensity),
     ];
 }
 
@@ -713,6 +753,61 @@ function ccms_page_primary_image(array $page): string
     return '';
 }
 
+function ccms_absolute_public_asset_url(string $url): string
+{
+    $url = ccms_sanitize_url($url, true);
+    if ($url === '' || str_starts_with($url, 'data:') || str_starts_with($url, '#')) {
+        return '';
+    }
+    if (preg_match('#^https?://#i', $url)) {
+        return $url;
+    }
+    $base = rtrim(ccms_base_url(), '/');
+    if (str_starts_with($url, '/')) {
+        return $base . $url;
+    }
+    return $base . '/' . ltrim($url, './');
+}
+
+function ccms_page_image_urls(array $page): array
+{
+    $images = [];
+    $coverImage = ccms_absolute_public_asset_url((string) ($page['cover_image'] ?? ''));
+    if ($coverImage !== '') {
+        $images[] = $coverImage;
+    }
+
+    $capsule = ccms_capsule_decode($page);
+    if (!is_array($capsule)) {
+        return array_values(array_unique($images));
+    }
+
+    foreach (($capsule['blocks'] ?? []) as $block) {
+        $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+        foreach (['image_url', 'background_image', 'image', 'photo', 'logo', 'thumbnail', 'cover_image'] as $key) {
+            $candidate = ccms_absolute_public_asset_url((string) ($props[$key] ?? ''));
+            if ($candidate !== '' && !str_contains($candidate, 'picsum.photos')) {
+                $images[] = $candidate;
+            }
+        }
+        foreach (['images', 'items', 'posts', 'projects', 'services', 'slides'] as $collectionKey) {
+            foreach ((array) ($props[$collectionKey] ?? []) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                foreach (['image', 'image_url', 'photo', 'logo', 'thumbnail', 'url', 'cover_image'] as $itemKey) {
+                    $candidate = ccms_absolute_public_asset_url((string) ($item[$itemKey] ?? ''));
+                    if ($candidate !== '' && !str_contains($candidate, 'picsum.photos')) {
+                        $images[] = $candidate;
+                    }
+                }
+            }
+        }
+    }
+
+    return array_values(array_unique($images));
+}
+
 function ccms_site_business_profile(array $site): array
 {
     return ccms_normalize_business_profile($site['business_profile'] ?? []);
@@ -893,6 +988,20 @@ function ccms_business_profile_offer_schema(array $payload): array
     return $offers;
 }
 
+function ccms_business_profile_offer_catalog_schema(array $payload): ?array
+{
+    $offers = ccms_business_profile_offer_schema($payload);
+    if ($offers === []) {
+        return null;
+    }
+
+    return [
+        '@type' => 'OfferCatalog',
+        'name' => 'Servicios y precios',
+        'itemListElement' => $offers,
+    ];
+}
+
 function ccms_business_profile_schema_node(array $site, array $page): ?array
 {
     $profile = ccms_site_business_profile($site);
@@ -902,6 +1011,7 @@ function ccms_business_profile_schema_node(array $site, array $page): ?array
 
     $node = [
         '@type' => ccms_business_profile_schema_type((string) ($profile['type'] ?? '')),
+        '@id' => rtrim(ccms_base_url(), '/') . '/#business',
         'name' => trim((string) ($profile['name'] ?? '')) ?: trim((string) ($site['title'] ?? 'LinuxCMS')),
         'url' => rtrim(ccms_base_url(), '/') . '/',
     ];
@@ -923,7 +1033,7 @@ function ccms_business_profile_schema_node(array $site, array $page): ?array
     if ($geo = ccms_business_profile_geo_schema($profile)) {
         $node['geo'] = $geo;
     }
-    $priceRange = trim((string) ($profile['price_range'] ?? ''));
+    $priceRange = ccms_business_profile_schema_price_range($site, $profile);
     if ($priceRange !== '') {
         $node['priceRange'] = $priceRange;
     }
@@ -957,9 +1067,9 @@ function ccms_business_profile_schema_node(array $site, array $page): ?array
 
     $priceSlot = ccms_business_profile_slot($site, $profile, 'price_list');
     $pricePayload = $priceSlot ? ccms_normalize_live_data_payload('price_list', $priceSlot['payload'] ?? []) : [];
-    $offers = ccms_business_profile_offer_schema($pricePayload);
-    if ($offers !== []) {
-        $node['makesOffer'] = $offers;
+    $offerCatalog = ccms_business_profile_offer_catalog_schema($pricePayload);
+    if ($offerCatalog !== null) {
+        $node['hasOfferCatalog'] = $offerCatalog;
     }
 
     return $node;
@@ -988,61 +1098,453 @@ function ccms_business_profile_latest_update(array $site, array $profile): ?stri
     return $timestamps[0];
 }
 
+function ccms_business_profile_type_label(string $type): string
+{
+    $catalog = ccms_business_profile_type_catalog();
+    $type = ccms_normalize_business_profile_type($type, 'local_business');
+    return (string) ($catalog[$type]['label'] ?? 'Negocio local');
+}
+
+function ccms_business_profile_address_text(array $profile): string
+{
+    $locality = trim(implode(' ', array_filter([
+        trim((string) ($profile['postal_code'] ?? '')),
+        trim((string) ($profile['city'] ?? '')),
+    ], static fn (string $value): bool => $value !== '')));
+
+    $parts = array_values(array_filter([
+        trim((string) ($profile['street_address'] ?? '')),
+        $locality,
+        trim((string) ($profile['region'] ?? '')),
+        trim((string) ($profile['country'] ?? '')),
+    ], static fn (string $value): bool => $value !== ''));
+
+    return implode(', ', $parts);
+}
+
+function ccms_business_profile_numeric_price(string $value): ?float
+{
+    $value = trim($value);
+    if ($value === '') {
+        return null;
+    }
+    $normalized = preg_replace('/[^0-9,.\-]/', '', $value);
+    if (!is_string($normalized) || $normalized === '') {
+        return null;
+    }
+    $normalized = str_replace(',', '.', $normalized);
+    return is_numeric($normalized) ? (float) $normalized : null;
+}
+
+function ccms_business_profile_schema_price_range(array $site, array $profile): string
+{
+    $priceRange = trim((string) ($profile['price_range'] ?? ''));
+    if ($priceRange !== '') {
+        return $priceRange;
+    }
+
+    $prices = [];
+    $menuSlot = ccms_business_profile_slot($site, $profile, 'menu_daily');
+    $menuPayload = $menuSlot ? ccms_normalize_live_data_payload('menu_daily', $menuSlot['payload'] ?? []) : [];
+    $menuPrice = ccms_business_profile_numeric_price((string) ($menuPayload['price'] ?? ''));
+    if ($menuPrice !== null) {
+        $prices[] = $menuPrice;
+    }
+
+    $priceSlot = ccms_business_profile_slot($site, $profile, 'price_list');
+    $pricePayload = $priceSlot ? ccms_normalize_live_data_payload('price_list', $priceSlot['payload'] ?? []) : [];
+    foreach ((array) ($pricePayload['items'] ?? []) as $item) {
+        $numeric = ccms_business_profile_numeric_price((string) ($item['price'] ?? ''));
+        if ($numeric !== null) {
+            $prices[] = $numeric;
+        }
+    }
+
+    if ($prices === []) {
+        return '';
+    }
+
+    sort($prices);
+    $currency = trim((string) ($menuPayload['currency'] ?? $pricePayload['currency'] ?? $profile['currencies_accepted'] ?? 'EUR')) ?: 'EUR';
+    $min = ccms_format_decimal((float) $prices[0]);
+    $max = ccms_format_decimal((float) $prices[count($prices) - 1]);
+    return $min === $max ? ($min . ' ' . $currency) : ($min . '-' . $max . ' ' . $currency);
+}
+
+function ccms_business_profile_price_text(array $site, array $profile): string
+{
+    $menuSlot = ccms_business_profile_slot($site, $profile, 'menu_daily');
+    $menuPayload = $menuSlot ? ccms_normalize_live_data_payload('menu_daily', $menuSlot['payload'] ?? []) : [];
+    $menuPrice = trim((string) ($menuPayload['price'] ?? ''));
+    $currency = trim((string) ($menuPayload['currency'] ?? $profile['currencies_accepted'] ?? 'EUR')) ?: 'EUR';
+    if ($menuPrice !== '') {
+        return 'Menu del dia desde ' . $menuPrice . ' ' . $currency;
+    }
+
+    $priceSlot = ccms_business_profile_slot($site, $profile, 'price_list');
+    $pricePayload = $priceSlot ? ccms_normalize_live_data_payload('price_list', $priceSlot['payload'] ?? []) : [];
+    $minPrice = null;
+    $minPriceLabel = '';
+    foreach ((array) ($pricePayload['items'] ?? []) as $item) {
+        $rawPrice = trim((string) ($item['price'] ?? ''));
+        $numeric = ccms_business_profile_numeric_price($rawPrice);
+        if ($numeric === null) {
+            continue;
+        }
+        if ($minPrice === null || $numeric < $minPrice) {
+            $minPrice = $numeric;
+            $minPriceLabel = $rawPrice;
+        }
+    }
+    if ($minPriceLabel !== '') {
+        $priceCurrency = trim((string) ($pricePayload['currency'] ?? $profile['currencies_accepted'] ?? 'EUR')) ?: 'EUR';
+        return 'Servicios desde ' . $minPriceLabel . ' ' . $priceCurrency;
+    }
+
+    $priceRange = trim((string) ($profile['price_range'] ?? ''));
+    if ($priceRange !== '') {
+        return 'Rango de precios ' . $priceRange;
+    }
+
+    return '';
+}
+
+function ccms_business_profile_day_schedule_text(array $day): string
+{
+    if (!empty($day['closed'])) {
+        return 'Cerrado';
+    }
+    $slots = [];
+    foreach ((array) ($day['slots'] ?? []) as $slot) {
+        $open = trim((string) ($slot['open'] ?? ''));
+        $close = trim((string) ($slot['close'] ?? ''));
+        if ($open === '' || $close === '') {
+            continue;
+        }
+        $slots[] = $open . '-' . $close;
+    }
+    return $slots === [] ? 'Cerrado' : implode(' / ', $slots);
+}
+
+function ccms_business_profile_hours_text(array $site, array $profile): string
+{
+    $hoursSlot = ccms_business_profile_slot($site, $profile, 'hours_status');
+    $hoursPayload = $hoursSlot ? ccms_normalize_live_data_payload('hours_status', $hoursSlot['payload'] ?? []) : [];
+    if ($hoursPayload === []) {
+        return '';
+    }
+
+    if (!empty($hoursPayload['closed_today'])) {
+        $closure = trim((string) ($hoursPayload['closure_label'] ?? '')) ?: 'Cerrado hoy';
+        $reopensOn = trim((string) ($hoursPayload['reopens_on'] ?? ''));
+        return $reopensOn !== '' ? $closure . ' · vuelve el ' . $reopensOn : $closure;
+    }
+
+    $labels = [
+        'mon' => 'Lun',
+        'tue' => 'Mar',
+        'wed' => 'Mie',
+        'thu' => 'Jue',
+        'fri' => 'Vie',
+        'sat' => 'Sab',
+        'sun' => 'Dom',
+    ];
+    $groups = [];
+    $previousSchedule = null;
+    $previousIndex = null;
+    foreach (ccms_business_hours_day_keys() as $index => $dayKey) {
+        $schedule = ccms_business_profile_day_schedule_text((array) ($hoursPayload['days'][$dayKey] ?? []));
+        if ($groups === [] || $schedule !== $previousSchedule || $previousIndex === null || $index !== ($previousIndex + 1)) {
+            $groups[] = [
+                'start' => $dayKey,
+                'end' => $dayKey,
+                'schedule' => $schedule,
+            ];
+        } else {
+            $groups[array_key_last($groups)]['end'] = $dayKey;
+        }
+        $previousSchedule = $schedule;
+        $previousIndex = $index;
+    }
+
+    $lines = [];
+    foreach ($groups as $group) {
+        $start = (string) ($group['start'] ?? '');
+        $end = (string) ($group['end'] ?? '');
+        $range = $start === $end ? ($labels[$start] ?? $start) : ($labels[$start] ?? $start) . '-' . ($labels[$end] ?? $end);
+        $lines[] = $range . ' ' . (string) ($group['schedule'] ?? '');
+    }
+
+    return implode('; ', $lines);
+}
+
+function ccms_business_profile_reservation_html(array $profile): string
+{
+    $reservationUrl = trim((string) ($profile['reservation_url'] ?? ''));
+    if ($reservationUrl !== '') {
+        return '<a href="' . ccms_h($reservationUrl) . '">Reserva online disponible</a>';
+    }
+
+    $phone = trim((string) ($profile['phone'] ?? ''));
+    if ($phone !== '') {
+        return '<a href="tel:' . ccms_h(preg_replace('/\s+/', '', $phone) ?? $phone) . '">Reservas por telefono: ' . ccms_h($phone) . '</a>';
+    }
+
+    $email = trim((string) ($profile['email'] ?? ''));
+    if ($email !== '') {
+        return '<a href="mailto:' . ccms_h($email) . '">Reservas por email: ' . ccms_h($email) . '</a>';
+    }
+
+    return '';
+}
+
+function ccms_business_profile_summary_text(array $site, array $page): string
+{
+    $profile = ccms_site_business_profile($site);
+    if (!ccms_business_profile_is_active($profile)) {
+        return '';
+    }
+
+    $name = trim((string) ($profile['name'] ?? '')) ?: trim((string) ($site['title'] ?? ''));
+    if ($name === '') {
+        return '';
+    }
+
+    $typeLabel = strtolower(ccms_business_profile_type_label((string) ($profile['type'] ?? '')));
+    $city = trim((string) ($profile['city'] ?? ''));
+    $summary = $name . ' es un ' . $typeLabel;
+    if ($city !== '') {
+        $summary .= ' en ' . $city;
+    }
+    $summary .= '.';
+
+    $description = trim((string) ($profile['description'] ?? ''));
+    if ($description !== '') {
+        $summary .= ' ' . $description;
+    }
+
+    $priceText = ccms_business_profile_price_text($site, $profile);
+    if ($priceText !== '') {
+        $summary .= ' ' . $priceText . '.';
+    }
+
+    return trim($summary);
+}
+
+function ccms_render_business_profile_facts(array $site, array $page): string
+{
+    if (($page['content_type'] ?? '') === 'post') {
+        return '';
+    }
+
+    $profile = ccms_site_business_profile($site);
+    if (!ccms_business_profile_is_active($profile)) {
+        return '';
+    }
+
+    $addressText = ccms_business_profile_address_text($profile);
+    $hoursText = ccms_business_profile_hours_text($site, $profile);
+    $priceText = ccms_business_profile_price_text($site, $profile);
+    $reservationHtml = ccms_business_profile_reservation_html($profile);
+    $summary = ccms_business_profile_summary_text($site, $page);
+
+    $facts = [];
+    if ($addressText !== '') {
+        $facts[] = '<div><dt>Direccion</dt><dd><address>' . ccms_h($addressText) . '</address></dd></div>';
+    }
+    if ($hoursText !== '') {
+        $facts[] = '<div><dt>Horario</dt><dd>' . ccms_h($hoursText) . '</dd></div>';
+    }
+    if ($priceText !== '') {
+        $facts[] = '<div><dt>Precio</dt><dd>' . ccms_h($priceText) . '</dd></div>';
+    }
+    if ($reservationHtml !== '') {
+        $facts[] = '<div><dt>Reserva</dt><dd>' . $reservationHtml . '</dd></div>';
+    }
+
+    if ($summary === '' && $facts === []) {
+        return '';
+    }
+
+    return '<section class="site-local-facts" aria-label="Informacion del negocio">'
+        . '<div class="shell">'
+        . '<div class="site-local-facts-card">'
+        . '<p class="site-local-facts-kicker">Informacion del negocio</p>'
+        . ($summary !== '' ? '<p class="site-local-facts-summary">' . ccms_h($summary) . '</p>' : '')
+        . ($facts !== [] ? '<dl class="site-local-facts-grid">' . implode('', $facts) . '</dl>' : '')
+        . '</div>'
+        . '</div>'
+        . '</section>';
+}
+
+function ccms_capsule_faq_schema(?array $capsule, string $pageUrl): ?array
+{
+    if (!is_array($capsule)) {
+        return null;
+    }
+
+    $questions = [];
+    foreach (($capsule['blocks'] ?? []) as $block) {
+        $type = (string) ($block['type'] ?? '');
+        if (!in_array($type, ['faq', 'accordion_rich'], true)) {
+            continue;
+        }
+        foreach ((array) (($block['props'] ?? [])['items'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $question = trim((string) ($item['q'] ?? $item['question'] ?? $item['title'] ?? ''));
+            $answer = trim((string) ($item['a'] ?? $item['answer'] ?? $item['text'] ?? $item['description'] ?? ''));
+            if ($question === '' || $answer === '') {
+                continue;
+            }
+            $questions[] = [
+                '@type' => 'Question',
+                'name' => $question,
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => $answer,
+                ],
+            ];
+        }
+    }
+
+    if ($questions === []) {
+        return null;
+    }
+
+    return [
+        '@type' => 'FAQPage',
+        '@id' => $pageUrl . '#faq',
+        'mainEntity' => $questions,
+    ];
+}
+
+function ccms_page_breadcrumb_schema(array $page): ?array
+{
+    if (!empty($page['is_homepage']) && ($page['content_type'] ?? '') !== 'post') {
+        return null;
+    }
+
+    $items = [[
+        '@type' => 'ListItem',
+        'position' => 1,
+        'name' => 'Inicio',
+        'item' => rtrim(ccms_base_url(), '/') . '/',
+    ]];
+
+    $contentType = (string) ($page['content_type'] ?? '');
+    if ($contentType === 'post') {
+        $items[] = [
+            '@type' => 'ListItem',
+            'position' => 2,
+            'name' => 'Blog',
+            'item' => ccms_blog_archive_url(),
+        ];
+        $items[] = [
+            '@type' => 'ListItem',
+            'position' => 3,
+            'name' => trim((string) ($page['title'] ?? 'Articulo')),
+            'item' => ccms_public_page_url($page),
+        ];
+    } elseif ($contentType === 'blog_archive') {
+        $items[] = [
+            '@type' => 'ListItem',
+            'position' => 2,
+            'name' => trim((string) ($page['title'] ?? 'Blog')),
+            'item' => ccms_public_page_url($page),
+        ];
+    } else {
+        $items[] = [
+            '@type' => 'ListItem',
+            'position' => 2,
+            'name' => trim((string) ($page['title'] ?? 'Pagina')),
+            'item' => ccms_public_page_url($page),
+        ];
+    }
+
+    return [
+        '@type' => 'BreadcrumbList',
+        '@id' => ccms_public_page_url($page) . '#breadcrumb',
+        'itemListElement' => $items,
+    ];
+}
+
 function ccms_render_public_schema(array $site, array $page): string
 {
     $contentType = (string) ($page['content_type'] ?? '');
-    $graph = [];
+    $baseUrl = rtrim(ccms_base_url(), '/');
+    $pageUrl = ccms_public_page_url($page);
+    $pageTitle = trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? $site['title'] ?? 'LinuxCMS'));
+    $pageDescription = trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($page['excerpt'] ?? $site['tagline'] ?? ''));
+    $siteTitle = trim((string) ($site['title'] ?? 'LinuxCMS'));
+    $contactEmail = trim((string) ($site['contact_email'] ?? ''));
+    $pageImage = ccms_page_primary_image($page);
+
+    $graph = [[
+        '@type' => 'WebSite',
+        '@id' => $baseUrl . '/#website',
+        'name' => $siteTitle,
+        'url' => $baseUrl . '/',
+    ]];
+
+    $pageNode = [
+        '@type' => 'WebPage',
+        '@id' => $pageUrl . '#webpage',
+        'url' => $pageUrl,
+        'name' => $pageTitle,
+        'description' => $pageDescription,
+        'isPartOf' => ['@id' => $baseUrl . '/#website'],
+    ];
+    if ($pageImage !== '') {
+        $pageNode['image'] = $pageImage;
+    }
+    $graph[] = $pageNode;
+
     if ($contentType === 'post') {
-        $graph[] = [
+        $articleNode = [
             '@type' => 'BlogPosting',
-            'headline' => trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? '')),
-            'description' => trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($page['excerpt'] ?? '')),
-            'url' => ccms_public_page_url($page),
+            '@id' => $pageUrl . '#post',
+            'headline' => $pageTitle,
+            'description' => $pageDescription,
+            'url' => $pageUrl,
+            'mainEntityOfPage' => ['@id' => $pageUrl . '#webpage'],
             'datePublished' => trim((string) ($page['published_at'] ?? $page['updated_at'] ?? '')),
             'dateModified' => trim((string) ($page['updated_at'] ?? $page['published_at'] ?? '')),
             'author' => [
                 '@type' => 'Person',
-                'name' => trim((string) ($page['author_name'] ?? '')) ?: trim((string) ($site['title'] ?? 'LinuxCMS')),
+                'name' => trim((string) ($page['author_name'] ?? '')) ?: $siteTitle,
             ],
         ];
-        $siteTitle = trim((string) ($site['title'] ?? ''));
         if ($siteTitle !== '') {
-            $graph[0]['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
-        }
-        $image = ccms_page_primary_image($page);
-        if ($image !== '') {
-            $graph[0]['image'] = $image;
-        }
-        if (!empty($page['categories'][0])) {
-            $graph[0]['articleSection'] = (string) $page['categories'][0];
-        }
-    } else {
-        $graph[] = [
-        '@type' => !empty($page['is_homepage']) ? 'WebSite' : 'WebPage',
-        'name' => trim((string) ($page['meta_title'] ?? '')) ?: trim((string) ($page['title'] ?? $site['title'] ?? 'LinuxCMS')),
-        'description' => trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? '')),
-        'url' => ccms_public_page_url($page),
-        ];
-        $siteTitle = trim((string) ($site['title'] ?? ''));
-        $contactEmail = trim((string) ($site['contact_email'] ?? ''));
-        if ($siteTitle !== '') {
-            $graph[0]['publisher'] = ['@type' => 'Organization', 'name' => $siteTitle];
+            $articleNode['publisher'] = [
+                '@type' => 'Organization',
+                'name' => $siteTitle,
+            ];
             if ($contactEmail !== '') {
-                $graph[0]['publisher']['email'] = $contactEmail;
+                $articleNode['publisher']['email'] = $contactEmail;
             }
         }
-        $image = ccms_page_primary_image($page);
-        if ($image !== '') {
-            $graph[0]['image'] = $image;
+        if ($pageImage !== '') {
+            $articleNode['image'] = $pageImage;
         }
+        if (!empty($page['categories'][0])) {
+            $articleNode['articleSection'] = (string) $page['categories'][0];
+        }
+        $graph[] = $articleNode;
     }
 
     if ($businessSchema = ccms_business_profile_schema_node($site, $page)) {
         $graph[] = $businessSchema;
     }
 
-    if (count($graph) === 1) {
-        return json_encode(['@context' => 'https://schema.org'] + $graph[0], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+    $capsule = ccms_capsule_decode($page);
+    if ($faqSchema = ccms_capsule_faq_schema($capsule, $pageUrl)) {
+        $graph[] = $faqSchema;
+    }
+
+    if ($breadcrumbSchema = ccms_page_breadcrumb_schema($page)) {
+        $graph[] = $breadcrumbSchema;
     }
 
     return json_encode([
@@ -1165,9 +1667,14 @@ function ccms_render_sitemap_xml(array $data): string
     });
     $urls = '';
     foreach ($pages as $page) {
+        $images = '';
+        foreach (ccms_page_image_urls($page) as $imageUrl) {
+            $images .= '  <image:image><image:loc>' . ccms_h($imageUrl) . "</image:loc></image:image>\n";
+        }
         $urls .= "<url>\n"
             . '  <loc>' . ccms_h(ccms_public_page_url($page)) . "</loc>\n"
             . '  <lastmod>' . ccms_h((string) ($page['updated_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . $images
             . "</url>\n";
     }
     if (!empty($posts)) {
@@ -1177,9 +1684,14 @@ function ccms_render_sitemap_xml(array $data): string
             . "</url>\n";
     }
     foreach ($posts as $post) {
+        $postImages = '';
+        foreach (ccms_page_image_urls($post) as $imageUrl) {
+            $postImages .= '  <image:image><image:loc>' . ccms_h($imageUrl) . "</image:loc></image:image>\n";
+        }
         $urls .= "<url>\n"
             . '  <loc>' . ccms_h(ccms_post_public_url($post)) . "</loc>\n"
             . '  <lastmod>' . ccms_h((string) ($post['updated_at'] ?? $post['published_at'] ?? ccms_now_iso())) . "</lastmod>\n"
+            . $postImages
             . "</url>\n";
     }
     foreach (ccms_blog_categories($data) as $category) {
@@ -1205,14 +1717,51 @@ function ccms_render_sitemap_xml(array $data): string
             . "</url>\n";
     }
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        . "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+        . "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">\n"
         . $urls
         . "</urlset>\n";
 }
 
 function ccms_render_robots_txt(): string
 {
-    return "User-agent: *\nAllow: /\nSitemap: " . rtrim(ccms_base_url(), '/') . "/sitemap.xml\n";
+    $baseUrl = rtrim(ccms_base_url(), '/');
+    $sharedDisallow = "Disallow: /r-admin/\n"
+        . "Disallow: /mi-negocio/\n"
+        . "Disallow: /data/\n"
+        . "Disallow: /src/\n"
+        . "Disallow: /tests/\n"
+        . "Disallow: /cli/\n";
+
+    return "User-agent: *\n"
+        . "Allow: /\n"
+        . $sharedDisallow
+        . "\n"
+        . "User-agent: OAI-SearchBot\n"
+        . "Allow: /\n"
+        . "Allow: /.well-known/ai.json\n"
+        . $sharedDisallow
+        . "\n"
+        . "User-agent: ChatGPT-User\n"
+        . "Allow: /\n"
+        . $sharedDisallow
+        . "\n"
+        . "User-agent: GPTBot\n"
+        . "Allow: /\n"
+        . $sharedDisallow
+        . "\n"
+        . "User-agent: Google-Extended\n"
+        . "Allow: /\n"
+        . $sharedDisallow
+        . "\n"
+        . "User-agent: PerplexityBot\n"
+        . "Allow: /\n"
+        . $sharedDisallow
+        . "\n"
+        . "User-agent: Amazonbot\n"
+        . "Allow: /\n"
+        . $sharedDisallow
+        . "\n"
+        . "Sitemap: " . $baseUrl . "/sitemap.xml\n";
 }
 
 function ccms_post_excerpt(array $post, int $limit = 180): string
@@ -1371,10 +1920,19 @@ function ccms_render_blog_rss(array $site, array $posts): string
         . "</rss>\n";
 }
 
-function ccms_capsule_animation_attr(array $block): string
+function ccms_capsule_animation_attr(array $block, int $index = 0): string
 {
     $animation = trim((string) (ccms_capsule_block_style($block)['animation'] ?? ''));
-    if ($animation === '' || $animation === 'none' || !in_array($animation, ccms_allowed_block_animations(), true)) {
+    if ($animation === '' || !in_array($animation, ccms_allowed_block_animations(), true)) {
+        $preset = trim((string) (ccms_capsule_current_style()['animation_preset'] ?? ''));
+        $animation = match ($preset) {
+            'slide' => $index % 2 === 0 ? 'fade-right' : 'fade-left',
+            'zoom' => 'scale',
+            'fade' => 'fade-up',
+            default => '',
+        };
+    }
+    if ($animation === '' || $animation === 'none') {
         return '';
     }
     return ' data-ccms-animate="' . ccms_h($animation) . '"';
@@ -1418,8 +1976,15 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     $metaDescription = trim((string) ($page['meta_description'] ?? '')) ?: trim((string) ($site['tagline'] ?? ''));
     $contentType = (string) ($page['content_type'] ?? '');
     $ogType = $contentType === 'post' ? 'article' : 'website';
+    $businessProfile = ccms_site_business_profile($site);
     $capsule = ccms_capsule_decode($page);
     $usesNativeCapsule = ccms_capsule_can_render($capsule);
+    $capsuleStyle = $usesNativeCapsule ? ccms_capsule_style($capsule, $site) : [];
+    $fontPreconnect = trim((string) ($capsuleStyle['font_url'] ?? '')) !== ''
+        ? '
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+        : '';
     $blockTypes = [];
     if ($usesNativeCapsule) {
         foreach (($capsule['blocks'] ?? []) as $block) {
@@ -1463,27 +2028,37 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     </div>
   </main>';
     }
+    $businessFactsHtml = ccms_render_business_profile_facts($site, $page);
 
     $scriptNonceAttr = ccms_script_nonce_attr();
     return '<!doctype html>
-<html lang="es">
+<html lang="es" dir="ltr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>' . ccms_h($pageTitle) . '</title>
   <meta name="description" content="' . ccms_h($metaDescription) . '">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="' . ccms_h($pageUrl) . '">
+  ' . (!empty($businessProfile['latitude']) && !empty($businessProfile['longitude']) ? '<meta name="geo.position" content="' . ccms_h((string) $businessProfile['latitude'] . ';' . (string) $businessProfile['longitude']) . '">' : '') . '
+  ' . (trim((string) ($businessProfile['city'] ?? '')) !== '' ? '<meta name="geo.placename" content="' . ccms_h((string) $businessProfile['city']) . '">' : '') . '
+  ' . (trim((string) ($businessProfile['region'] ?? $businessProfile['country'] ?? '')) !== '' ? '<meta name="geo.region" content="' . ccms_h(trim((string) ($businessProfile['region'] ?? $businessProfile['country'] ?? ''))) . '">' : '') . '
   <meta property="og:title" content="' . ccms_h($pageTitle) . '">
   <meta property="og:description" content="' . ccms_h($metaDescription) . '">
   <meta property="og:type" content="' . ccms_h($ogType) . '">
+  <meta property="og:locale" content="es_ES">
   <meta property="og:url" content="' . ccms_h($pageUrl) . '">
   <meta property="og:site_name" content="' . ccms_h((string) ($site['title'] ?? 'LinuxCMS')) . '">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="' . ccms_h($pageTitle) . '">
   <meta name="twitter:description" content="' . ccms_h($metaDescription) . '">' . ($contentType === 'post' && trim((string) ($page['published_at'] ?? '')) !== '' ? '
-  <meta property="article:published_time" content="' . ccms_h((string) $page['published_at']) . '">' : '') . ($pageImage !== '' ? '
+  <meta property="article:published_time" content="' . ccms_h((string) $page['published_at']) . '">' : '') . ($contentType === 'post' && trim((string) ($page['updated_at'] ?? '')) !== '' ? '
+  <meta property="article:modified_time" content="' . ccms_h((string) $page['updated_at']) . '">' : '') . ($pageImage !== '' ? '
   <meta property="og:image" content="' . ccms_h($pageImage) . '">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:image" content="' . ccms_h($pageImage) . '">' : '') . '
+  ' . $fontPreconnect . '
   <style' . $styleNonceAttr . '>
     :root{
       --bg:' . ccms_h((string) ($colors['bg'] ?? '#f7f4ee')) . ';
@@ -1520,6 +2095,16 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
     .page-content{padding:0}
     .site-footer{padding:22px 0 42px;color:var(--muted);font-size:14px;text-align:center}
     .site-footer a{text-decoration:none;color:var(--text)}
+    .site-local-facts{padding:0 0 32px}
+    .site-local-facts-card{background:var(--surface);border:1px solid rgba(0,0,0,.08);border-radius:24px;box-shadow:0 18px 48px -34px rgba(0,0,0,.2);padding:28px}
+    .site-local-facts-kicker{margin:0 0 10px;color:var(--primary);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .site-local-facts-summary{margin:0 0 18px;font-size:17px;line-height:1.75;color:var(--text)}
+    .site-local-facts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;margin:0}
+    .site-local-facts-grid div{display:grid;gap:6px}
+    .site-local-facts-grid dt{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .site-local-facts-grid dd{margin:0;font-size:15px;line-height:1.7;color:var(--text)}
+    .site-local-facts-grid address{margin:0;font-style:normal}
+    .site-local-facts-grid a{color:var(--primary);text-decoration:none;font-weight:700}
     .ccms-btn{border-radius:var(--site-button-radius)!important}
     h1,h2,h3,h4,h5,h6,.ccms-title,.ccms-section-title{font-family:' . ccms_h($theme['font_heading']) . ';font-weight:var(--site-heading-weight);letter-spacing:var(--site-heading-spacing);text-transform:var(--site-heading-transform)}
     @media (max-width:1100px){
@@ -1532,6 +2117,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
       .menu{gap:10px}
       .ccms-title{font-size:36px}
       .ccms-section-title{font-size:28px}
+      .site-local-facts-grid{grid-template-columns:1fr}
     }
     @media (max-width:480px){
       .ccms-title{font-size:28px}
@@ -1549,6 +2135,7 @@ function ccms_render_public_page(array $site, array $page, array $menuPages): st
 <body>
   ' . $outerHeader . '
   ' . $mainHtml . '
+  ' . $businessFactsHtml . '
   ' . $outerFooter . '
   ' . $pluginBodyEnd . '
 </body>
@@ -1560,8 +2147,27 @@ function ccms_render_capsule_body(array $capsule, array $site = []): string
     $style = ccms_capsule_style($capsule, $site);
     $scriptNonceAttr = ccms_script_nonce_attr();
     $styleNonceAttr = ccms_style_nonce_attr();
-    $html = '<style' . $styleNonceAttr . '>
-      .ccms-capsule{background:linear-gradient(180deg,' . ccms_h($style['bg_from']) . ' 0%,' . ccms_h($style['bg_to']) . ' 100%);color:' . ccms_h($style['text_primary']) . ';font-family:' . ccms_h($style['font_family']) . ';--site-surface-radius:' . ccms_h($style['surface_radius']) . ';--site-card-radius:' . ccms_h($style['card_radius']) . ';--site-button-radius:' . ccms_h($style['button_radius']) . ';--site-image-radius:' . ccms_h($style['image_radius']) . ';--site-space-scale:' . ccms_h($style['spacing_scale']) . ';--site-heading-weight:' . ccms_h($style['font_weight_heading']) . ';--site-heading-spacing:' . ccms_h($style['letter_spacing_heading']) . ';--site-heading-transform:' . ccms_h($style['text_transform_heading']) . ';--site-body-leading:' . ccms_h($style['line_height_body']) . ';--site-shadow:' . ccms_h($style['shadow']) . ';--site-card-shadow:' . ccms_h($style['shadow']) . '}
+    $cardStyleCss = match ($style['card_style']) {
+        'glass' => '
+      .ccms-card{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+      .ccms-card::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 55%);opacity:0;transition:opacity .35s ease;pointer-events:none}
+      .ccms-card:hover::before{opacity:1}',
+        'flat' => '
+      .ccms-card{box-shadow:none!important;border-left:3px solid transparent;transition:border-color .25s ease,background .25s ease}
+      .ccms-card:hover{border-left-color:' . ccms_h($style['accent']) . ';background:rgba(0,0,0,.03)}',
+        'bordered' => '
+      .ccms-card{background:transparent!important;border:2px solid ' . ccms_h($style['accent']) . ';box-shadow:none!important}
+      .ccms-card:hover{background:rgba(255,255,255,.04)}',
+        'elevated' => '
+      .ccms-card{box-shadow:0 28px 60px -36px rgba(0,0,0,.28)!important;transition:transform .25s ease,box-shadow .25s ease}
+      .ccms-card:hover{transform:translateY(-4px);box-shadow:0 38px 70px -38px rgba(0,0,0,.34)!important}',
+        default => '',
+    };
+    $fontLinks = $style['font_url'] !== ''
+        ? '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="' . ccms_h($style['font_url']) . '">'
+        : '';
+    $html = $fontLinks . '<style' . $styleNonceAttr . '>
+      .ccms-capsule{background:linear-gradient(180deg,' . ccms_h($style['bg_from']) . ' 0%,' . ccms_h($style['bg_to']) . ' 100%);color:' . ccms_h($style['text_primary']) . ';font-family:' . ccms_h($style['font_family']) . ';--site-surface-radius:' . ccms_h($style['surface_radius']) . ';--site-card-radius:' . ccms_h($style['card_radius']) . ';--site-button-radius:' . ccms_h($style['button_radius']) . ';--site-image-radius:' . ccms_h($style['image_radius']) . ';--site-space-scale:' . ccms_h($style['spacing_scale']) . ';--site-heading-weight:' . ccms_h($style['font_weight_heading']) . ';--site-heading-spacing:' . ccms_h($style['letter_spacing_heading']) . ';--site-heading-transform:' . ccms_h($style['text_transform_heading']) . ';--site-body-leading:' . ccms_h($style['line_height_body']) . ';--site-shadow:' . ccms_h($style['shadow']) . ';--site-card-shadow:' . ccms_h($style['card_shadow']) . '}
       .ccms-capsule *{box-sizing:border-box}
       .ccms-capsule section{position:relative}
       [data-ccms-bg]{position:relative;isolation:isolate;overflow:hidden}
@@ -1602,8 +2208,12 @@ function ccms_render_capsule_body(array $capsule, array $site = []): string
       }
       .ccms-c-inner{width:min(1180px,calc(100% - 48px));margin:0 auto}
       .ccms-chip{display:inline-flex;padding:calc(8px * var(--site-space-scale)) calc(14px * var(--site-space-scale));border-radius:999px;background:rgba(229,115,115,.12);color:' . ccms_h($style['accent_dark']) . ';font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-      .ccms-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:calc(14px * var(--site-space-scale)) calc(22px * var(--site-space-scale));border-radius:var(--site-button-radius)!important;background:var(--ccms-button-bg,' . ccms_h($style['gradient_accent']) . ');color:var(--ccms-button-color,#fff);text-decoration:none;font-weight:800;box-shadow:var(--site-card-shadow);border:1px solid var(--ccms-button-border,transparent)}
+      .ccms-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:calc(14px * var(--site-space-scale)) calc(22px * var(--site-space-scale));border-radius:var(--site-button-radius)!important;background:var(--ccms-button-bg,' . ccms_h($style['gradient_accent']) . ');color:var(--ccms-button-color,#fff);text-decoration:none;font-weight:800;box-shadow:0 8px 30px rgba(0,0,0,.18);border:1px solid var(--ccms-button-border,transparent);position:relative;transition:transform .2s ease,box-shadow .2s ease}
+      .ccms-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.22)}
+      .ccms-btn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;background:inherit;filter:blur(16px);opacity:0;transition:opacity .25s ease;z-index:-1}
+      .ccms-btn:hover::after{opacity:.35}
       .ccms-btn--ghost{background:var(--ccms-button-ghost-bg,#fff);color:var(--ccms-button-ghost-color,' . ccms_h($style['text_primary']) . ');border:1px solid var(--ccms-button-ghost-border,rgba(0,0,0,.08))}
+      .ccms-btn--ghost::after{display:none}
       .ccms-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:calc(28px * var(--site-space-scale));align-items:center}
       .ccms-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(22px * var(--site-space-scale))}
       .ccms-pricing-stack-card{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr) auto;gap:calc(22px * var(--site-space-scale));align-items:center}
@@ -1612,6 +2222,7 @@ function ccms_render_capsule_body(array $capsule, array $site = []): string
       .ccms-gallery-spotlight{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:calc(22px * var(--site-space-scale));align-items:stretch}
       .ccms-blog-list-card{display:grid;grid-template-columns:240px minmax(0,1fr);gap:calc(18px * var(--site-space-scale));align-items:stretch}
       .ccms-card{background:' . ccms_h($style['card_bg']) . ';border:1px solid ' . ccms_h($style['card_border']) . ';border-radius:var(--site-card-radius)!important;box-shadow:var(--site-card-shadow)!important}
+      ' . $cardStyleCss . '
       .ccms-title{font-family:' . ccms_h($style['font_heading']) . ';font-size:52px;line-height:1.02;margin:0 0 16px;font-weight:var(--site-heading-weight);letter-spacing:var(--site-heading-spacing);text-transform:var(--site-heading-transform)}
       .ccms-subtitle{font-size:18px;line-height:var(--site-body-leading);color:' . ccms_h($style['text_secondary']) . ';margin:0}
       .ccms-section-title{font-family:' . ccms_h($style['font_heading']) . ';font-size:42px;line-height:1.08;margin:0 0 14px;font-weight:var(--site-heading-weight);letter-spacing:var(--site-heading-spacing);text-transform:var(--site-heading-transform)}
@@ -1667,7 +2278,7 @@ function ccms_render_capsule_body(array $capsule, array $site = []): string
             $block = ccms_capsule_runtime_block(is_array($block) ? $block : [], $site);
             $blockType = (string) ($block['type'] ?? 'block');
             $blockId = (string) ($block['id'] ?? ($blockType . '_' . $index));
-            $animationAttr = ccms_capsule_animation_attr($block);
+            $animationAttr = ccms_capsule_animation_attr($block, $index);
             if ($animationAttr !== '') {
                 $hasAnimatedBlocks = true;
             }
@@ -2539,14 +3150,24 @@ function ccms_render_capsule_block(array $block, array $style): string
             }
             $ctaHref = (string) ($props['cta_href'] ?? '#');
             $ctaText = (string) ($props['cta_text'] ?? 'Contactar');
-            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:40;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h($ctaHref) . '">' . ccms_h($ctaText) . '</a></nav></div></section>';
+            $navChrome = match ($style['nav_style'] ?? '') {
+                'transparent' => 'position:sticky;top:0;z-index:40;background:transparent;border-bottom:1px solid transparent',
+                'solid' => 'position:sticky;top:0;z-index:40;background:' . ccms_h($style['bg_to']) . ';border-bottom:1px solid rgba(0,0,0,.06)',
+                default => 'position:sticky;top:0;z-index:40;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)',
+            };
+            return '<section id="' . ccms_h($sectionId) . '" style="' . $navChrome . '"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h($ctaHref) . '">' . ccms_h($ctaText) . '</a></nav></div></section>';
 
         case 'sticky_header':
             $links = '';
             foreach (($props['links'] ?? []) as $link) {
                 $links .= '<a href="' . ccms_h((string) ($link['href'] ?? '#')) . '" style="text-decoration:none;color:' . ccms_h($style['text_secondary']) . ';font-weight:700">' . ccms_h(ccms_capsule_link_text($link)) . '</a>';
             }
-            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:45"><div style="background:' . ccms_h($style['text_primary']) . ';color:#fff;padding:10px 0;font-size:14px;text-align:center">' . ccms_h((string) ($props['announcement'] ?? '')) . '</div><div style="background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_text'] ?? 'Contactar')) . '</a></nav></div></div></section>';
+            $stickyNavChrome = match ($style['nav_style'] ?? '') {
+                'transparent' => 'background:transparent;border-bottom:1px solid transparent',
+                'solid' => 'background:' . ccms_h($style['bg_to']) . ';border-bottom:1px solid rgba(0,0,0,.06)',
+                default => 'background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.05)',
+            };
+            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:45"><div style="background:' . ccms_h($style['text_primary']) . ';color:#fff;padding:10px 0;font-size:14px;text-align:center">' . ccms_h((string) ($props['announcement'] ?? '')) . '</div><div style="' . $stickyNavChrome . '"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><nav style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">' . $links . '<a class="' . ccms_h(ccms_capsule_button_classes($block)) . '" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_text'] ?? 'Contactar')) . '</a></nav></div></div></section>';
 
         case 'offcanvas_menu':
             $uid = preg_replace('/[^a-z0-9_-]+/i', '-', $blockId) ?: 'offcanvas-menu';
@@ -2554,7 +3175,12 @@ function ccms_render_capsule_block(array $block, array $style): string
             foreach (($props['links'] ?? []) as $link) {
                 $links .= '<a href="' . ccms_h((string) ($link['href'] ?? '#')) . '" style="display:block;font-size:clamp(28px,4vw,44px);line-height:1.1;font-weight:900;text-decoration:none;color:' . ccms_h($style['text_primary']) . '">' . ccms_h(ccms_capsule_link_text($link)) . '</a>';
             }
-            return '<section id="' . ccms_h($sectionId) . '" style="position:sticky;top:0;z-index:48;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.05)"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:6px">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</div><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div></div><button type="button" data-open-offcanvas="' . ccms_h($uid) . '" style="display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-weight:800;cursor:pointer">' . ccms_h((string) ($props['button_text'] ?? 'Menu')) . '</button></div><div id="offcanvas-' . ccms_h($uid) . '" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.54);display:none"><div data-offcanvas-panel="' . ccms_h($uid) . '" style="position:absolute;right:0;top:0;bottom:0;width:min(520px,100%);background:' . ccms_h($style['bg_to']) . ';padding:34px 28px;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);overflow:auto"><div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:26px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:8px">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><h2 style="margin:0;font-size:32px;line-height:1.05;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</h2></div><button type="button" data-close-offcanvas="' . ccms_h($uid) . '" aria-label="Close menu" style="width:46px;height:46px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-size:28px;cursor:pointer">&times;</button></div><p class="ccms-note" style="margin:0 0 24px">' . ccms_h((string) ($props['helper_text'] ?? '')) . '</p><div style="display:grid;gap:18px">' . $links . '</div><div style="margin-top:30px"><a class="ccms-btn" href="' . ccms_h((string) ($props['cta_href'] ?? '#contact')) . '" style="width:100%">' . ccms_h((string) ($props['cta_text'] ?? 'Talk to us')) . '</a></div></div></div><script' . $scriptNonceAttr . '>(function(){var uid=' . json_encode($uid) . ';var openBtn=document.querySelector(\'[data-open-offcanvas=\"\'+uid+\'\"]\');var overlay=document.getElementById(\'offcanvas-\'+uid);if(!openBtn||!overlay)return;var panel=overlay.querySelector(\'[data-offcanvas-panel=\"\'+uid+\'\"]\');var closeBtn=overlay.querySelector(\'[data-close-offcanvas=\"\'+uid+\'\"]\');function openMenu(){overlay.style.display=\'block\';requestAnimationFrame(function(){panel.style.transform=\'translateX(0)\';});}function closeMenu(){panel.style.transform=\'translateX(100%)\';setTimeout(function(){overlay.style.display=\'none\';},250);}openBtn.addEventListener(\'click\',openMenu);if(closeBtn)closeBtn.addEventListener(\'click\',closeMenu);overlay.addEventListener(\'click\',function(e){if(e.target===overlay)closeMenu();});document.addEventListener(\'keydown\',function(e){if(e.key===\'Escape\'&&overlay.style.display===\'block\'){closeMenu();}});}());</script></section>';
+            $offcanvasNavChrome = match ($style['nav_style'] ?? '') {
+                'transparent' => 'position:sticky;top:0;z-index:48;background:transparent;border-bottom:1px solid transparent',
+                'solid' => 'position:sticky;top:0;z-index:48;background:' . ccms_h($style['bg_to']) . ';border-bottom:1px solid rgba(0,0,0,.06)',
+                default => 'position:sticky;top:0;z-index:48;background:' . ccms_h($style['nav_bg']) . ';backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.05)',
+            };
+            return '<section id="' . ccms_h($sectionId) . '" style="' . $offcanvasNavChrome . '"><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:6px">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</div><div style="font-weight:900;font-size:22px;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div></div><button type="button" data-open-offcanvas="' . ccms_h($uid) . '" style="display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-weight:800;cursor:pointer">' . ccms_h((string) ($props['button_text'] ?? 'Menu')) . '</button></div><div id="offcanvas-' . ccms_h($uid) . '" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.54);display:none"><div data-offcanvas-panel="' . ccms_h($uid) . '" style="position:absolute;right:0;top:0;bottom:0;width:min(520px,100%);background:' . ccms_h($style['bg_to']) . ';padding:34px 28px;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);overflow:auto"><div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:26px"><div><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:' . ccms_h($style['accent_dark']) . ';margin-bottom:8px">' . ccms_h((string) ($props['brand'] ?? 'Brand')) . '</div><h2 style="margin:0;font-size:32px;line-height:1.05;font-family:' . ccms_h($style['font_heading']) . '">' . ccms_h((string) ($props['title'] ?? 'Open the full site menu')) . '</h2></div><button type="button" data-close-offcanvas="' . ccms_h($uid) . '" aria-label="Close menu" style="width:46px;height:46px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:#fff;color:' . ccms_h($style['accent_dark']) . ';font-size:28px;cursor:pointer">&times;</button></div><p class="ccms-note" style="margin:0 0 24px">' . ccms_h((string) ($props['helper_text'] ?? '')) . '</p><div style="display:grid;gap:18px">' . $links . '</div><div style="margin-top:30px"><a class="ccms-btn" href="' . ccms_h((string) ($props['cta_href'] ?? '#contact')) . '" style="width:100%">' . ccms_h((string) ($props['cta_text'] ?? 'Talk to us')) . '</a></div></div></div><script' . $scriptNonceAttr . '>(function(){var uid=' . json_encode($uid) . ';var openBtn=document.querySelector(\'[data-open-offcanvas=\"\'+uid+\'\"]\');var overlay=document.getElementById(\'offcanvas-\'+uid);if(!openBtn||!overlay)return;var panel=overlay.querySelector(\'[data-offcanvas-panel=\"\'+uid+\'\"]\');var closeBtn=overlay.querySelector(\'[data-close-offcanvas=\"\'+uid+\'\"]\');function openMenu(){overlay.style.display=\'block\';requestAnimationFrame(function(){panel.style.transform=\'translateX(0)\';});}function closeMenu(){panel.style.transform=\'translateX(100%)\';setTimeout(function(){overlay.style.display=\'none\';},250);}openBtn.addEventListener(\'click\',openMenu);if(closeBtn)closeBtn.addEventListener(\'click\',closeMenu);overlay.addEventListener(\'click\',function(e){if(e.target===overlay)closeMenu();});document.addEventListener(\'keydown\',function(e){if(e.key===\'Escape\'&&overlay.style.display===\'block\'){closeMenu();}});}());</script></section>';
 
         case 'banner':
             return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:14px 0;background:' . $style['gradient_accent']) . '><div class="ccms-c-inner" style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;color:#fff"><p style="margin:0;font-weight:800">' . ccms_h((string) ($props['text'] ?? '')) . '</p><a class="ccms-btn ccms-btn--ghost" href="' . ccms_h((string) ($props['cta_href'] ?? '#')) . '">' . ccms_h((string) ($props['cta_text'] ?? 'Ver más')) . '</a></div></section>';
@@ -2815,19 +3441,32 @@ function ccms_render_capsule_block(array $block, array $style): string
             $page = ccms_current_public_page() ?? ['slug' => '', 'title' => ''];
             $feedback = ccms_render_public_form_feedback($blockId);
             $hidden = ccms_render_public_form_hidden_inputs($page, 'contact', $blockId);
-            $contactDetails = '';
-            foreach ([
-                'Email' => (string) ($props['email'] ?? $props['contact_email'] ?? ''),
-                'Phone' => (string) ($props['phone'] ?? ''),
-                'Address' => (string) ($props['address'] ?? ''),
-                'Hours' => (string) ($props['hours'] ?? ''),
-            ] as $label => $value) {
-                if (trim($value) === '') {
-                    continue;
-                }
-                $contactDetails .= '<li><strong>' . ccms_h($label) . ':</strong> ' . ccms_h($value) . '</li>';
+            $contactLines = [];
+            $address = trim((string) ($props['address'] ?? ''));
+            $city = trim((string) ($props['city'] ?? ''));
+            $postal = trim((string) ($props['postal_code'] ?? ''));
+            $phone = trim((string) ($props['phone'] ?? ''));
+            $email = trim((string) ($props['email'] ?? $props['contact_email'] ?? ''));
+            $hours = trim((string) ($props['hours'] ?? ''));
+            if ($address !== '') {
+                $contactLines[] = '<span itemprop="streetAddress">' . ccms_h($address) . '</span>';
             }
-            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:72px 0;background:rgba(255,255,255,.56)') . '><div class="ccms-c-inner ccms-grid-2"' . ccms_capsule_inner_style_attr($block) . '><div><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Contact')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? $props['brand'] ?? 'Contact')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? $props['info'] ?? '')) . '</p>' . ($contactDetails !== '' ? '<ul class="ccms-list" style="margin-top:18px">' . $contactDetails . '</ul>' : '') . '</div><div><div class="ccms-card" style="padding:28px">' . $feedback . '<form method="post" action="' . ccms_h(ccms_public_form_action()) . '" style="display:grid;gap:14px">' . $hidden . '<input name="name" placeholder="Name" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="email" type="email" placeholder="Email" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="phone" placeholder="Phone" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"><textarea name="message" placeholder="Message" style="width:100%;min-height:150px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08);font:inherit" required></textarea><button type="submit" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Send message')) . '</button></form></div></div></div></section>';
+            if ($city !== '' || $postal !== '') {
+                $contactLines[] = '<span><span itemprop="postalCode">' . ccms_h($postal) . '</span> <span itemprop="addressLocality">' . ccms_h($city) . '</span></span>';
+            }
+            if ($phone !== '') {
+                $contactLines[] = '<a href="tel:' . ccms_h(preg_replace('/\s+/', '', $phone) ?? $phone) . '" itemprop="telephone">' . ccms_h($phone) . '</a>';
+            }
+            if ($email !== '') {
+                $contactLines[] = '<a href="mailto:' . ccms_h($email) . '" itemprop="email">' . ccms_h($email) . '</a>';
+            }
+            if ($hours !== '') {
+                $contactLines[] = '<span>' . ccms_h($hours) . '</span>';
+            }
+            $contactDetails = $contactLines !== []
+                ? '<address itemscope itemtype="https://schema.org/PostalAddress" style="display:grid;gap:8px;margin-top:18px;font-style:normal;color:' . ccms_h($style['text_secondary']) . '">' . implode('', $contactLines) . '</address>'
+                : '';
+            return '<section id="' . ccms_h($sectionId) . '"' . ccms_capsule_section_style_attr($block, 'padding:72px 0;background:rgba(255,255,255,.56)') . '><div class="ccms-c-inner ccms-grid-2"' . ccms_capsule_inner_style_attr($block) . '><div><span class="ccms-chip">' . ccms_h((string) ($props['badge'] ?? 'Contact')) . '</span><h2 class="ccms-section-title" style="margin-top:18px">' . ccms_h((string) ($props['title'] ?? $props['brand'] ?? 'Contact')) . '</h2><p class="ccms-subtitle">' . ccms_h((string) ($props['subtitle'] ?? $props['info'] ?? '')) . '</p>' . $contactDetails . '</div><div><div class="ccms-card" style="padding:28px">' . $feedback . '<form method="post" action="' . ccms_h(ccms_public_form_action()) . '" style="display:grid;gap:14px">' . $hidden . '<input name="name" placeholder="Name" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="email" type="email" placeholder="Email" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)" required><input name="phone" placeholder="Phone" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08)"><textarea name="message" placeholder="Message" style="width:100%;min-height:150px;padding:14px 16px;border-radius:16px;border:1px solid rgba(0,0,0,.08);font:inherit" required></textarea><button type="submit" class="ccms-btn">' . ccms_h((string) ($props['button_text'] ?? 'Send message')) . '</button></form></div></div></div></section>';
 
         case 'split_image_left':
         case 'split_image_right':

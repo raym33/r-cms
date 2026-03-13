@@ -1,0 +1,344 @@
+{
+  "version": 2,
+  "template_id": "generic",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Ayuntamiento de Ribera Nueva",
+    "page_title": "Ayuntamiento de Ribera Nueva | Zaragoza: tramites, agenda y servicios en una sola portada",
+    "description": "Ayuntamiento de Ribera Nueva concentra tramites, agenda, avisos y accesos utiles para que vecinos, familias y comercios encuentren lo importante sin friccion."
+  },
+  "style": {
+    "accent": "#22c55e",
+    "accent_dark": "#16a34a",
+    "accent_rgb": "34,197,94",
+    "bg_from": "#050a0f",
+    "bg_to": "#0f172a",
+    "card_bg": "rgba(5,10,15,0.7)",
+    "card_border": "rgba(34,197,94,0.15)",
+    "gradient_accent": "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+    "theme_mode": "dark",
+    "text_primary": "#ffffff",
+    "text_secondary": "#9ca3af",
+    "text_muted": "#6b7280",
+    "nav_bg": "rgba(0,0,0,0.4)",
+    "hero_style": "gradient",
+    "card_style": "glass",
+    "nav_style": "glass",
+    "animation_preset": "fade",
+    "font_pairing": "modern",
+    "font_family": "'Inter'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "7rem",
+    "card_radius": "1rem",
+    "shadow_intensity": "0.3",
+    "animation_style": "fade-up",
+    "font_heading": "'Inter'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "abstract_orbs",
+      "desc": "Soft floating orbs with gradient glow",
+      "colors": [
+        "#22c55e",
+        "#4ade80",
+        "#dcfce7"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "f2f7b25f",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Ayuntamiento de Ribera Nueva",
+        "announcement": "Zaragoza · participacion, ayudas y noticias del municipio",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_fullscreen"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Servicios",
+            "href": "#services_cards"
+          },
+          {
+            "text": "Detalle",
+            "href": "#tabs_content"
+          },
+          {
+            "text": "Proceso",
+            "href": "#timeline"
+          }
+        ],
+        "cta_text": "Consultar tramites",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "e0448712",
+      "type": "hero_fullscreen",
+      "props": {
+        "badge": "Ayuntamientos y Portales Publicos",
+        "title": "Zaragoza: tramites, agenda y servicios en una sola portada",
+        "subtitle": "Ayuntamiento de Ribera Nueva concentra tramites, agenda, avisos y accesos utiles para que vecinos, familias y comercios encuentren lo importante sin friccion.",
+        "background_image": "https://loremflickr.com/1800/1200/hero?lock=31803",
+        "cta_primary": "Consultar tramites",
+        "cta_secondary": "Ver detalle",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "3cf28c1a",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "47+",
+            "label": "tramites online"
+          },
+          {
+            "value": "27",
+            "label": "areas municipales"
+          },
+          {
+            "value": "33h",
+            "label": "respuesta media"
+          },
+          {
+            "value": "72%",
+            "label": "gestion digital"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cfb5e9f4",
+      "type": "services_cards",
+      "props": {
+        "badge": "Servicios",
+        "title": "Servicios y gestiones clave",
+        "subtitle": "Una vista clara de como Ayuntamiento de Ribera Nueva organiza la oferta.",
+        "services": [
+          {
+            "icon": "target",
+            "title": "Atencion ciudadana",
+            "desc": "Atencion ciudadana aterrizado para vecinos con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en participacion, ayudas",
+              "Entrega alineada con pagina institucional con foco en atencion ciudadana",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Consultar tramites",
+            "cta_href": "#lead-form"
+          },
+          {
+            "icon": "zap",
+            "title": "Tramites digitales",
+            "desc": "Tramites digitales aterrizado para vecinos con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en participacion, ayudas",
+              "Entrega alineada con pagina institucional con foco en atencion ciudadana",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Consultar tramites",
+            "cta_href": "#lead-form"
+          },
+          {
+            "icon": "shield",
+            "title": "Agenda municipal",
+            "desc": "Agenda municipal aterrizado para vecinos con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en participacion, ayudas",
+              "Entrega alineada con pagina institucional con foco en atencion ciudadana",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Consultar tramites",
+            "cta_href": "#lead-form"
+          }
+        ]
+      }
+    },
+    {
+      "id": "3085d827",
+      "type": "tabs_content",
+      "props": {
+        "badge": "Detalle",
+        "title": "Como se ordena la informacion importante",
+        "subtitle": "La propuesta se estructura por capas para que el visitante no se pierda.",
+        "tabs": [
+          {
+            "label": "Contexto",
+            "title": "Contexto",
+            "text": "Ayuntamiento de Ribera Nueva necesita explicar pagina institucional con foco en atencion ciudadana sin perder ritmo ni jerarquia.",
+            "bullets": [
+              "Oferta",
+              "Publico",
+              "Promesa"
+            ],
+            "image": "https://loremflickr.com/1600/1100/hall?lock=4429"
+          },
+          {
+            "label": "Metodo",
+            "title": "Metodo",
+            "text": "Se estructura la pagina para responder dudas de vecinos, comercios locales, familias y personas visitantes con el minimo ruido.",
+            "bullets": [
+              "Secciones",
+              "Prueba",
+              "CTA"
+            ],
+            "image": "https://loremflickr.com/1600/1100/community?lock=36045"
+          },
+          {
+            "label": "Resultado",
+            "title": "Resultado",
+            "text": "El objetivo final es hacer mas facil consultar tramites y elevar la percepcion de marca.",
+            "bullets": [
+              "Conversion",
+              "Confianza",
+              "Seguimiento"
+            ],
+            "image": "https://loremflickr.com/1600/1100/detail?lock=26733"
+          }
+        ]
+      }
+    },
+    {
+      "id": "928ebd6a",
+      "type": "timeline",
+      "props": {
+        "badge": "Recorrido",
+        "title": "De la primera impresion al siguiente paso",
+        "subtitle": "Una secuencia clara reduce dudas y mejora la comprension.",
+        "items": [
+          {
+            "year": "Paso 1",
+            "title": "Portada",
+            "desc": "Abrir con accesos rapidos y un resumen de servicios municipales.",
+            "metric": "47+"
+          },
+          {
+            "year": "Paso 2",
+            "title": "Tramites",
+            "desc": "Organizar la sede y los tramites de forma clara para distintos perfiles de usuario.",
+            "metric": "27"
+          },
+          {
+            "year": "Paso 3",
+            "title": "Actualidad",
+            "desc": "Mantener agenda, avisos y noticias visibles sin saturar la experiencia.",
+            "metric": "33h"
+          }
+        ]
+      }
+    },
+    {
+      "id": "d61c1410",
+      "type": "blog_grid",
+      "props": {
+        "badge": "Actualidad",
+        "title": "Piezas editoriales y recursos",
+        "subtitle": "Una cuadricula limpia para noticias, guias y articulos de referencia.",
+        "posts": [
+          {
+            "category": "Guia",
+            "title": "Como Ayuntamiento de Ribera Nueva ordena mejor participacion, ayudas",
+            "excerpt": "Una pieza corta sobre pagina institucional con foco en atencion ciudadana y por que una mejor jerarquia ayuda a vecinos a decidir con menos dudas.",
+            "author": "Equipo editorial",
+            "date": "Enero 2026",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/spain?lock=47927"
+          },
+          {
+            "category": "Tendencias",
+            "title": "Como Ayuntamiento de Ribera Nueva ordena mejor participacion, ayudas",
+            "excerpt": "Una pieza corta sobre pagina institucional con foco en atencion ciudadana y por que una mejor jerarquia ayuda a vecinos a decidir con menos dudas.",
+            "author": "Equipo editorial",
+            "date": "Febrero 2026",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/editorial?lock=72804"
+          },
+          {
+            "category": "Caso real",
+            "title": "Como Ayuntamiento de Ribera Nueva ordena mejor participacion, ayudas",
+            "excerpt": "Una pieza corta sobre pagina institucional con foco en atencion ciudadana y por que una mejor jerarquia ayuda a vecinos a decidir con menos dudas.",
+            "author": "Equipo editorial",
+            "date": "Marzo 2026",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/community?lock=58859"
+          }
+        ]
+      }
+    },
+    {
+      "id": "4bfff3a8",
+      "type": "map_embed",
+      "props": {
+        "badge": "Ubicacion",
+        "title": "Direccion, horario y contacto en un bloque",
+        "subtitle": "Especialmente util cuando la proximidad importa para convertir.",
+        "embed_url": "https://www.google.com/maps?q=Calle+del+Ebro%2C+39%2C+Zaragoza%2C+Spain&output=embed",
+        "address": "Calle del Ebro, 39, Zaragoza",
+        "phone": "+34 6025 487 001",
+        "email": "hola@ayuntamientoderibe.es",
+        "hours": "Lun-Vie 09:00-18:00"
+      }
+    },
+    {
+      "id": "369b1d45",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Ayuntamiento de Ribera Nueva",
+        "description": "Ayuntamiento de Ribera Nueva concentra tramites, agenda, avisos y accesos utiles para que vecinos, familias y comercios encuentren lo importante sin friccion.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@ayuntamientoderibe.es",
+          "+34 6025 487 001",
+          "Calle del Ebro, 39, Zaragoza"
+        ],
+        "copyright": "© 2026 Ayuntamiento de Ribera Nueva. Todos los derechos reservados."
+      }
+    }
+  ]
+}

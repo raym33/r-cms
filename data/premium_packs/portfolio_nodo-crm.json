@@ -1,0 +1,367 @@
+{
+  "version": 2,
+  "template_id": "saas",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Nodo CRM",
+    "page_title": "Nodo CRM | Pipeline comercial y forecast sin hojas sueltas para equipos que necesitan operar con claridad",
+    "description": "Nodo CRM organiza su propuesta alrededor de pipeline comercial y forecast sin hojas sueltas y usa esta landing para conectar con equipos de operaciones, explicar mejor el valor y llevar la visita hacia reservar demo.",
+    "style_pack": "typography_principles_obys"
+  },
+  "style": {
+    "accent": "#f2eee8",
+    "accent_dark": "#9d978f",
+    "accent_rgb": "242,238,232",
+    "bg_from": "#050505",
+    "bg_to": "#111111",
+    "card_bg": "rgba(17,17,17,0.72)",
+    "card_border": "rgba(255,255,255,0.12)",
+    "gradient_accent": "linear-gradient(135deg, #f2eee8 0%, #9d978f 100%)",
+    "theme_mode": "dark",
+    "text_primary": "#f7f4ef",
+    "text_secondary": "#d8d2ca",
+    "text_muted": "#8f8a84",
+    "nav_bg": "rgba(5,5,5,0.36)",
+    "hero_style": "minimal",
+    "card_style": "flat",
+    "nav_style": "transparent",
+    "animation_preset": "slide",
+    "font_pairing": "tech",
+    "font_family": "'Space Grotesk'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "9rem",
+    "card_radius": "0.375rem",
+    "shadow_intensity": "0.12",
+    "animation_style": "fade-up",
+    "font_heading": "'Space Grotesk'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "circuit_grid",
+      "desc": "Animated circuit board / data flow grid",
+      "colors": [
+        "#8b5cf6",
+        "#a78bfa",
+        "#c4b5fd"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "3d53ce43",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Nodo CRM",
+        "announcement": "Madrid · pipeline comercial y forecast sin hojas sueltas",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_particles"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Pilares",
+            "href": "#numbered_features"
+          },
+          {
+            "text": "Testimonios",
+            "href": "#testimonial_carousel"
+          },
+          {
+            "text": "Planes",
+            "href": "#pricing_comparison"
+          }
+        ],
+        "cta_text": "Reservar demo",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "af3d1e57",
+      "type": "hero_particles",
+      "props": {
+        "badge": "Apps SaaS B2B",
+        "title": "Pipeline comercial y forecast sin hojas sueltas para equipos que necesitan operar con claridad",
+        "subtitle": "Nodo CRM organiza su propuesta alrededor de pipeline comercial y forecast sin hojas sueltas y usa esta landing para conectar con equipos de operaciones, explicar mejor el valor y llevar la visita hacia reservar demo.",
+        "background_image": "https://loremflickr.com/1800/1200/dark?lock=20855",
+        "cta_primary": "Reservar demo",
+        "cta_secondary": "Explorar",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "14b044ab",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "26%",
+            "label": "menos tiempo operativo"
+          },
+          {
+            "value": "3x",
+            "label": "mas visibilidad"
+          },
+          {
+            "value": "17d",
+            "label": "puesta en marcha"
+          },
+          {
+            "value": "96%",
+            "label": "adopcion interna"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ed7037f4",
+      "type": "numbered_features",
+      "props": {
+        "badge": "Pilares",
+        "title": "Tres razones para quedarse",
+        "subtitle": "Formato editorial para explicar diferenciales con mas presencia.",
+        "items": [
+          {
+            "number": "01",
+            "title": "Mensaje principal mas claro",
+            "desc": "La propuesta de Nodo CRM se entiende antes y con menos friccion."
+          },
+          {
+            "number": "02",
+            "title": "Prueba mejor ordenada",
+            "desc": "Casos, resultados y testimonios sostienen mejor la decision."
+          },
+          {
+            "number": "03",
+            "title": "CTA visible en el momento correcto",
+            "desc": "La accion de reservar demo llega cuando ya existe contexto y confianza."
+          }
+        ]
+      }
+    },
+    {
+      "id": "05ca97fc",
+      "type": "testimonial_carousel",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Opiniones con mas contexto",
+        "items": [
+          {
+            "quote": "Nodo CRM transmite mejor software para equipos de ventas con visibilidad diaria y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Paula Crespo",
+            "role": "directora general",
+            "image": "https://loremflickr.com/700/700/dashboard?lock=60540",
+            "stars": 5
+          },
+          {
+            "quote": "Nodo CRM transmite mejor software para equipos de ventas con visibilidad diaria y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "David Pardo",
+            "role": "cliente recurrente",
+            "image": "https://loremflickr.com/700/700/office?lock=21558",
+            "stars": 5
+          },
+          {
+            "quote": "Nodo CRM transmite mejor software para equipos de ventas con visibilidad diaria y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Carlos Vela",
+            "role": "responsable de marketing",
+            "image": "https://loremflickr.com/700/700/portrait?lock=64431",
+            "stars": 5
+          }
+        ],
+        "autoplay_ms": 5100
+      }
+    },
+    {
+      "id": "b348e30b",
+      "type": "pricing_comparison",
+      "props": {
+        "badge": "Comparativa",
+        "title": "La diferencia entre opciones, de un vistazo",
+        "subtitle": "Una tabla reduce dudas cuando la venta exige comparacion.",
+        "plans": [
+          {
+            "name": "Lite",
+            "price": "€79",
+            "cta": "Reservar demo",
+            "highlighted": false
+          },
+          {
+            "name": "Pro",
+            "price": "€149",
+            "cta": "Reservar demo",
+            "highlighted": true
+          },
+          {
+            "name": "Enterprise",
+            "price": "Custom",
+            "cta": "Consultar",
+            "highlighted": false
+          }
+        ],
+        "rows": [
+          {
+            "feature": "Usuarios",
+            "values": [
+              "3",
+              "10",
+              "Ilimitado"
+            ]
+          },
+          {
+            "feature": "Automatizaciones",
+            "values": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "feature": "Onboarding",
+            "values": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "feature": "Soporte prioritario",
+            "values": [
+              false,
+              false,
+              true
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "3d8f9a43",
+      "type": "blog_grid",
+      "props": {
+        "badge": "Contenido",
+        "title": "Piezas editoriales y recursos",
+        "subtitle": "Una cuadricula limpia para noticias, guias y articulos de referencia.",
+        "posts": [
+          {
+            "category": "Guia",
+            "title": "Como Nodo CRM ordena mejor pipeline comercial",
+            "excerpt": "Una pieza corta sobre software para equipos de ventas con visibilidad diaria y por que una mejor jerarquia ayuda a equipos de operaciones a decidir con menos dudas.",
+            "author": "Equipo editorial",
+            "date": "Enero 2026",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/office?lock=13101"
+          },
+          {
+            "category": "Tendencias",
+            "title": "Como Nodo CRM ordena mejor pipeline comercial",
+            "excerpt": "Una pieza corta sobre software para equipos de ventas con visibilidad diaria y por que una mejor jerarquia ayuda a equipos de operaciones a decidir con menos dudas.",
+            "author": "Equipo editorial",
+            "date": "Febrero 2026",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/dashboard?lock=20495"
+          },
+          {
+            "category": "Caso real",
+            "title": "Como Nodo CRM ordena mejor pipeline comercial",
+            "excerpt": "Una pieza corta sobre software para equipos de ventas con visibilidad diaria y por que una mejor jerarquia ayuda a equipos de operaciones a decidir con menos dudas.",
+            "author": "Equipo editorial",
+            "date": "Marzo 2026",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/software?lock=76064"
+          }
+        ]
+      }
+    },
+    {
+      "id": "4fa1e567",
+      "type": "faq",
+      "props": {
+        "badge": "FAQ",
+        "title": "Preguntas frecuentes",
+        "items": [
+          {
+            "q": "Que hace distinta esta propuesta?",
+            "a": "Nodo CRM presenta software para equipos de ventas con visibilidad diaria con una mezcla equilibrada de claridad, prueba y accion."
+          },
+          {
+            "q": "Se puede adaptar la web a otros servicios?",
+            "a": "Si. La estructura esta pensada para crecer y para editar bloques, textos e imagenes con rapidez."
+          },
+          {
+            "q": "Cuanto tarda la respuesta inicial?",
+            "a": "Normalmente menos de 24 horas desde que el visitante decide reservar demo."
+          }
+        ]
+      }
+    },
+    {
+      "id": "1efaa702",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para reservar demo?",
+        "subtitle": "Una peticion clara basta para que Nodo CRM responda con el siguiente paso.",
+        "button_text": "Reservar demo",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "310a0f4a",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Nodo CRM",
+        "description": "Nodo CRM organiza su propuesta alrededor de pipeline comercial y forecast sin hojas sueltas y usa esta landing para conectar con equipos de operaciones, explicar mejor el valor y llevar la visita hacia reservar demo.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@nodocrm.es",
+          "+34 6068 514 142",
+          "Calle Almadena, 47, Madrid"
+        ],
+        "copyright": "© 2026 Nodo CRM. Todos los derechos reservados."
+      }
+    }
+  ]
+}

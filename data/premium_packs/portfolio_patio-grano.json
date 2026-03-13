@@ -1,0 +1,294 @@
+{
+  "version": 2,
+  "template_id": "restaurant",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Patio Grano",
+    "page_title": "Patio Grano | Cafe de especialidad y brunch de temporada para convertir visitas en reservas directas",
+    "description": "Patio Grano organiza su propuesta alrededor de cafe de especialidad y brunch de temporada y usa esta landing para conectar con parejas, explicar mejor el valor y llevar la visita hacia reservar mesa.",
+    "style_pack": "waka_waka_studio"
+  },
+  "style": {
+    "accent": "#8d6742",
+    "accent_dark": "#5b4027",
+    "accent_rgb": "141,103,66",
+    "bg_from": "#f4efe6",
+    "bg_to": "#fbf8f2",
+    "card_bg": "rgba(251,248,242,0.9)",
+    "card_border": "rgba(36,28,20,0.12)",
+    "gradient_accent": "linear-gradient(135deg, #8d6742 0%, #5b4027 100%)",
+    "theme_mode": "light",
+    "text_primary": "#181512",
+    "text_secondary": "#5f5547",
+    "text_muted": "#8a7e70",
+    "nav_bg": "rgba(244,239,230,0.58)",
+    "hero_style": "minimal",
+    "card_style": "bordered",
+    "nav_style": "transparent",
+    "animation_preset": "fade",
+    "font_pairing": "corporate",
+    "font_family": "'Source Sans 3'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "8.5rem",
+    "card_radius": "0.5rem",
+    "shadow_intensity": "0.08",
+    "animation_style": "fade",
+    "font_heading": "'Montserrat'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "particles_food",
+      "desc": "Gentle floating food icons (fork, knife, plate outlines)",
+      "colors": [
+        "#f59e0b",
+        "#fbbf24",
+        "#fef3c7"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "3a35789a",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Patio Grano",
+        "announcement": "Sevilla · cafe de especialidad y brunch de temporada",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_split"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Galeria",
+            "href": "#gallery"
+          },
+          {
+            "text": "Marca",
+            "href": "#parallax_section"
+          },
+          {
+            "text": "Testimonios",
+            "href": "#testimonial_carousel"
+          }
+        ],
+        "cta_text": "Reservar mesa",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "32243916",
+      "type": "hero_split",
+      "props": {
+        "badge": "Restaurantes y Cafeterias",
+        "title": "Cafe de especialidad y brunch de temporada para convertir visitas en reservas directas",
+        "subtitle": "Patio Grano organiza su propuesta alrededor de cafe de especialidad y brunch de temporada y usa esta landing para conectar con parejas, explicar mejor el valor y llevar la visita hacia reservar mesa.",
+        "image_url": "https://loremflickr.com/1600/1100/restaurant?lock=78482",
+        "image_seed": "landing-builder",
+        "bullets": [
+          "Carta de temporada",
+          "Reservas online",
+          "Eventos privados"
+        ],
+        "cta_primary": "Reservar mesa",
+        "cta_secondary": "Ver servicios",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "59badb08",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "4.9/5",
+            "label": "valoracion media"
+          },
+          {
+            "value": "477+",
+            "label": "resenas"
+          },
+          {
+            "value": "35%",
+            "label": "reserva directa"
+          },
+          {
+            "value": "15h",
+            "label": "respuesta media"
+          }
+        ]
+      }
+    },
+    {
+      "id": "eff8853f",
+      "type": "gallery",
+      "props": {
+        "badge": "Galeria",
+        "title": "Direccion visual",
+        "images": [
+          {
+            "url": "https://loremflickr.com/1600/1100/interior?lock=38884",
+            "alt": "Patio Grano imagen 1"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/food?lock=24827",
+            "alt": "Patio Grano imagen 2"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/restaurant?lock=74682",
+            "alt": "Patio Grano imagen 3"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/restaurant?lock=206",
+            "alt": "Patio Grano imagen 4"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/detail?lock=85676",
+            "alt": "Patio Grano imagen 5"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/chef?lock=47462",
+            "alt": "Patio Grano imagen 6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "c4ec74bf",
+      "type": "parallax_section",
+      "props": {
+        "badge": "Mensaje de marca",
+        "title": "Patio Grano: una presencia mas clara, mas coherente y mas memorable",
+        "subtitle": "Un bloque de impacto para sostener la atencion entre secciones clave.",
+        "background_image": "",
+        "button_text": "Reservar mesa",
+        "button_href": "#lead-form",
+        "height": 520
+      }
+    },
+    {
+      "id": "f6fb0379",
+      "type": "testimonial_carousel",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Opiniones con mas contexto",
+        "items": [
+          {
+            "quote": "Patio Grano transmite mejor cafeteria de barrio con producto cuidado y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Carlos Vela",
+            "role": "directora general",
+            "image": "https://loremflickr.com/700/700/table?lock=10770",
+            "stars": 5
+          },
+          {
+            "quote": "Patio Grano transmite mejor cafeteria de barrio con producto cuidado y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Lucia Sanz",
+            "role": "cliente recurrente",
+            "image": "https://loremflickr.com/700/700/food?lock=71776",
+            "stars": 5
+          },
+          {
+            "quote": "Patio Grano transmite mejor cafeteria de barrio con producto cuidado y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Marta Rubio",
+            "role": "responsable de marketing",
+            "image": "https://loremflickr.com/700/700/interior?lock=53181",
+            "stars": 5
+          }
+        ],
+        "autoplay_ms": 5100
+      }
+    },
+    {
+      "id": "0289de7f",
+      "type": "booking_widget",
+      "props": {
+        "badge": "Reservas",
+        "title": "Haz la reserva desde la propia landing",
+        "subtitle": "Una forma directa de capturar intencion sin depender de otra herramienta.",
+        "services": [
+          "Mesa para dos",
+          "Cena de grupo",
+          "Evento privado"
+        ],
+        "times": [
+          "09:30",
+          "11:00",
+          "13:30",
+          "18:30"
+        ],
+        "button_text": "Reservar mesa",
+        "helper_text": "Elige servicio, fecha y tramo horario preferido."
+      }
+    },
+    {
+      "id": "e032fa89",
+      "type": "map_embed",
+      "props": {
+        "badge": "Ubicacion",
+        "title": "Direccion, horario y contacto en un bloque",
+        "subtitle": "Especialmente util cuando la proximidad importa para convertir.",
+        "embed_url": "https://www.google.com/maps?q=Avenida+del+Arenal%2C+44%2C+Sevilla%2C+Spain&output=embed",
+        "address": "Avenida del Arenal, 44, Sevilla",
+        "phone": "+34 6926 653 127",
+        "email": "hola@patiograno.es",
+        "hours": "Lun-Vie 09:00-18:00"
+      }
+    },
+    {
+      "id": "0638c564",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Patio Grano",
+        "description": "Patio Grano organiza su propuesta alrededor de cafe de especialidad y brunch de temporada y usa esta landing para conectar con parejas, explicar mejor el valor y llevar la visita hacia reservar mesa.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@patiograno.es",
+          "+34 6926 653 127",
+          "Avenida del Arenal, 44, Sevilla"
+        ],
+        "copyright": "© 2026 Patio Grano. Todos los derechos reservados."
+      }
+    }
+  ]
+}

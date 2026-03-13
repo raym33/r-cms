@@ -1,0 +1,344 @@
+{
+  "version": 2,
+  "template_id": "legal",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Costa Defensa",
+    "page_title": "Costa Defensa | Inmobiliario, herencias y compraventas con claridad, rigor y respuesta rapida",
+    "description": "Costa Defensa organiza su propuesta alrededor de inmobiliario, herencias y compraventas y usa esta landing para conectar con familias, explicar mejor el valor y llevar la visita hacia solicitar consulta."
+  },
+  "style": {
+    "accent": "#1e3a5f",
+    "accent_dark": "#172554",
+    "accent_rgb": "30,58,95",
+    "bg_from": "#06111f",
+    "bg_to": "#0f172a",
+    "card_bg": "rgba(6,17,31,0.78)",
+    "card_border": "rgba(30,58,95,0.28)",
+    "gradient_accent": "linear-gradient(135deg, #1e3a5f 0%, #172554 100%)",
+    "theme_mode": "dark",
+    "text_primary": "#ffffff",
+    "text_secondary": "#cbd5e1",
+    "text_muted": "#94a3b8",
+    "nav_bg": "rgba(6,17,31,0.78)",
+    "hero_style": "minimal",
+    "card_style": "elevated",
+    "nav_style": "solid",
+    "animation_preset": "fade",
+    "font_pairing": "elegant",
+    "font_family": "'Inter'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "7rem",
+    "card_radius": "1rem",
+    "shadow_intensity": "0.3",
+    "animation_style": "fade-up",
+    "font_heading": "'Playfair Display'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "document_columns",
+      "desc": "Document stacks, balance lines, and subtle columns.",
+      "colors": [
+        "#1e3a5f",
+        "#60a5fa",
+        "#dbeafe"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "5f82543c",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Costa Defensa",
+        "announcement": "Malaga · inmobiliario, herencias y compraventas",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_fullscreen"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Servicios",
+            "href": "#services_cards"
+          },
+          {
+            "text": "Detalle",
+            "href": "#tabs_content"
+          },
+          {
+            "text": "Testimonios",
+            "href": "#testimonial_cards"
+          }
+        ],
+        "cta_text": "Solicitar consulta",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "da230eaa",
+      "type": "hero_fullscreen",
+      "props": {
+        "badge": "Despachos y Asesorias",
+        "title": "Inmobiliario, herencias y compraventas con claridad, rigor y respuesta rapida",
+        "subtitle": "Costa Defensa organiza su propuesta alrededor de inmobiliario, herencias y compraventas y usa esta landing para conectar con familias, explicar mejor el valor y llevar la visita hacia solicitar consulta.",
+        "background_image": "https://loremflickr.com/1800/1200/documents?lock=19167",
+        "cta_primary": "Solicitar consulta",
+        "cta_secondary": "Ver detalle",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "9e86ed80",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "300+",
+            "label": "clientes y proyectos"
+          },
+          {
+            "value": "90%",
+            "label": "satisfaccion"
+          },
+          {
+            "value": "36h",
+            "label": "respuesta"
+          },
+          {
+            "value": "5",
+            "label": "anos de recorrido"
+          }
+        ]
+      }
+    },
+    {
+      "id": "95349fc6",
+      "type": "services_cards",
+      "props": {
+        "badge": "Servicios",
+        "title": "Servicios principales",
+        "subtitle": "Una vista clara de como Costa Defensa organiza la oferta.",
+        "services": [
+          {
+            "icon": "target",
+            "title": "Consulta inicial",
+            "desc": "Consulta inicial aterrizado para familias con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en inmobiliario, herencias",
+              "Entrega alineada con bufete para particulares",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Solicitar consulta",
+            "cta_href": "#lead-form"
+          },
+          {
+            "icon": "zap",
+            "title": "Estrategia legal",
+            "desc": "Estrategia legal aterrizado para familias con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en inmobiliario, herencias",
+              "Entrega alineada con bufete para particulares",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Solicitar consulta",
+            "cta_href": "#lead-form"
+          },
+          {
+            "icon": "shield",
+            "title": "Seguimiento de expedientes",
+            "desc": "Seguimiento de expedientes aterrizado para familias con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en inmobiliario, herencias",
+              "Entrega alineada con bufete para particulares",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Solicitar consulta",
+            "cta_href": "#lead-form"
+          }
+        ]
+      }
+    },
+    {
+      "id": "9fca7972",
+      "type": "tabs_content",
+      "props": {
+        "badge": "Detalle",
+        "title": "Como se ordena la informacion importante",
+        "subtitle": "La propuesta se estructura por capas para que el visitante no se pierda.",
+        "tabs": [
+          {
+            "label": "Contexto",
+            "title": "Contexto",
+            "text": "Costa Defensa necesita explicar bufete para particulares y operaciones patrimoniales sin perder ritmo ni jerarquia.",
+            "bullets": [
+              "Oferta",
+              "Publico",
+              "Promesa"
+            ],
+            "image": "https://loremflickr.com/1600/1100/office?lock=12086"
+          },
+          {
+            "label": "Metodo",
+            "title": "Metodo",
+            "text": "Se estructura la pagina para responder dudas de familias, empresas y personas que necesitan orientacion rapida con el minimo ruido.",
+            "bullets": [
+              "Secciones",
+              "Prueba",
+              "CTA"
+            ],
+            "image": "https://loremflickr.com/1600/1100/team?lock=34049"
+          },
+          {
+            "label": "Resultado",
+            "title": "Resultado",
+            "text": "El objetivo final es hacer mas facil solicitar consulta y elevar la percepcion de marca.",
+            "bullets": [
+              "Conversion",
+              "Confianza",
+              "Seguimiento"
+            ],
+            "image": "https://loremflickr.com/1600/1100/meeting?lock=48635"
+          }
+        ]
+      }
+    },
+    {
+      "id": "a82ef6dd",
+      "type": "testimonial_cards",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Voces que refuerzan la confianza",
+        "subtitle": "Un bloque simple para hacer visible la prueba social.",
+        "items": [
+          {
+            "quote": "Costa Defensa transmite mejor bufete para particulares y operaciones patrimoniales y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Adrian Luque",
+            "role": "directora general",
+            "image": "https://loremflickr.com/700/700/portrait?lock=76656",
+            "stars": 5
+          },
+          {
+            "quote": "Costa Defensa transmite mejor bufete para particulares y operaciones patrimoniales y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Carlos Vela",
+            "role": "cliente recurrente",
+            "image": "https://loremflickr.com/700/700/professional?lock=42896",
+            "stars": 5
+          },
+          {
+            "quote": "Costa Defensa transmite mejor bufete para particulares y operaciones patrimoniales y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Irene Soler",
+            "role": "responsable de marketing",
+            "image": "https://loremflickr.com/700/700/meeting?lock=69464",
+            "stars": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "a59943b6",
+      "type": "faq",
+      "props": {
+        "badge": "FAQ",
+        "title": "Preguntas frecuentes",
+        "items": [
+          {
+            "q": "Que hace distinta esta propuesta?",
+            "a": "Costa Defensa presenta bufete para particulares y operaciones patrimoniales con una mezcla equilibrada de claridad, prueba y accion."
+          },
+          {
+            "q": "Se puede adaptar la web a otros servicios?",
+            "a": "Si. La estructura esta pensada para crecer y para editar bloques, textos e imagenes con rapidez."
+          },
+          {
+            "q": "Cuanto tarda la respuesta inicial?",
+            "a": "Normalmente menos de 24 horas desde que el visitante decide solicitar consulta."
+          }
+        ]
+      }
+    },
+    {
+      "id": "02d0227c",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para solicitar consulta?",
+        "subtitle": "Una peticion clara basta para que Costa Defensa responda con el siguiente paso.",
+        "button_text": "Solicitar consulta",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "fb198ec2",
+      "type": "map_embed",
+      "props": {
+        "badge": "Ubicacion",
+        "title": "Direccion, horario y contacto en un bloque",
+        "subtitle": "Especialmente util cuando la proximidad importa para convertir.",
+        "embed_url": "https://www.google.com/maps?q=Calle+del+Puerto%2C+44%2C+Malaga%2C+Spain&output=embed",
+        "address": "Calle del Puerto, 44, Malaga",
+        "phone": "+34 6842 117 063",
+        "email": "hola@costadefensa.es",
+        "hours": "Lun-Vie 09:00-18:00"
+      }
+    },
+    {
+      "id": "90c56438",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Costa Defensa",
+        "description": "Costa Defensa organiza su propuesta alrededor de inmobiliario, herencias y compraventas y usa esta landing para conectar con familias, explicar mejor el valor y llevar la visita hacia solicitar consulta.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@costadefensa.es",
+          "+34 6842 117 063",
+          "Calle del Puerto, 44, Malaga"
+        ],
+        "copyright": "© 2026 Costa Defensa. Todos los derechos reservados."
+      }
+    }
+  ]
+}

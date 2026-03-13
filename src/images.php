@@ -247,6 +247,32 @@ function ccms_optimize_public_images_html(string $html): string
         if (!$img instanceof DOMElement) {
             continue;
         }
+        $alt = trim((string) $img->getAttribute('alt'));
+        if ($alt === '') {
+            $fallbackAlt = '';
+            $figcaption = null;
+            $parent = $img->parentNode;
+            if ($parent instanceof DOMElement && strtolower($parent->nodeName) === 'figure') {
+                foreach ($parent->childNodes as $child) {
+                    if ($child instanceof DOMElement && strtolower($child->nodeName) === 'figcaption') {
+                        $figcaption = trim($child->textContent);
+                        break;
+                    }
+                }
+            }
+            if (is_string($figcaption) && $figcaption !== '') {
+                $fallbackAlt = $figcaption;
+            } else {
+                $page = $GLOBALS['ccms_current_public_page'] ?? null;
+                if (is_array($page)) {
+                    $fallbackAlt = trim((string) ($page['title'] ?? ''));
+                }
+            }
+            if ($fallbackAlt === '') {
+                $fallbackAlt = 'Imagen';
+            }
+            $img->setAttribute('alt', $fallbackAlt);
+        }
         if (!$img->hasAttribute('loading')) {
             $img->setAttribute('loading', 'lazy');
         }

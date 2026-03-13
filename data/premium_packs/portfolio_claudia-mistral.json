@@ -1,0 +1,290 @@
+{
+  "version": 2,
+  "template_id": "creative",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Claudia Mistral",
+    "page_title": "Claudia Mistral | Direccion de arte para marcas editoriales para equipos que valoran criterio y ejecucion",
+    "description": "Claudia Mistral usa esta web como CV vivo: experiencia, proyectos seleccionados y una forma clara de abrir conversaciones con marcas.",
+    "style_pack": "waka_waka_studio"
+  },
+  "style": {
+    "accent": "#8d6742",
+    "accent_dark": "#5b4027",
+    "accent_rgb": "141,103,66",
+    "bg_from": "#f4efe6",
+    "bg_to": "#fbf8f2",
+    "card_bg": "rgba(251,248,242,0.9)",
+    "card_border": "rgba(36,28,20,0.12)",
+    "gradient_accent": "linear-gradient(135deg, #8d6742 0%, #5b4027 100%)",
+    "theme_mode": "light",
+    "text_primary": "#181512",
+    "text_secondary": "#5f5547",
+    "text_muted": "#8a7e70",
+    "nav_bg": "rgba(244,239,230,0.58)",
+    "hero_style": "minimal",
+    "card_style": "bordered",
+    "nav_style": "transparent",
+    "animation_preset": "fade",
+    "font_pairing": "corporate",
+    "font_family": "'Source Sans 3'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "8.5rem",
+    "card_radius": "0.5rem",
+    "shadow_intensity": "0.08",
+    "animation_style": "fade",
+    "font_heading": "'Montserrat'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "studio_shapes",
+      "desc": "Angular layers, gradients, and moving studio shapes.",
+      "colors": [
+        "#f43f5e",
+        "#fb7185",
+        "#ffe4e6"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "1c6d81dd",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Claudia Mistral",
+        "announcement": "Madrid · direccion de arte para marcas editoriales",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_split"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Portfolio",
+            "href": "#portfolio_grid"
+          },
+          {
+            "text": "Galeria",
+            "href": "#gallery"
+          },
+          {
+            "text": "Testimonios",
+            "href": "#testimonial_cards"
+          }
+        ],
+        "cta_text": "Ver disponibilidad",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "421ab4e3",
+      "type": "hero_split",
+      "props": {
+        "badge": "CV Creativo",
+        "title": "Direccion de arte para marcas editoriales para equipos que valoran criterio y ejecucion",
+        "subtitle": "Claudia Mistral usa esta web como CV vivo: experiencia, proyectos seleccionados y una forma clara de abrir conversaciones con marcas.",
+        "image_url": "https://loremflickr.com/1600/1100/creative?lock=35906",
+        "image_seed": "landing-builder",
+        "bullets": [
+          "Direccion de arte",
+          "Brand systems",
+          "Web visual y motion"
+        ],
+        "cta_primary": "Ver disponibilidad",
+        "cta_secondary": "Ver experiencia",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "4340e13c",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "12",
+            "label": "anos de experiencia"
+          },
+          {
+            "value": "18",
+            "label": "proyectos clave"
+          },
+          {
+            "value": "3",
+            "label": "sectores trabajados"
+          },
+          {
+            "value": "96%",
+            "label": "clientes recurrentes"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ea112c3a",
+      "type": "portfolio_grid",
+      "props": {
+        "badge": "Portfolio",
+        "title": "Trabajo seleccionado",
+        "subtitle": "Piezas visuales, casos y referencias con mejor contexto.",
+        "projects": [
+          {
+            "category": "Proyecto clave",
+            "title": "Claudia Mistral · Serie principal",
+            "metric": "2.1x mas consultas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/portrait?lock=71010"
+          },
+          {
+            "category": "Caso destacado",
+            "title": "Claudia Mistral · Direccion visual",
+            "metric": "+32% captacion",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/studio?lock=30515"
+          },
+          {
+            "category": "Trabajo reciente",
+            "title": "Claudia Mistral · Entrega reciente",
+            "metric": "4.9/5 resenas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/notebook?lock=1293"
+          }
+        ]
+      }
+    },
+    {
+      "id": "58e5091d",
+      "type": "gallery",
+      "props": {
+        "badge": "Galeria",
+        "title": "Direccion visual",
+        "images": [
+          {
+            "url": "https://loremflickr.com/1600/1100/detail?lock=22938",
+            "alt": "Claudia Mistral imagen 1"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/creative?lock=106",
+            "alt": "Claudia Mistral imagen 2"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/designer?lock=43360",
+            "alt": "Claudia Mistral imagen 3"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/notebook?lock=66742",
+            "alt": "Claudia Mistral imagen 4"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/studio?lock=11161",
+            "alt": "Claudia Mistral imagen 5"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/designer?lock=33290",
+            "alt": "Claudia Mistral imagen 6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "f9d2be61",
+      "type": "testimonial_cards",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Voces que refuerzan la confianza",
+        "subtitle": "Un bloque simple para hacer visible la prueba social.",
+        "items": [
+          {
+            "quote": "Claudia Mistral transmite mejor portfolio personal con casos, proceso y disponibilidad y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Rocio Vera",
+            "role": "product lead",
+            "image": "https://loremflickr.com/700/700/notebook?lock=49187",
+            "stars": 5
+          },
+          {
+            "quote": "Claudia Mistral transmite mejor portfolio personal con casos, proceso y disponibilidad y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Paula Crespo",
+            "role": "directora creativa",
+            "image": "https://loremflickr.com/700/700/creative?lock=81860",
+            "stars": 5
+          },
+          {
+            "quote": "Claudia Mistral transmite mejor portfolio personal con casos, proceso y disponibilidad y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Paula Crespo",
+            "role": "founder",
+            "image": "https://loremflickr.com/700/700/portrait?lock=56222",
+            "stars": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "d36a28ed",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para ver disponibilidad?",
+        "subtitle": "Una peticion clara basta para que Claudia Mistral responda con el siguiente paso.",
+        "button_text": "Ver disponibilidad",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "a934fe1a",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Claudia Mistral",
+        "description": "Claudia Mistral usa esta web como CV vivo: experiencia, proyectos seleccionados y una forma clara de abrir conversaciones con marcas.",
+        "columns": [
+          {
+            "title": "Perfil",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@claudiamistral.es",
+          "+34 6961 387 458",
+          "Calle Almadena, 27, Madrid"
+        ],
+        "copyright": "© 2026 Claudia Mistral. Todos los derechos reservados."
+      }
+    }
+  ]
+}

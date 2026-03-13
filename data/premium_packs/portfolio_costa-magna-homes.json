@@ -1,0 +1,324 @@
+{
+  "version": 2,
+  "template_id": "real_estate",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Costa Magna Homes",
+    "page_title": "Costa Magna Homes | Vivienda premium y segundas residencias con una presencia que eleva la percepcion",
+    "description": "Costa Magna Homes organiza su propuesta alrededor de vivienda premium y segundas residencias y usa esta landing para conectar con compradores, explicar mejor el valor y llevar la visita hacia solicitar visita.",
+    "style_pack": "impeccable_hero"
+  },
+  "style": {
+    "accent": "#c8ab7b",
+    "accent_dark": "#8a6a45",
+    "accent_rgb": "200,171,123",
+    "bg_from": "#050505",
+    "bg_to": "#121212",
+    "card_bg": "rgba(18,18,18,0.78)",
+    "card_border": "rgba(255,255,255,0.08)",
+    "gradient_accent": "linear-gradient(135deg, #c8ab7b 0%, #8a6a45 100%)",
+    "theme_mode": "dark",
+    "text_primary": "#f6f1ea",
+    "text_secondary": "#d0c6b8",
+    "text_muted": "#8d8478",
+    "nav_bg": "rgba(10,10,10,0.48)",
+    "hero_style": "minimal",
+    "card_style": "elevated",
+    "nav_style": "transparent",
+    "animation_preset": "fade",
+    "font_pairing": "elegant",
+    "font_family": "'Source Sans 3'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "8rem",
+    "card_radius": "1.5rem",
+    "shadow_intensity": "0.24",
+    "animation_style": "fade-up",
+    "font_heading": "'Playfair Display'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "city_wireframe",
+      "desc": "Low-poly wireframe cityscape / buildings",
+      "colors": [
+        "#10b981",
+        "#34d399",
+        "#d1fae5"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "17f0972c",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Costa Magna Homes",
+        "announcement": "Malaga · vivienda premium y segundas residencias",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_split"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Portfolio",
+            "href": "#portfolio_grid"
+          },
+          {
+            "text": "Espacio",
+            "href": "#split_image_left"
+          },
+          {
+            "text": "Casos",
+            "href": "#case_studies"
+          }
+        ],
+        "cta_text": "Solicitar visita",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "fbff1c11",
+      "type": "hero_split",
+      "props": {
+        "badge": "Inmobiliarias",
+        "title": "Vivienda premium y segundas residencias con una presencia que eleva la percepcion",
+        "subtitle": "Costa Magna Homes organiza su propuesta alrededor de vivienda premium y segundas residencias y usa esta landing para conectar con compradores, explicar mejor el valor y llevar la visita hacia solicitar visita.",
+        "image_url": "https://loremflickr.com/1600/1100/apartment?lock=38162",
+        "image_seed": "landing-builder",
+        "bullets": [
+          "Venta residencial",
+          "Captacion de inmuebles",
+          "Gestion de inversiones"
+        ],
+        "cta_primary": "Solicitar visita",
+        "cta_secondary": "Ver servicios",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "10fce02a",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "212+",
+            "label": "clientes y proyectos"
+          },
+          {
+            "value": "93%",
+            "label": "satisfaccion"
+          },
+          {
+            "value": "44h",
+            "label": "respuesta"
+          },
+          {
+            "value": "13",
+            "label": "anos de recorrido"
+          }
+        ]
+      }
+    },
+    {
+      "id": "6ed04328",
+      "type": "portfolio_grid",
+      "props": {
+        "badge": "Portfolio",
+        "title": "Trabajo seleccionado",
+        "subtitle": "Piezas visuales, casos y referencias con mejor contexto.",
+        "projects": [
+          {
+            "category": "Proyecto clave",
+            "title": "Costa Magna Homes · Serie principal",
+            "metric": "+32% captacion",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/real-estate?lock=22332"
+          },
+          {
+            "category": "Caso destacado",
+            "title": "Costa Magna Homes · Direccion visual",
+            "metric": "4.9/5 resenas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/architecture?lock=59872"
+          },
+          {
+            "category": "Trabajo reciente",
+            "title": "Costa Magna Homes · Entrega reciente",
+            "metric": "2.1x mas consultas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/property?lock=90812"
+          }
+        ]
+      }
+    },
+    {
+      "id": "2565cdd4",
+      "type": "split_image_left",
+      "props": {
+        "badge": "Visual",
+        "title": "La parte visual tambien explica",
+        "text": "Un bloque de apoyo para mostrar inmobiliaria para costa, inversores y relocation con mas contraste, detalle y percepcion premium.",
+        "image_url": "https://loremflickr.com/1600/1100/real-estate?lock=52646",
+        "image_seed": "visual-left",
+        "bullets": [
+          "Venta residencial",
+          "Captacion de inmuebles",
+          "Gestion de inversiones"
+        ]
+      }
+    },
+    {
+      "id": "e8348715",
+      "type": "case_studies",
+      "props": {
+        "badge": "Casos",
+        "title": "Resultados que hacen la propuesta mas tangible",
+        "subtitle": "Tres tarjetas para convertir el argumento en evidencia.",
+        "items": [
+          {
+            "title": "Costa Magna Homes presenta mejor su propuesta",
+            "industry": "Real Estate",
+            "desc": "Se reorganizo la narrativa para que el visitante vea valor, prueba y siguiente paso en menos scroll.",
+            "metric": "+41% leads cualificados",
+            "image": "https://loremflickr.com/1600/1100/detail?lock=17553",
+            "link_text": "Ver caso",
+            "href": "#lead-form"
+          },
+          {
+            "title": "Jerarquia visual mas clara para publico frio",
+            "industry": "Real Estate",
+            "desc": "Se redujo ruido, se reforzaron bloques de confianza y se repitio la accion principal con mejor timing.",
+            "metric": "+34% consultas",
+            "image": "https://loremflickr.com/1600/1100/real-estate?lock=48407",
+            "link_text": "Abrir detalle",
+            "href": "#lead-form"
+          },
+          {
+            "title": "Mas coherencia entre marca, contenido y conversion",
+            "industry": "Real Estate",
+            "desc": "La web gana percepcion premium sin complicar mantenimiento ni velocidad de actualizacion.",
+            "metric": "+28% reservas",
+            "image": "https://loremflickr.com/1600/1100/property?lock=95223",
+            "link_text": "Leer mas",
+            "href": "#lead-form"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fea30b99",
+      "type": "testimonial_cards",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Voces que refuerzan la confianza",
+        "subtitle": "Un bloque simple para hacer visible la prueba social.",
+        "items": [
+          {
+            "quote": "Costa Magna Homes transmite mejor inmobiliaria para costa, inversores y relocation y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Jorge Mena",
+            "role": "directora general",
+            "image": "https://loremflickr.com/700/700/portrait?lock=58719",
+            "stars": 5
+          },
+          {
+            "quote": "Costa Magna Homes transmite mejor inmobiliaria para costa, inversores y relocation y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Irene Soler",
+            "role": "cliente recurrente",
+            "image": "https://loremflickr.com/700/700/real-estate?lock=15319",
+            "stars": 5
+          },
+          {
+            "quote": "Costa Magna Homes transmite mejor inmobiliaria para costa, inversores y relocation y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Paula Crespo",
+            "role": "responsable de marketing",
+            "image": "https://loremflickr.com/700/700/architecture?lock=78625",
+            "stars": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "1bf421c0",
+      "type": "map_embed",
+      "props": {
+        "badge": "Ubicacion",
+        "title": "Direccion, horario y contacto en un bloque",
+        "subtitle": "Especialmente util cuando la proximidad importa para convertir.",
+        "embed_url": "https://www.google.com/maps?q=Calle+del+Puerto%2C+47%2C+Malaga%2C+Spain&output=embed",
+        "address": "Calle del Puerto, 47, Malaga",
+        "phone": "+34 6973 305 704",
+        "email": "hola@costamagnahomes.es",
+        "hours": "Lun-Vie 09:00-18:00"
+      }
+    },
+    {
+      "id": "f70d00c2",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para solicitar visita?",
+        "subtitle": "Una peticion clara basta para que Costa Magna Homes responda con el siguiente paso.",
+        "button_text": "Solicitar visita",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "f815e15c",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Costa Magna Homes",
+        "description": "Costa Magna Homes organiza su propuesta alrededor de vivienda premium y segundas residencias y usa esta landing para conectar con compradores, explicar mejor el valor y llevar la visita hacia solicitar visita.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@costamagnahomes.es",
+          "+34 6973 305 704",
+          "Calle del Puerto, 47, Malaga"
+        ],
+        "copyright": "© 2026 Costa Magna Homes. Todos los derechos reservados."
+      }
+    }
+  ]
+}

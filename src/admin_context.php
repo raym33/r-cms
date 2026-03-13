@@ -275,6 +275,8 @@ function ccms_build_admin_context(string $error = ''): array
     $selectedPostRevisions = $selectedPost && is_array($selectedPost['revisions'] ?? null) ? $selectedPost['revisions'] : [];
     $storageInfo = ccms_storage_runtime_info();
     $aiSettings = ccms_ai_settings($data);
+    $premiumPacks = ccms_list_premium_packs();
+    $premiumPacksByIndustry = ccms_group_premium_packs_by_industry();
     $auditLogs = array_slice(is_array($data['audit_logs'] ?? null) ? $data['audit_logs'] : [], 0, 80);
     $submissions = array_slice(is_array($data['submissions'] ?? null) ? $data['submissions'] : [], 0, 200);
     $submissionCounts = ['new' => 0, 'reviewed' => 0, 'contacted' => 0, 'archived' => 0];
@@ -333,6 +335,8 @@ function ccms_build_admin_context(string $error = ''): array
         'pendingTwoFactor',
         'previewHtml',
         'postPreviewHtml',
+        'premiumPacks',
+        'premiumPacksByIndustry',
         'previewSiteConfigJson',
         'resetTokenEntry',
         'resetTokenValue',

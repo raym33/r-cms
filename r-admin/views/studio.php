@@ -63,8 +63,27 @@
               <option value="real-estate">Inmobiliaria</option>
               <option value="creative">Creativa / portfolio</option>
               <option value="clinic">Clínica / salud</option>
+              <option value="beauty">Beauty / salon</option>
+              <option value="public-sector">Portal público</option>
             </select>
           </div>
+        </div>
+        <div class="field">
+          <label>Pack premium de partida</label>
+          <select name="pack_id">
+            <option value="auto" <?= (($aiSettings['preferred_pack_id'] ?? 'auto') === 'auto') ? 'selected' : '' ?>>Auto (elige un pack según industria y negocio)</option>
+            <?php foreach ($premiumPacksByIndustry as $industryGroup): ?>
+              <optgroup label="<?= ccms_h((string) ($industryGroup['label'] ?? 'Packs')) ?>">
+                <?php foreach (($industryGroup['packs'] ?? []) as $pack): ?>
+                  <?php $packId = (string) ($pack['id'] ?? ''); ?>
+                  <option value="<?= ccms_h($packId) ?>" <?= (($aiSettings['preferred_pack_id'] ?? 'auto') === $packId) ? 'selected' : '' ?>>
+                    <?= ccms_h((string) ($pack['label'] ?? $packId)) ?> · <?= ccms_h((string) ($pack['description'] ?? '')) ?>
+                  </option>
+                <?php endforeach; ?>
+              </optgroup>
+            <?php endforeach; ?>
+          </select>
+          <p class="small" style="margin-top:8px">El Studio arrancará desde un pack premium real y LM Studio reescribirá el contenido sin perder la estructura visual base.</p>
         </div>
         <div class="field"><label>Oferta o servicio</label><textarea name="offer" style="min-height:100px" placeholder="Describe qué vendes y por qué importa." required></textarea></div>
         <div class="split-2">
@@ -90,8 +109,9 @@
       <h4>Qué genera esta pantalla</h4>
       <ul>
         <li>Una página nueva con una <strong>cápsula completa</strong>.</li>
-        <li>Una estructura ya pensada para editarse luego en el builder: header, hero, contenido, prueba, contacto y footer.</li>
+        <li>Una estructura premium basada en un <strong>pack curado</strong>, no en una cápsula genérica.</li>
         <li>Una base visual que luego puedes afinar por sección desde <strong>Páginas</strong>.</li>
+        <li>Un resultado más variable entre clientes, porque el diseño base cambia antes de que LM Studio escriba el copy.</li>
       </ul>
       <p class="small" style="margin-top:12px"><strong>Consejo:</strong> usa esta pantalla para crear la primera versión y el builder para pulirla a nivel de detalle.</p>
     </div>

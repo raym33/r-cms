@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/render.php';
+require_once __DIR__ . '/premium_packs.php';
 
 function ccms_ai_defaults(): array
 {
@@ -12,6 +13,7 @@ function ccms_ai_defaults(): array
         'temperature' => 0.2,
         'max_tokens' => 2800,
         'timeout' => 20,
+        'preferred_pack_id' => 'auto',
     ];
 }
 
@@ -25,19 +27,421 @@ function ccms_ai_settings(array $data): array
         'temperature' => max(0, min(1.2, (float) ($settings['temperature'] ?? $defaults['temperature']))),
         'max_tokens' => max(600, min(6000, (int) ($settings['max_tokens'] ?? $defaults['max_tokens']))),
         'timeout' => max(5, min(120, (int) ($settings['timeout'] ?? $defaults['timeout']))),
+        'preferred_pack_id' => ccms_resolve_premium_pack_id(
+            (string) ($settings['preferred_pack_id'] ?? $defaults['preferred_pack_id']),
+            'generic'
+        ) ?: 'auto',
     ];
 }
 
-function ccms_ai_settings_input(array $post): array
+function ccms_ai_settings_input(array $post, ?array $existing = null): array
 {
     $defaults = ccms_ai_defaults();
+    $existing = is_array($existing) ? $existing : [];
+    $preferredPackId = ccms_resolve_premium_pack_id(
+        (string) ($post['preferred_pack_id'] ?? $existing['preferred_pack_id'] ?? $defaults['preferred_pack_id']),
+        'generic'
+    ) ?: 'auto';
     return [
         'endpoint' => trim((string) ($post['ai_endpoint'] ?? $defaults['endpoint'])) ?: $defaults['endpoint'],
         'model' => trim((string) ($post['ai_model'] ?? '')),
         'temperature' => max(0, min(1.2, (float) ($post['ai_temperature'] ?? $defaults['temperature']))),
         'max_tokens' => max(600, min(6000, (int) ($post['ai_max_tokens'] ?? $defaults['max_tokens']))),
         'timeout' => max(5, min(120, (int) ($post['ai_timeout'] ?? $defaults['timeout']))),
+        'preferred_pack_id' => $preferredPackId,
     ];
+}
+
+function ccms_ai_brief_text(array $brief, string $key, string $fallback = ''): string
+{
+    return trim((string) ($brief[$key] ?? '')) ?: $fallback;
+}
+
+function ccms_ai_resolve_pack(array $brief, ?string $requestedPackId = null): ?array
+{
+    $industry = ccms_ai_brief_text($brief, 'industry', 'generic');
+    $businessName = ccms_ai_brief_text($brief, 'business_name', '');
+    $resolvedPackId = ccms_resolve_premium_pack_id((string) ($requestedPackId ?? ($brief['pack_id'] ?? 'auto')), $industry, $businessName);
+    return $resolvedPackId !== '' ? ccms_load_premium_pack($resolvedPackId) : null;
+}
+
+function ccms_ai_pack_offer_line(array $brief): string
+{
+    $offer = ccms_ai_brief_text($brief, 'offer', 'Una propuesta clara, útil y fácil de entender.');
+    $audience = ccms_ai_brief_text($brief, 'audience', '');
+    if ($audience === '') {
+        return $offer;
+    }
+    return $offer . ' Para ' . $audience . '.';
+}
+
+function ccms_ai_pack_support_points(array $brief): array
+{
+    $offer = ccms_ai_brief_text($brief, 'offer', 'Explica aquí la oferta principal.');
+    $audience = ccms_ai_brief_text($brief, 'audience', 'Clientes que necesitan claridad antes de decidir.');
+    $goal = ccms_ai_brief_text($brief, 'goal', 'Generar conversaciones y oportunidades reales.');
+    return [
+        ['title' => 'Oferta clara', 'desc' => $offer],
+        ['title' => 'Cliente ideal', 'desc' => $audience],
+        ['title' => 'Objetivo', 'desc' => $goal],
+    ];
+}
+
+function ccms_ai_placeholder_testimonials(string $businessName): array
+{
+    return [
+        ['quote' => 'Añade aquí una reseña real para reforzar la confianza.', 'name' => 'Cliente real', 'role' => $businessName, 'stars' => 5],
+        ['quote' => 'Sustituye este placeholder por una prueba social concreta.', 'name' => 'Caso o testimonio', 'role' => $businessName, 'stars' => 5],
+    ];
+}
+
+function ccms_ai_placeholder_stats(): array
+{
+    return [
+        ['value' => '01', 'label' => 'Oferta clara'],
+        ['value' => '02', 'label' => 'Prueba visible'],
+        ['value' => '03', 'label' => 'CTA directo'],
+        ['value' => '04', 'label' => 'CMS editable'],
+    ];
+}
+
+function ccms_ai_capsule_has_block_type(array $capsule, array $types): bool
+{
+    foreach (($capsule['blocks'] ?? []) as $block) {
+        $type = (string) ($block['type'] ?? '');
+        if (in_array($type, $types, true)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function ccms_ai_customize_pack_capsule(array $capsule, array $brief, array $pack): array
+{
+    $businessName = ccms_ai_brief_text($brief, 'business_name', 'Nuevo proyecto');
+    $pageTitle = ccms_ai_brief_text($brief, 'page_title', $businessName);
+    $offer = ccms_ai_brief_text($brief, 'offer', 'Explica aquí la propuesta principal.');
+    $audience = ccms_ai_brief_text($brief, 'audience', 'Personas que buscan una solución clara.');
+    $goal = ccms_ai_brief_text($brief, 'goal', 'Generar leads y conversaciones cualificadas.');
+    $ctaText = ccms_ai_brief_text($brief, 'cta_text', 'Contactar');
+    $tone = ccms_ai_brief_text($brief, 'tone', 'Claro, útil y confiable.');
+    $notes = ccms_ai_brief_text($brief, 'notes', '');
+    $supportPoints = ccms_ai_pack_support_points($brief);
+    $packLabel = ccms_ai_brief_text($pack, 'label', 'Premium Pack');
+
+    $capsule['meta']['business_name'] = $businessName;
+    $capsule['meta']['page_title'] = $pageTitle;
+    $capsule['meta']['description'] = $offer;
+    $capsule['meta']['template'] = (string) ($pack['id'] ?? ($capsule['meta']['template'] ?? 'premium-pack'));
+    $capsule['meta']['industry'] = ccms_ai_brief_text($brief, 'industry', ccms_ai_brief_text($pack, 'industry', 'generic'));
+
+    foreach (($capsule['blocks'] ?? []) as $index => $block) {
+        $type = (string) ($block['type'] ?? '');
+        $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+
+        switch ($type) {
+            case 'nav':
+            case 'sticky_header':
+            case 'offcanvas_menu':
+                $props['brand'] = $businessName;
+                if (isset($props['announcement'])) {
+                    $props['announcement'] = ccms_ai_brief_text($pack, 'industry_label', 'Premium pack') . ' · ' . $packLabel;
+                }
+                if (isset($props['cta_text'])) {
+                    $props['cta_text'] = $ctaText;
+                }
+                if (isset($props['cta_href'])) {
+                    $props['cta_href'] = '#contact';
+                }
+                break;
+
+            case 'hero':
+            case 'hero_fullscreen':
+            case 'hero_split':
+            case 'hero_slider':
+            case 'hero_particles':
+            case 'hero_video':
+                $props['title'] = $pageTitle;
+                $props['subtitle'] = ccms_ai_pack_offer_line($brief);
+                $props['badge'] = ccms_ai_brief_text($pack, 'industry_label', (string) ($props['badge'] ?? 'Premium'));
+                if (isset($props['cta_primary'])) {
+                    $props['cta_primary'] = $ctaText;
+                }
+                if (isset($props['cta_text'])) {
+                    $props['cta_text'] = $ctaText;
+                }
+                if (isset($props['cta_href'])) {
+                    $props['cta_href'] = '#contact';
+                }
+                if ($type === 'hero_slider' && is_array($props['slides'] ?? null)) {
+                    foreach ($props['slides'] as $slideIndex => $slide) {
+                        if (!is_array($slide)) {
+                            continue;
+                        }
+                        $props['slides'][$slideIndex]['title'] = $slideIndex === 0 ? $pageTitle : ($slide['title'] ?? 'Bloque visual');
+                        $props['slides'][$slideIndex]['subtitle'] = $slideIndex === 0 ? ccms_ai_pack_offer_line($brief) : (string) ($slide['subtitle'] ?? '');
+                        $props['slides'][$slideIndex]['cta_text'] = $ctaText;
+                        $props['slides'][$slideIndex]['cta_href'] = '#contact';
+                    }
+                }
+                break;
+
+            case 'split_image_left':
+            case 'split_image_right':
+            case 'split_content':
+                $props['title'] = (string) ($props['title'] ?? 'Por qué esta propuesta merece atención');
+                $props['text'] = $offer . ' ' . $goal . ' ' . ($notes !== '' ? $notes : 'Puedes pulir esta sección luego desde el builder.');
+                $props['bullets'] = [
+                    'Enfoque para ' . $audience,
+                    'Objetivo: ' . $goal,
+                    'Tono: ' . $tone,
+                ];
+                break;
+
+            case 'text_block':
+                $props['title'] = (string) ($props['title'] ?? 'La historia detrás de la oferta');
+                $props['paragraphs'] = [
+                    $offer,
+                    $goal . ($notes !== '' ? ' ' . $notes : ''),
+                ];
+                $props['quote'] = 'Este bloque sirve como punto de partida. Reemplázalo con una narrativa real del negocio.';
+                $props['quote_author'] = $businessName;
+                break;
+
+            case 'features':
+                $props['title'] = (string) ($props['title'] ?? 'Puntos clave de la propuesta');
+                $props['subtitle'] = 'Usa estas tarjetas como primer borrador estructurado.';
+                $props['items'] = $supportPoints;
+                break;
+
+            case 'numbered_features':
+                $props['title'] = (string) ($props['title'] ?? 'Tres razones para quedarse');
+                $props['subtitle'] = 'Estructura base para explicar la propuesta sin repetirte.';
+                $props['items'] = array_map(static function (array $item, int $itemIndex): array {
+                    return [
+                        'number' => str_pad((string) ($itemIndex + 1), 2, '0', STR_PAD_LEFT),
+                        'title' => $item['title'],
+                        'desc' => $item['desc'],
+                    ];
+                }, $supportPoints, array_keys($supportPoints));
+                break;
+
+            case 'services_cards':
+                $props['title'] = (string) ($props['title'] ?? 'Cómo se ordena la oferta');
+                $props['subtitle'] = 'Tres tarjetas iniciales para explicar valor, público y resultado.';
+                $props['services'] = [
+                    [
+                        'icon' => 'target',
+                        'title' => 'Oferta',
+                        'desc' => $offer,
+                        'bullets' => ['Qué incluye', 'Qué resuelve', 'Por qué importa'],
+                        'cta_text' => $ctaText,
+                        'cta_href' => '#contact',
+                    ],
+                    [
+                        'icon' => 'users',
+                        'title' => 'Cliente ideal',
+                        'desc' => $audience,
+                        'bullets' => ['Dolor principal', 'Momento de compra', 'Necesidad concreta'],
+                        'cta_text' => $ctaText,
+                        'cta_href' => '#contact',
+                    ],
+                    [
+                        'icon' => 'zap',
+                        'title' => 'Resultado esperado',
+                        'desc' => $goal,
+                        'bullets' => ['Siguiente paso claro', 'Confianza', 'Conversión'],
+                        'cta_text' => $ctaText,
+                        'cta_href' => '#contact',
+                    ],
+                ];
+                break;
+
+            case 'stats':
+                $props['items'] = ccms_ai_placeholder_stats();
+                break;
+
+            case 'testimonial_cards':
+            case 'testimonial_carousel':
+            case 'reviews_summary':
+                $props['title'] = (string) ($props['title'] ?? 'Prueba social');
+                $props['subtitle'] = 'Sustituye estos placeholders por reseñas reales del cliente.';
+                if ($type === 'reviews_summary') {
+                    $props['summary'] = 'Añade aquí métricas o reseñas reales cuando estén disponibles.';
+                    $props['items'] = ccms_ai_placeholder_testimonials($businessName);
+                } else {
+                    $props['items'] = ccms_ai_placeholder_testimonials($businessName);
+                }
+                break;
+
+            case 'faq':
+                $props['title'] = (string) ($props['title'] ?? 'Preguntas frecuentes');
+                $props['items'] = [
+                    ['q' => '¿Para quién es esta propuesta?', 'a' => $audience],
+                    ['q' => '¿Qué resultado busca esta web?', 'a' => $goal],
+                ];
+                break;
+
+            case 'tabs_content':
+                $props['title'] = (string) ($props['title'] ?? 'Cómo se estructura la propuesta');
+                if (is_array($props['tabs'] ?? null)) {
+                    $tabTexts = [$offer, $audience, $goal];
+                    foreach ($props['tabs'] as $tabIndex => $tab) {
+                        if (!is_array($tab)) {
+                            continue;
+                        }
+                        $props['tabs'][$tabIndex]['text'] = $tabTexts[$tabIndex] ?? (string) ($tab['text'] ?? '');
+                    }
+                }
+                break;
+
+            case 'timeline':
+            case 'process':
+                $props['title'] = (string) ($props['title'] ?? 'De la visita al siguiente paso');
+                if (is_array($props['items'] ?? null)) {
+                    $steps = ['Claridad', 'Confianza', 'Acción'];
+                    foreach ($props['items'] as $itemIndex => $item) {
+                        if (!is_array($item)) {
+                            continue;
+                        }
+                        $props['items'][$itemIndex]['title'] = $steps[$itemIndex] ?? (string) ($item['title'] ?? 'Paso');
+                    }
+                }
+                break;
+
+            case 'lead_form':
+            case 'contact':
+                $props['badge'] = (string) ($props['badge'] ?? 'Contacto');
+                $props['title'] = 'Listo para dar el siguiente paso?';
+                $props['subtitle'] = 'Usa este formulario como punto de entrada para ' . $goal;
+                $props['button_text'] = $ctaText;
+                break;
+
+            case 'newsletter':
+                $props['title'] = 'Mantén el contacto';
+                $props['subtitle'] = 'Usa este bloque si la estrategia necesita seguimiento por email.';
+                $props['button_text'] = $ctaText;
+                break;
+
+            case 'cta':
+            case 'popup_cta':
+                $props['title'] = 'Convierte el interés en conversación';
+                $props['subtitle'] = $goal;
+                $props['button_text'] = $ctaText;
+                $props['button_href'] = '#contact';
+                break;
+
+            case 'footer_multi':
+                $props['brand'] = $businessName;
+                $props['description'] = $offer;
+                $props['contact_lines'] = [
+                    'Añade aquí tu email real',
+                    'Añade aquí tu teléfono real',
+                ];
+                $props['copyright'] = '© ' . gmdate('Y') . ' ' . $businessName;
+                break;
+        }
+
+        $capsule['blocks'][$index]['props'] = $props;
+    }
+
+    if (!ccms_ai_capsule_has_block_type($capsule, ['lead_form', 'contact', 'newsletter'])) {
+        $capsule['blocks'][] = [
+            'id' => ccms_next_id('block'),
+            'type' => 'lead_form',
+            'props' => [
+                'badge' => 'Contacto',
+                'title' => 'Start the conversation',
+                'subtitle' => 'Usa este formulario como primer paso para ' . $goal,
+                'button_text' => $ctaText,
+                'privacy_text' => 'Sustituye este texto por el flujo real de captación del proyecto.',
+            ],
+        ];
+    }
+
+    return $capsule;
+}
+
+function ccms_ai_payload_from_pack(array $brief, array $pack): array
+{
+    $businessName = ccms_ai_brief_text($brief, 'business_name', 'New Project');
+    $pageTitle = ccms_ai_brief_text($brief, 'page_title', $businessName);
+    $offer = ccms_ai_brief_text($brief, 'offer', 'A clear offer worth exploring.');
+    $capsule = ccms_ai_customize_pack_capsule($pack['capsule'], $brief, $pack);
+    $style = is_array($capsule['style'] ?? null) ? $capsule['style'] : [];
+
+    return [
+        'site' => [
+            'title' => $businessName,
+            'tagline' => $offer,
+            'footer_text' => 'Powered by LinuxCMS',
+            'contact_email' => '',
+            'theme_preset' => (string) ($pack['visual_profile'] ?? 'warm'),
+            'font_pairing' => 'auto',
+            'colors' => [
+                'bg' => (string) ($style['bg_from'] ?? '#f7f4ee'),
+                'surface' => (string) ($style['bg_to'] ?? '#ffffff'),
+                'text' => (string) ($style['text_primary'] ?? '#2f241f'),
+                'muted' => (string) ($style['text_secondary'] ?? '#6b5b53'),
+                'primary' => (string) ($style['accent'] ?? '#c86f5c'),
+                'secondary' => (string) ($style['accent_dark'] ?? '#ab5d4e'),
+            ],
+        ],
+        'page' => [
+            'title' => $pageTitle,
+            'slug' => ccms_slugify((string) ($brief['slug'] ?? $pageTitle)),
+            'status' => 'draft',
+            'show_in_menu' => true,
+            'menu_label' => $pageTitle,
+            'meta_title' => $pageTitle,
+            'meta_description' => $offer,
+            'capsule' => $capsule,
+        ],
+    ];
+}
+
+function ccms_ai_merge_payload_with_base_pack(array $generatedPayload, array $basePayload): array
+{
+    $merged = $basePayload;
+    if (is_array($generatedPayload['site'] ?? null)) {
+        $merged['site'] = array_replace_recursive($basePayload['site'], $generatedPayload['site']);
+        $merged['site']['colors'] = array_replace_recursive($basePayload['site']['colors'] ?? [], $generatedPayload['site']['colors'] ?? []);
+    }
+    if (is_array($generatedPayload['page'] ?? null)) {
+        $merged['page'] = array_replace_recursive($basePayload['page'], $generatedPayload['page']);
+    }
+
+    $baseCapsule = is_array($basePayload['page']['capsule'] ?? null) ? $basePayload['page']['capsule'] : [];
+    $incomingCapsule = is_array($generatedPayload['page']['capsule'] ?? null) ? $generatedPayload['page']['capsule'] : [];
+    $mergedCapsule = $baseCapsule;
+    $mergedCapsule['meta'] = array_replace_recursive($baseCapsule['meta'] ?? [], $incomingCapsule['meta'] ?? []);
+    $mergedCapsule['style'] = array_replace_recursive($baseCapsule['style'] ?? [], $incomingCapsule['style'] ?? []);
+
+    $baseBlocks = is_array($baseCapsule['blocks'] ?? null) ? $baseCapsule['blocks'] : [];
+    $incomingBlocks = is_array($incomingCapsule['blocks'] ?? null) ? array_values($incomingCapsule['blocks']) : [];
+    $mergedBlocks = [];
+    foreach ($baseBlocks as $index => $baseBlock) {
+        $candidate = is_array($incomingBlocks[$index] ?? null) ? $incomingBlocks[$index] : [];
+        if (($candidate['type'] ?? '') !== ($baseBlock['type'] ?? '')) {
+            $candidate = [];
+        }
+        $mergedBlock = $baseBlock;
+        if ($candidate !== []) {
+            $mergedBlock['props'] = array_replace_recursive(
+                is_array($baseBlock['props'] ?? null) ? $baseBlock['props'] : [],
+                is_array($candidate['props'] ?? null) ? $candidate['props'] : []
+            );
+            $mergedBlock['style'] = array_replace_recursive(
+                is_array($baseBlock['style'] ?? null) ? $baseBlock['style'] : [],
+                is_array($candidate['style'] ?? null) ? $candidate['style'] : []
+            );
+            $mergedBlock['layout'] = trim((string) ($candidate['layout'] ?? ($baseBlock['layout'] ?? '')));
+        }
+        $mergedBlocks[] = $mergedBlock;
+    }
+    $mergedCapsule['blocks'] = $mergedBlocks;
+    $merged['page']['capsule'] = ccms_normalize_capsule($mergedCapsule);
+    return $merged;
 }
 
 function ccms_ai_http_json(string $method, string $url, ?array $payload = null, int $timeout = 30): array
@@ -161,12 +565,19 @@ function ccms_ai_default_palette(string $industry): array
         'saas' => ['accent' => '#4f77ff', 'accent_dark' => '#2f57df', 'bg_from' => '#eef4ff', 'bg_to' => '#ffffff', 'text_primary' => '#1f2840', 'text_secondary' => '#5b6782'],
         'creative' => ['accent' => '#b86f78', 'accent_dark' => '#934f58', 'bg_from' => '#f8f0f1', 'bg_to' => '#fffefe', 'text_primary' => '#2f2025', 'text_secondary' => '#6b5960'],
         'clinic' => ['accent' => '#5b9f96', 'accent_dark' => '#3e8178', 'bg_from' => '#eef8f6', 'bg_to' => '#ffffff', 'text_primary' => '#1f2f2d', 'text_secondary' => '#57706d'],
+        'beauty' => ['accent' => '#d46aa1', 'accent_dark' => '#b34c81', 'bg_from' => '#fff3f8', 'bg_to' => '#fffefe', 'text_primary' => '#34212d', 'text_secondary' => '#7b6071'],
+        'public-sector' => ['accent' => '#22c55e', 'accent_dark' => '#15803d', 'bg_from' => '#edf8f1', 'bg_to' => '#ffffff', 'text_primary' => '#153524', 'text_secondary' => '#4f6f5d'],
     ];
     return $presets[$industry] ?? ['accent' => '#c86f5c', 'accent_dark' => '#ab5d4e', 'bg_from' => '#f7f4ee', 'bg_to' => '#ffffff', 'text_primary' => '#2f241f', 'text_secondary' => '#6b5b53'];
 }
 
 function ccms_ai_fallback_payload(array $brief): array
 {
+    $pack = ccms_ai_resolve_pack($brief);
+    if ($pack) {
+        return ccms_ai_payload_from_pack($brief, $pack);
+    }
+
     $businessName = trim((string) ($brief['business_name'] ?? 'New Project')) ?: 'New Project';
     $pageTitle = trim((string) ($brief['page_title'] ?? $businessName)) ?: $businessName;
     $industry = trim((string) ($brief['industry'] ?? 'business')) ?: 'business';
@@ -328,73 +739,34 @@ function ccms_ai_fallback_payload(array $brief): array
     ];
 }
 
-function ccms_ai_prompt(array $brief): string
+function ccms_ai_prompt(array $brief, array $basePayload, array $pack): string
 {
-    $supportedBlocks = [
-        'sticky_header',
-        'hero_fullscreen',
-        'hero_split',
-        'split_image_left',
-        'split_image_right',
-        'text_block',
-        'features',
-        'services_cards',
-        'stats',
-        'testimonial_cards',
-        'faq',
-        'pricing',
-        'portfolio_grid',
-        'blog_grid',
-        'gallery',
-        'cta',
-        'lead_form',
-        'map_embed',
-        'footer_multi',
-    ];
-
-    return "You are generating a first-draft website capsule for a local CMS that renders blocks in PHP.\n"
+    return "You are adapting a premium website pack for a local CMS that renders blocks in PHP.\n"
         . "Return JSON only. No markdown, no prose.\n"
-        . "Use only these block types: " . implode(', ', $supportedBlocks) . ".\n"
-        . "The JSON format must be:\n"
-        . "{\n"
-        . "  \"site\": {\n"
-        . "    \"title\": \"...\",\n"
-        . "    \"tagline\": \"...\",\n"
-        . "    \"footer_text\": \"...\",\n"
-        . "    \"contact_email\": \"...\",\n"
-        . "    \"colors\": {\n"
-        . "      \"bg\": \"#...\",\n"
-        . "      \"surface\": \"#...\",\n"
-        . "      \"text\": \"#...\",\n"
-        . "      \"muted\": \"#...\",\n"
-        . "      \"primary\": \"#...\",\n"
-        . "      \"secondary\": \"#...\"\n"
-        . "    }\n"
-        . "  },\n"
-        . "  \"page\": {\n"
-        . "    \"title\": \"...\",\n"
-        . "    \"slug\": \"...\",\n"
-        . "    \"status\": \"draft\",\n"
-        . "    \"show_in_menu\": true,\n"
-        . "    \"menu_label\": \"...\",\n"
-        . "    \"meta_title\": \"...\",\n"
-        . "    \"meta_description\": \"...\",\n"
-        . "    \"capsule\": {\n"
-        . "      \"meta\": {\"business_name\": \"...\", \"template\": \"generic\"},\n"
-        . "      \"style\": {\"accent\": \"#...\", \"accent_dark\": \"#...\", \"bg_from\": \"#...\", \"bg_to\": \"#...\", \"text_primary\": \"#...\", \"text_secondary\": \"#...\", \"text_muted\": \"#...\", \"font_family\": \"Inter, Arial, Helvetica, sans-serif\", \"font_heading\": \"Inter, Arial, Helvetica, sans-serif\"},\n"
-        . "      \"blocks\": [ ... ]\n"
-        . "    }\n"
-        . "  }\n"
-        . "}\n"
-        . "Keep the first draft practical: header, hero, supporting section, benefits/services, proof, contact, footer.\n"
-        . "Business brief:\n"
-        . json_encode($brief, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        . "Keep the SAME block order, SAME block types, SAME visual style and SAME layout choices as the base pack.\n"
+        . "Rewrite the content so it fits the business brief.\n"
+        . "Do not invent fake awards, fake client names or false numerical claims. If proof is missing, keep placeholders neutral.\n"
+        . "Preserve anchors like #contact, #lead-form and internal section links.\n"
+        . "Selected premium pack:\n"
+        . json_encode([
+            'id' => $pack['id'] ?? '',
+            'label' => $pack['label'] ?? '',
+            'industry' => $pack['industry'] ?? '',
+            'description' => $pack['description'] ?? '',
+            'visual_profile' => $pack['visual_profile'] ?? '',
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        . "\nBusiness brief:\n"
+        . json_encode($brief, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        . "\nBase payload to adapt:\n"
+        . json_encode($basePayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
 function ccms_ai_generate_payload(array $brief, array $settings): array
 {
     $requestTimeout = (int) ($settings['timeout'] ?? 20);
     ccms_ai_prepare_runtime($requestTimeout);
+    $pack = ccms_ai_resolve_pack($brief, (string) ($settings['preferred_pack_id'] ?? ($brief['pack_id'] ?? 'auto')));
+    $basePayload = $pack ? ccms_ai_payload_from_pack($brief, $pack) : ccms_ai_fallback_payload($brief);
 
     $endpoint = rtrim((string) ($settings['endpoint'] ?? ''), '/');
     $model = trim((string) ($settings['model'] ?? ''));
@@ -407,8 +779,12 @@ function ccms_ai_generate_payload(array $brief, array $settings): array
         }
     }
     if ($endpoint === '' || $model === '') {
-        $fallback = ccms_ai_fallback_payload($brief);
-        $fallback['_meta'] = ['mode' => 'fallback', 'reason' => 'LM Studio endpoint or model not available'];
+        $fallback = $basePayload;
+        $fallback['_meta'] = [
+            'mode' => 'fallback',
+            'reason' => 'LM Studio endpoint or model not available',
+            'pack_id' => $pack['id'] ?? '',
+        ];
         return $fallback;
     }
 
@@ -419,7 +795,7 @@ function ccms_ai_generate_payload(array $brief, array $settings): array
             'max_tokens' => (int) ($settings['max_tokens'] ?? 2800),
             'messages' => [
                 ['role' => 'system', 'content' => 'You generate structured website capsules for a local CMS. Return valid JSON only.'],
-                ['role' => 'user', 'content' => ccms_ai_prompt($brief)],
+                ['role' => 'user', 'content' => ccms_ai_prompt($brief, $basePayload, $pack ?? [])],
             ],
         ], $requestTimeout);
         if ($response['status'] >= 400) {
@@ -430,11 +806,20 @@ function ccms_ai_generate_payload(array $brief, array $settings): array
         if (!is_array($decoded['page']['capsule'] ?? null)) {
             throw new RuntimeException('La respuesta de LM Studio no incluye una cápsula válida.');
         }
-        $decoded['_meta'] = ['mode' => 'lm_studio', 'model' => $model];
+        $decoded = ccms_ai_merge_payload_with_base_pack($decoded, $basePayload);
+        $decoded['_meta'] = [
+            'mode' => 'lm_studio',
+            'model' => $model,
+            'pack_id' => $pack['id'] ?? '',
+        ];
         return $decoded;
     } catch (Throwable $e) {
-        $fallback = ccms_ai_fallback_payload($brief);
-        $fallback['_meta'] = ['mode' => 'fallback', 'reason' => $e->getMessage()];
+        $fallback = $basePayload;
+        $fallback['_meta'] = [
+            'mode' => 'fallback',
+            'reason' => $e->getMessage(),
+            'pack_id' => $pack['id'] ?? '',
+        ];
         return $fallback;
     }
 }

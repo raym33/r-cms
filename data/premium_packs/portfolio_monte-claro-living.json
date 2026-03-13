@@ -1,0 +1,291 @@
+{
+  "version": 2,
+  "template_id": "real_estate",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Monte Claro Living",
+    "page_title": "Monte Claro Living | Casas familiares y promociones singulares con una presencia que eleva la percepcion",
+    "description": "Monte Claro Living organiza su propuesta alrededor de casas familiares y promociones singulares y usa esta landing para conectar con compradores, explicar mejor el valor y llevar la visita hacia solicitar visita.",
+    "style_pack": "waka_waka_studio"
+  },
+  "style": {
+    "accent": "#8d6742",
+    "accent_dark": "#5b4027",
+    "accent_rgb": "141,103,66",
+    "bg_from": "#f4efe6",
+    "bg_to": "#fbf8f2",
+    "card_bg": "rgba(251,248,242,0.9)",
+    "card_border": "rgba(36,28,20,0.12)",
+    "gradient_accent": "linear-gradient(135deg, #8d6742 0%, #5b4027 100%)",
+    "theme_mode": "light",
+    "text_primary": "#181512",
+    "text_secondary": "#5f5547",
+    "text_muted": "#8a7e70",
+    "nav_bg": "rgba(244,239,230,0.58)",
+    "hero_style": "minimal",
+    "card_style": "bordered",
+    "nav_style": "transparent",
+    "animation_preset": "fade",
+    "font_pairing": "corporate",
+    "font_family": "'Source Sans 3'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "8.5rem",
+    "card_radius": "0.5rem",
+    "shadow_intensity": "0.08",
+    "animation_style": "fade",
+    "font_heading": "'Montserrat'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "city_wireframe",
+      "desc": "Low-poly wireframe cityscape / buildings",
+      "colors": [
+        "#10b981",
+        "#34d399",
+        "#d1fae5"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "67a919bf",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Monte Claro Living",
+        "announcement": "Valencia · casas familiares y promociones singulares",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_fullscreen"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Galeria",
+            "href": "#gallery"
+          },
+          {
+            "text": "Portfolio",
+            "href": "#portfolio_grid"
+          },
+          {
+            "text": "Resenas",
+            "href": "#reviews_summary"
+          }
+        ],
+        "cta_text": "Solicitar visita",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "6294e224",
+      "type": "hero_fullscreen",
+      "props": {
+        "badge": "Inmobiliarias",
+        "title": "Casas familiares y promociones singulares con una presencia que eleva la percepcion",
+        "subtitle": "Monte Claro Living organiza su propuesta alrededor de casas familiares y promociones singulares y usa esta landing para conectar con compradores, explicar mejor el valor y llevar la visita hacia solicitar visita.",
+        "background_image": "https://loremflickr.com/1800/1200/hero?lock=17964",
+        "cta_primary": "Solicitar visita",
+        "cta_secondary": "Ver detalle",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "0be1bb36",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "356+",
+            "label": "clientes y proyectos"
+          },
+          {
+            "value": "90%",
+            "label": "satisfaccion"
+          },
+          {
+            "value": "32h",
+            "label": "respuesta"
+          },
+          {
+            "value": "13",
+            "label": "anos de recorrido"
+          }
+        ]
+      }
+    },
+    {
+      "id": "979e3790",
+      "type": "gallery",
+      "props": {
+        "badge": "Galeria",
+        "title": "Direccion visual",
+        "images": [
+          {
+            "url": "https://loremflickr.com/1600/1100/interior?lock=99416",
+            "alt": "Monte Claro Living imagen 1"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/apartment?lock=74811",
+            "alt": "Monte Claro Living imagen 2"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/property?lock=80352",
+            "alt": "Monte Claro Living imagen 3"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/interior?lock=46240",
+            "alt": "Monte Claro Living imagen 4"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/interior?lock=55063",
+            "alt": "Monte Claro Living imagen 5"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/architecture?lock=24874",
+            "alt": "Monte Claro Living imagen 6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "0fddd283",
+      "type": "portfolio_grid",
+      "props": {
+        "badge": "Portfolio",
+        "title": "Trabajo seleccionado",
+        "subtitle": "Piezas visuales, casos y referencias con mejor contexto.",
+        "projects": [
+          {
+            "category": "Proyecto clave",
+            "title": "Monte Claro Living · Serie principal",
+            "metric": "+32% captacion",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/interior?lock=73198"
+          },
+          {
+            "category": "Caso destacado",
+            "title": "Monte Claro Living · Direccion visual",
+            "metric": "+32% captacion",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/architecture?lock=2376"
+          },
+          {
+            "category": "Trabajo reciente",
+            "title": "Monte Claro Living · Entrega reciente",
+            "metric": "4.9/5 resenas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/real-estate?lock=86358"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bc575e7d",
+      "type": "reviews_summary",
+      "props": {
+        "badge": "Resenas",
+        "title": "Prueba resumida en segundos",
+        "score": "4.9/5",
+        "review_count": "468+ resenas",
+        "source": "Google, directorios y recomendacion directa",
+        "breakdown": [
+          {
+            "label": "5 estrellas",
+            "value": 91
+          },
+          {
+            "label": "4 estrellas",
+            "value": 7
+          },
+          {
+            "label": "3 estrellas",
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "1b34ddd2",
+      "type": "map_embed",
+      "props": {
+        "badge": "Ubicacion",
+        "title": "Direccion, horario y contacto en un bloque",
+        "subtitle": "Especialmente util cuando la proximidad importa para convertir.",
+        "embed_url": "https://www.google.com/maps?q=Calle+de+la+Seda%2C+33%2C+Valencia%2C+Spain&output=embed",
+        "address": "Calle de la Seda, 33, Valencia",
+        "phone": "+34 6440 760 773",
+        "email": "hola@monteclaroliving.es",
+        "hours": "Lun-Vie 09:00-18:00"
+      }
+    },
+    {
+      "id": "9516c099",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para solicitar visita?",
+        "subtitle": "Una peticion clara basta para que Monte Claro Living responda con el siguiente paso.",
+        "button_text": "Solicitar visita",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "eaeca135",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Monte Claro Living",
+        "description": "Monte Claro Living organiza su propuesta alrededor de casas familiares y promociones singulares y usa esta landing para conectar con compradores, explicar mejor el valor y llevar la visita hacia solicitar visita.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@monteclaroliving.es",
+          "+34 6440 760 773",
+          "Calle de la Seda, 33, Valencia"
+        ],
+        "copyright": "© 2026 Monte Claro Living. Todos los derechos reservados."
+      }
+    }
+  ]
+}

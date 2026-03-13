@@ -1,0 +1,260 @@
+{
+  "version": 2,
+  "template_id": "beauty",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Piel Serena Studio",
+    "page_title": "Piel Serena Studio | Faciales, diagnostico y rituales de piel con una marca que ya se siente premium antes de la visita",
+    "description": "Piel Serena Studio organiza su propuesta alrededor de faciales, diagnostico y rituales de piel y usa esta landing para conectar con clientes que valoran imagen cuidada, explicar mejor el valor y llevar la visita hacia pedir cita."
+  },
+  "style": {
+    "accent": "#d946ef",
+    "accent_dark": "#c026d3",
+    "accent_rgb": "217,70,239",
+    "bg_from": "#180416",
+    "bg_to": "#2b0930",
+    "card_bg": "rgba(43,9,48,0.72)",
+    "card_border": "rgba(217,70,239,0.18)",
+    "gradient_accent": "linear-gradient(135deg, #d946ef 0%, #c026d3 100%)",
+    "theme_mode": "dark",
+    "text_primary": "#ffffff",
+    "text_secondary": "#f5d0fe",
+    "text_muted": "#f0abfc",
+    "nav_bg": "rgba(24,4,22,0.62)",
+    "hero_style": "particles",
+    "card_style": "glass",
+    "nav_style": "glass",
+    "animation_preset": "zoom",
+    "font_pairing": "creative",
+    "font_family": "'Inter'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "7rem",
+    "card_radius": "1rem",
+    "shadow_intensity": "0.3",
+    "animation_style": "fade-up",
+    "font_heading": "'Sora'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "silk_glow",
+      "desc": "Glow trails, sparkle particles, and soft gradients.",
+      "colors": [
+        "#d946ef",
+        "#f0abfc",
+        "#fdf4ff"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "2468f431",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Piel Serena Studio",
+        "announcement": "Valencia · faciales, diagnostico y rituales de piel",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_fullscreen"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Galeria",
+            "href": "#gallery"
+          },
+          {
+            "text": "Testimonios",
+            "href": "#testimonial_carousel"
+          },
+          {
+            "text": "Reservas",
+            "href": "#booking_widget"
+          }
+        ],
+        "cta_text": "Pedir cita",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "6568d5fd",
+      "type": "hero_fullscreen",
+      "props": {
+        "badge": "Beauty y Barber",
+        "title": "Faciales, diagnostico y rituales de piel con una marca que ya se siente premium antes de la visita",
+        "subtitle": "Piel Serena Studio organiza su propuesta alrededor de faciales, diagnostico y rituales de piel y usa esta landing para conectar con clientes que valoran imagen cuidada, explicar mejor el valor y llevar la visita hacia pedir cita.",
+        "background_image": "https://loremflickr.com/1800/1200/spa?lock=16891",
+        "cta_primary": "Pedir cita",
+        "cta_secondary": "Ver detalle",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "f702fcd2",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "354+",
+            "label": "clientes y proyectos"
+          },
+          {
+            "value": "88%",
+            "label": "satisfaccion"
+          },
+          {
+            "value": "42h",
+            "label": "respuesta"
+          },
+          {
+            "value": "11",
+            "label": "anos de recorrido"
+          }
+        ]
+      }
+    },
+    {
+      "id": "87a7c227",
+      "type": "gallery",
+      "props": {
+        "badge": "Galeria",
+        "title": "Direccion visual",
+        "images": [
+          {
+            "url": "https://loremflickr.com/1600/1100/spa?lock=21461",
+            "alt": "Piel Serena Studio imagen 1"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/beauty?lock=88239",
+            "alt": "Piel Serena Studio imagen 2"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/beauty?lock=69760",
+            "alt": "Piel Serena Studio imagen 3"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/salon?lock=70703",
+            "alt": "Piel Serena Studio imagen 4"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/beauty?lock=88048",
+            "alt": "Piel Serena Studio imagen 5"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/portrait?lock=61418",
+            "alt": "Piel Serena Studio imagen 6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "b5deb1ad",
+      "type": "testimonial_carousel",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Opiniones con mas contexto",
+        "items": [
+          {
+            "quote": "Piel Serena Studio transmite mejor centro de estetica con enfoque calmado y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Carlos Vela",
+            "role": "directora general",
+            "image": "https://loremflickr.com/700/700/salon?lock=37168",
+            "stars": 5
+          },
+          {
+            "quote": "Piel Serena Studio transmite mejor centro de estetica con enfoque calmado y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Lucia Sanz",
+            "role": "cliente recurrente",
+            "image": "https://loremflickr.com/700/700/barber?lock=67278",
+            "stars": 5
+          },
+          {
+            "quote": "Piel Serena Studio transmite mejor centro de estetica con enfoque calmado y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Lucia Sanz",
+            "role": "responsable de marketing",
+            "image": "https://loremflickr.com/700/700/portrait?lock=53570",
+            "stars": 5
+          }
+        ],
+        "autoplay_ms": 5100
+      }
+    },
+    {
+      "id": "b42649be",
+      "type": "booking_widget",
+      "props": {
+        "badge": "Reservas",
+        "title": "Haz la reserva desde la propia landing",
+        "subtitle": "Una forma directa de capturar intencion sin depender de otra herramienta.",
+        "services": [
+          "Corte",
+          "Tratamiento",
+          "Sesion completa"
+        ],
+        "times": [
+          "09:30",
+          "11:00",
+          "13:30",
+          "18:30"
+        ],
+        "button_text": "Pedir cita",
+        "helper_text": "Elige servicio, fecha y tramo horario preferido."
+      }
+    },
+    {
+      "id": "2c6ddb42",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Piel Serena Studio",
+        "description": "Piel Serena Studio organiza su propuesta alrededor de faciales, diagnostico y rituales de piel y usa esta landing para conectar con clientes que valoran imagen cuidada, explicar mejor el valor y llevar la visita hacia pedir cita.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@pielserenastudio.es",
+          "+34 6975 309 905",
+          "Calle de la Seda, 43, Valencia"
+        ],
+        "copyright": "© 2026 Piel Serena Studio. Todos los derechos reservados."
+      }
+    }
+  ]
+}

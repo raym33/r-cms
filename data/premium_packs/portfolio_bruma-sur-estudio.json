@@ -1,0 +1,378 @@
+{
+  "version": 2,
+  "template_id": "creative",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Bruma Sur Estudio",
+    "page_title": "Bruma Sur Estudio | Fotografia de autor y direccion de arte con una web que vende mejor la propuesta",
+    "description": "Bruma Sur Estudio organiza su propuesta alrededor de fotografia de autor y direccion de arte y usa esta landing para conectar con coleccionistas, explicar mejor el valor y llevar la visita hacia solicitar dossier.",
+    "style_pack": "waka_waka_studio"
+  },
+  "style": {
+    "accent": "#8d6742",
+    "accent_dark": "#5b4027",
+    "accent_rgb": "141,103,66",
+    "bg_from": "#f4efe6",
+    "bg_to": "#fbf8f2",
+    "card_bg": "rgba(251,248,242,0.9)",
+    "card_border": "rgba(36,28,20,0.12)",
+    "gradient_accent": "linear-gradient(135deg, #8d6742 0%, #5b4027 100%)",
+    "theme_mode": "light",
+    "text_primary": "#181512",
+    "text_secondary": "#5f5547",
+    "text_muted": "#8a7e70",
+    "nav_bg": "rgba(244,239,230,0.58)",
+    "hero_style": "minimal",
+    "card_style": "bordered",
+    "nav_style": "transparent",
+    "animation_preset": "fade",
+    "font_pairing": "corporate",
+    "font_family": "'Source Sans 3'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "8.5rem",
+    "card_radius": "0.5rem",
+    "shadow_intensity": "0.08",
+    "animation_style": "fade",
+    "font_heading": "'Montserrat'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "studio_shapes",
+      "desc": "Angular layers, gradients, and moving studio shapes.",
+      "colors": [
+        "#f43f5e",
+        "#fb7185",
+        "#ffe4e6"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "27f198bf",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Bruma Sur Estudio",
+        "announcement": "Malaga · fotografia de autor y direccion de arte",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_split"
+          },
+          {
+            "text": "Metricas",
+            "href": "#stats"
+          },
+          {
+            "text": "Portfolio",
+            "href": "#portfolio_grid"
+          },
+          {
+            "text": "Galeria",
+            "href": "#gallery"
+          },
+          {
+            "text": "Testimonios",
+            "href": "#testimonial_cards"
+          }
+        ],
+        "cta_text": "Solicitar dossier",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "02600c9b",
+      "type": "hero_split",
+      "props": {
+        "badge": "Artistas y Estudios",
+        "title": "Fotografia de autor y direccion de arte con una web que vende mejor la propuesta",
+        "subtitle": "Bruma Sur Estudio organiza su propuesta alrededor de fotografia de autor y direccion de arte y usa esta landing para conectar con coleccionistas, explicar mejor el valor y llevar la visita hacia solicitar dossier.",
+        "image_url": "https://loremflickr.com/1600/1100/sculpture?lock=33548",
+        "image_seed": "landing-builder",
+        "bullets": [
+          "Obra por encargo",
+          "Series limitadas",
+          "Instalaciones para espacios"
+        ],
+        "cta_primary": "Solicitar dossier",
+        "cta_secondary": "Ver servicios",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "1f4537dc",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "229+",
+            "label": "clientes y proyectos"
+          },
+          {
+            "value": "96%",
+            "label": "satisfaccion"
+          },
+          {
+            "value": "37h",
+            "label": "respuesta"
+          },
+          {
+            "value": "6",
+            "label": "anos de recorrido"
+          }
+        ]
+      }
+    },
+    {
+      "id": "c66127e1",
+      "type": "portfolio_grid",
+      "props": {
+        "badge": "Portfolio",
+        "title": "Trabajo seleccionado",
+        "subtitle": "Piezas visuales, casos y referencias con mejor contexto.",
+        "projects": [
+          {
+            "category": "Proyecto clave",
+            "title": "Bruma Sur Estudio · Serie principal",
+            "metric": "4.9/5 resenas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/studio?lock=94472"
+          },
+          {
+            "category": "Caso destacado",
+            "title": "Bruma Sur Estudio · Direccion visual",
+            "metric": "+32% captacion",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/painting?lock=93693"
+          },
+          {
+            "category": "Trabajo reciente",
+            "title": "Bruma Sur Estudio · Entrega reciente",
+            "metric": "4.9/5 resenas",
+            "href": "#lead-form",
+            "image": "https://loremflickr.com/1600/1100/studio?lock=97729"
+          }
+        ]
+      }
+    },
+    {
+      "id": "50f6ffea",
+      "type": "gallery",
+      "props": {
+        "badge": "Galeria",
+        "title": "Direccion visual",
+        "images": [
+          {
+            "url": "https://loremflickr.com/1600/1100/painting?lock=58596",
+            "alt": "Bruma Sur Estudio imagen 1"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/detail?lock=28460",
+            "alt": "Bruma Sur Estudio imagen 2"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/studio?lock=46305",
+            "alt": "Bruma Sur Estudio imagen 3"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/sculpture?lock=10932",
+            "alt": "Bruma Sur Estudio imagen 4"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/sculpture?lock=25595",
+            "alt": "Bruma Sur Estudio imagen 5"
+          },
+          {
+            "url": "https://loremflickr.com/1600/1100/gallery?lock=67888",
+            "alt": "Bruma Sur Estudio imagen 6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cae19743",
+      "type": "testimonial_cards",
+      "props": {
+        "badge": "Testimonios",
+        "title": "Voces que refuerzan la confianza",
+        "subtitle": "Un bloque simple para hacer visible la prueba social.",
+        "items": [
+          {
+            "quote": "Bruma Sur Estudio transmite mejor encargos visuales para editoriales y hospitality y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Adrian Luque",
+            "role": "directora general",
+            "image": "https://loremflickr.com/700/700/sculpture?lock=46168",
+            "stars": 5
+          },
+          {
+            "quote": "Bruma Sur Estudio transmite mejor encargos visuales para editoriales y hospitality y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Silvia Prieto",
+            "role": "cliente recurrente",
+            "image": "https://loremflickr.com/700/700/portrait?lock=45474",
+            "stars": 5
+          },
+          {
+            "quote": "Bruma Sur Estudio transmite mejor encargos visuales para editoriales y hospitality y ahora todo se entiende mas rapido. La sensacion es mucho mas profesional.",
+            "name": "Marta Rubio",
+            "role": "responsable de marketing",
+            "image": "https://loremflickr.com/700/700/sculpture?lock=84470",
+            "stars": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "594616cc",
+      "type": "content_stack",
+      "props": {
+        "badge": "Metodo",
+        "title": "Una narracion en tres capas",
+        "subtitle": "Ideal para agrupar mensaje, prueba y cierre sin dispersar la lectura.",
+        "items": [
+          {
+            "eyebrow": "Contexto",
+            "title": "Contexto de la propuesta",
+            "text": "Bruma Sur Estudio organiza su propuesta alrededor de fotografia de autor y direccion de arte y usa esta landing para conectar con coleccionistas, explicar mejor el valor y llevar la visita hacia solicitar dossier.",
+            "bullets": [
+              "fotografia de autor",
+              "encargos visuales",
+              "Solicitar dossier"
+            ],
+            "cta_text": "Solicitar dossier",
+            "cta_href": "#lead-form"
+          },
+          {
+            "eyebrow": "Prueba",
+            "title": "Prueba de la propuesta",
+            "text": "Encargos visuales para editoriales y hospitality con una estructura que empuja mejor hacia solicitar dossier.",
+            "bullets": [
+              "fotografia de autor",
+              "encargos visuales",
+              "Solicitar dossier"
+            ],
+            "cta_text": "Solicitar dossier",
+            "cta_href": "#lead-form"
+          },
+          {
+            "eyebrow": "Accion",
+            "title": "Accion de la propuesta",
+            "text": "Encargos visuales para editoriales y hospitality con una estructura que empuja mejor hacia solicitar dossier.",
+            "bullets": [
+              "fotografia de autor",
+              "encargos visuales",
+              "Solicitar dossier"
+            ],
+            "cta_text": "Solicitar dossier",
+            "cta_href": "#lead-form"
+          }
+        ]
+      }
+    },
+    {
+      "id": "b0727320",
+      "type": "instagram_feed",
+      "props": {
+        "badge": "Feed",
+        "title": "Cultura visual y contenido vivo",
+        "handle": "@brumasurestudio",
+        "images": [
+          {
+            "url": "https://loremflickr.com/900/900/social?lock=69067",
+            "alt": "Bruma Sur Estudio social 1",
+            "likes": "240"
+          },
+          {
+            "url": "https://loremflickr.com/900/900/social?lock=99521",
+            "alt": "Bruma Sur Estudio social 2",
+            "likes": "271"
+          },
+          {
+            "url": "https://loremflickr.com/900/900/artist?lock=5599",
+            "alt": "Bruma Sur Estudio social 3",
+            "likes": "302"
+          },
+          {
+            "url": "https://loremflickr.com/900/900/gallery?lock=77074",
+            "alt": "Bruma Sur Estudio social 4",
+            "likes": "333"
+          },
+          {
+            "url": "https://loremflickr.com/900/900/studio?lock=68558",
+            "alt": "Bruma Sur Estudio social 5",
+            "likes": "364"
+          },
+          {
+            "url": "https://loremflickr.com/900/900/gallery?lock=47741",
+            "alt": "Bruma Sur Estudio social 6",
+            "likes": "395"
+          }
+        ]
+      }
+    },
+    {
+      "id": "d4fe224f",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para solicitar dossier?",
+        "subtitle": "Una peticion clara basta para que Bruma Sur Estudio responda con el siguiente paso.",
+        "button_text": "Solicitar dossier",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "750752fa",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Bruma Sur Estudio",
+        "description": "Bruma Sur Estudio organiza su propuesta alrededor de fotografia de autor y direccion de arte y usa esta landing para conectar con coleccionistas, explicar mejor el valor y llevar la visita hacia solicitar dossier.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@brumasurestudio.es",
+          "+34 6994 384 809",
+          "Calle del Puerto, 15, Malaga"
+        ],
+        "copyright": "© 2026 Bruma Sur Estudio. Todos los derechos reservados."
+      }
+    }
+  ]
+}

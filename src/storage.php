@@ -304,6 +304,7 @@ function ccms_default_data(): array
             'temperature' => 0.2,
             'max_tokens' => 2800,
             'timeout' => 20,
+            'preferred_pack_id' => 'auto',
         ],
         'admin' => [
             'id' => null,
@@ -918,6 +919,10 @@ function ccms_import_backup_payload(array $payload): array
         $data['local_ai']['temperature'] = is_numeric($localAi['temperature'] ?? null) ? (float) $localAi['temperature'] : $data['local_ai']['temperature'];
         $data['local_ai']['max_tokens'] = is_numeric($localAi['max_tokens'] ?? null) ? (int) $localAi['max_tokens'] : $data['local_ai']['max_tokens'];
         $data['local_ai']['timeout'] = is_numeric($localAi['timeout'] ?? null) ? (int) $localAi['timeout'] : $data['local_ai']['timeout'];
+        $data['local_ai']['preferred_pack_id'] = ccms_resolve_premium_pack_id(
+            (string) ($localAi['preferred_pack_id'] ?? $data['local_ai']['preferred_pack_id']),
+            'generic'
+        ) ?: 'auto';
     }
 
     $data['live_data'] = ccms_normalize_live_data_structure($payloadData['live_data'] ?? []);

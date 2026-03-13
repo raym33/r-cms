@@ -343,6 +343,16 @@ ccms_logout();
 ccms_login('owner', 'PasswordDemo2026!');
 
 // AI generation helpers
+$premiumPacks = ccms_list_premium_packs();
+lc_assert(count($premiumPacks) >= 10, 'premium pack catalog exposes multiple curated packs');
+$legalPack = ccms_load_premium_pack('legal-prestige');
+lc_assert(is_array($legalPack), 'specific premium pack can be loaded');
+lc_assert(ccms_capsule_can_render($legalPack['capsule'] ?? []), 'loaded premium pack capsule is renderable');
+$legalPackHtml = ccms_render_capsule_body($legalPack['capsule'] ?? [], ['theme_preset' => 'luxury']);
+lc_assert(str_contains($legalPackHtml, 'fonts.googleapis.com/css2'), 'premium pack render includes sanitized Google Fonts link');
+lc_assert(str_contains($legalPackHtml, 'data-ccms-animate='), 'premium pack render maps global animation preset to block attributes');
+lc_assert(str_contains($legalPackHtml, 'rgba(0,0,0,0.24)'), 'premium pack render maps legacy shadow intensity to card shadow');
+
 $brief = [
     'business_name' => 'OTM Lawyers',
     'page_title' => 'Corporate Law for fast-moving businesses',
@@ -356,9 +366,11 @@ $brief = [
 ];
 $fallback = ccms_ai_generate_payload($brief, ccms_ai_defaults());
 lc_assert(($fallback['_meta']['mode'] ?? '') !== '', 'ai payload includes meta mode');
+lc_assert(($fallback['_meta']['pack_id'] ?? '') !== '', 'ai payload meta keeps the selected premium pack id');
 lc_assert(is_array($fallback['page']['capsule'] ?? null), 'ai payload includes capsule');
 lc_assert(count($fallback['page']['capsule']['blocks'] ?? []) >= 6, 'ai fallback generates multiple blocks');
 lc_assert(($fallback['site']['title'] ?? '') === 'OTM Lawyers', 'ai fallback uses business name');
+lc_assert(in_array(($fallback['page']['capsule']['meta']['template'] ?? ''), array_map(static fn (array $pack): string => (string) ($pack['id'] ?? ''), $premiumPacks), true), 'ai fallback stamps the capsule with the selected premium pack template');
 
 $data = ccms_load_data();
 $pageRecord = ccms_ai_page_record_from_payload($fallback, $data['pages'], true);
@@ -719,10 +731,10 @@ lc_assert(ccms_capsule_can_render($capsule) === true, 'generated capsule is full
 $bodyHtml = ccms_render_capsule_body($capsule);
 lc_assert(str_contains($bodyHtml, 'Corporate Law for fast-moving businesses'), 'render body contains generated title');
 lc_assert(str_contains($bodyHtml, 'Book a consultation'), 'render body contains CTA');
-lc_assert(str_contains($bodyHtml, 'Start the conversation'), 'render body contains form block');
+lc_assert(str_contains($bodyHtml, '<form ') && str_contains($bodyHtml, '/api/forms/submit'), 'render body contains lead capture form markup');
 lc_assert(str_contains($bodyHtml, '/api/forms/submit'), 'render body includes public form endpoint');
 lc_assert(str_contains($bodyHtml, 'method="post"'), 'render body includes public form post method');
-lc_assert(!str_contains($bodyHtml, 'IntersectionObserver'), 'capsule render skips motion observer when no blocks are animated');
+lc_assert(str_contains($bodyHtml, 'IntersectionObserver'), 'premium pack render includes motion observer when the selected pack defines a global animation preset');
 $animatedCapsule = $capsule;
 $animatedCapsule['style']['button_radius'] = '12px';
 $animatedCapsule['style']['line_height_body'] = '1.9';
@@ -736,20 +748,54 @@ lc_assert(str_contains($animatedBodyHtml, 'data-ccms-animate="fade-up"'), 'capsu
 lc_assert(str_contains($animatedBodyHtml, 'IntersectionObserver'), 'capsule render injects motion observer when a block is animated');
 lc_assert(str_contains($animatedBodyHtml, '--site-button-radius:12px'), 'capsule style override controls button radius');
 lc_assert(str_contains($animatedBodyHtml, '--site-body-leading:1.9'), 'capsule style override controls body line height');
-$layoutCapsule = $capsule;
-foreach (($layoutCapsule['blocks'] ?? []) as $layoutIndex => $layoutBlock) {
-    $layoutType = (string) ($layoutBlock['type'] ?? '');
-    if ($layoutType === 'hero_fullscreen') {
-        $layoutCapsule['blocks'][$layoutIndex]['layout'] = 'reversed';
-        $layoutCapsule['blocks'][$layoutIndex]['props']['background_image'] = '/uploads/demo.png';
-    }
-    if ($layoutType === 'features') {
-        $layoutCapsule['blocks'][$layoutIndex]['layout'] = '4-col';
-    }
-    if ($layoutType === 'testimonial_cards') {
-        $layoutCapsule['blocks'][$layoutIndex]['layout'] = 'spotlight';
-    }
-}
+$layoutCapsule = [
+    'style' => [],
+    'blocks' => [
+        [
+            'id' => 'layout-hero',
+            'type' => 'hero_fullscreen',
+            'layout' => 'reversed',
+            'props' => [
+                'badge' => 'Hero',
+                'title' => 'Layout hero',
+                'subtitle' => 'Hero layout coverage',
+                'background_image' => '/uploads/demo.png',
+                'cta_primary' => 'Contact',
+                'cta_href' => '#contact',
+            ],
+        ],
+        [
+            'id' => 'layout-features',
+            'type' => 'features',
+            'layout' => '4-col',
+            'props' => [
+                'badge' => 'Features',
+                'title' => 'Feature layouts',
+                'subtitle' => 'Four columns',
+                'items' => [
+                    ['title' => 'One', 'desc' => 'One'],
+                    ['title' => 'Two', 'desc' => 'Two'],
+                    ['title' => 'Three', 'desc' => 'Three'],
+                    ['title' => 'Four', 'desc' => 'Four'],
+                ],
+            ],
+        ],
+        [
+            'id' => 'layout-testimonials',
+            'type' => 'testimonial_cards',
+            'layout' => 'spotlight',
+            'props' => [
+                'badge' => 'Proof',
+                'title' => 'Testimonial layouts',
+                'subtitle' => 'Spotlight mode',
+                'items' => [
+                    ['quote' => 'Lead quote', 'name' => 'Lead client', 'role' => 'Lead role', 'stars' => 5],
+                    ['quote' => 'Support quote', 'name' => 'Support client', 'role' => 'Support role', 'stars' => 5],
+                ],
+            ],
+        ],
+    ],
+];
 $layoutBodyHtml = ccms_render_capsule_body($layoutCapsule, $data['site']);
 lc_assert(str_contains($layoutBodyHtml, 'data-ccms-layout="reversed"'), 'hero layout variant is rendered on capsule output');
 lc_assert(str_contains($layoutBodyHtml, 'data-ccms-layout="4-col"'), 'features layout variant is rendered on capsule output');
@@ -998,11 +1044,23 @@ lc_assert(str_contains($publicHtml, '--site-heading-weight:400'), 'public page i
 lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includes custom css block');
 lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'public page includes enabled plugin markup');
 lc_assert(str_contains($publicHtml, 'property="og:title"'), 'public page includes og title');
+lc_assert(str_contains($publicHtml, 'property="og:locale" content="es_ES"'), 'public page includes og locale');
 lc_assert(str_contains($publicHtml, 'rel="canonical"'), 'public page includes canonical link');
+lc_assert(str_contains($publicHtml, 'name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"'), 'public page includes robots meta');
+lc_assert(str_contains($publicHtml, 'name="geo.position" content="39.4699;-0.3763"'), 'public page includes geo position meta');
+lc_assert(str_contains($publicHtml, 'name="geo.placename" content="Valencia"'), 'public page includes geo place meta');
 lc_assert(str_contains($publicHtml, 'application/ld+json'), 'public page includes schema json-ld');
+lc_assert(str_contains($publicHtml, '"@type":"WebSite"'), 'public page includes website schema');
 lc_assert(str_contains($publicHtml, '"@type":"Restaurant"'), 'public page includes business schema type');
 lc_assert(str_contains($publicHtml, '"openingHoursSpecification"'), 'public page includes business opening hours schema');
 lc_assert(str_contains($publicHtml, '"hasMenuSection"'), 'public page includes structured menu schema');
+lc_assert(str_contains($publicHtml, '"hasOfferCatalog"'), 'public page includes structured offer catalog schema');
+lc_assert(str_contains($publicHtml, '"@type":"FAQPage"'), 'public page includes faq schema when faq block exists');
+lc_assert(str_contains($publicHtml, 'site-local-facts'), 'public page renders visible business facts block');
+lc_assert(str_contains($publicHtml, 'Calle Mayor 15'), 'public page renders visible address facts');
+lc_assert(str_contains($publicHtml, 'Lun-Vie 09:00-14:00 / 17:00-20:00; Sab 10:00-14:00; Dom Cerrado'), 'public page renders visible schedule facts');
+lc_assert(str_contains($publicHtml, 'Menu del dia desde 11.50 EUR'), 'public page renders visible exact price facts');
+lc_assert(str_contains($publicHtml, 'casamaria.example.com/reservas'), 'public page renders visible reservation facts');
 lc_assert(str_contains($publicHtml, 'googletagmanager.com/gtag/js?id=G-DEEPTEST1'), 'public page includes GA4 script');
 lc_assert(str_contains($publicHtml, 'gtag("config","G-DEEPTEST1")') || str_contains($publicHtml, 'gtag("config", "G-DEEPTEST1")'), 'public page includes GA4 config');
 lc_assert(!str_contains($publicHtml, 'Agency Console'), 'public page does not leak admin white-label branding');
@@ -1019,12 +1077,22 @@ $playfulHtml = ccms_render_public_page($playfulSite + ['live_data' => ccms_publi
 lc_assert(str_contains($playfulHtml, '--site-surface-radius:32px'), 'playful profile sets large surface radius');
 lc_assert(str_contains($playfulHtml, '--site-space-scale:1.3'), 'playful profile increases spacing scale');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
+$businessPublicPage = ccms_page_by_slug($data, 'casa-maria');
+$businessPublicHtml = ccms_render_public_page(ccms_public_site_config($data), $businessPublicPage, ccms_menu_pages($data));
+lc_assert(str_contains($businessPublicHtml, '"@type":"BreadcrumbList"'), 'internal business page includes breadcrumb schema');
 $sitemapXml = ccms_render_sitemap_xml($data);
 lc_assert(str_contains($sitemapXml, '<urlset'), 'sitemap xml renders urlset');
 lc_assert(str_contains($sitemapXml, ccms_base_url()), 'sitemap includes public base url');
+lc_assert(str_contains($sitemapXml, 'xmlns:image='), 'sitemap includes image namespace');
+lc_assert(str_contains($sitemapXml, '<image:loc>'), 'sitemap includes image entries');
+lc_assert(str_contains($sitemapXml, '/uploads/demo.png'), 'sitemap includes uploaded image urls');
 $robotsTxt = ccms_render_robots_txt();
 lc_assert(str_contains($robotsTxt, 'Sitemap:'), 'robots.txt includes sitemap reference');
 lc_assert(str_contains($robotsTxt, 'User-agent: *'), 'robots.txt includes user agent');
+lc_assert(str_contains($robotsTxt, 'Disallow: /r-admin/'), 'robots.txt blocks admin path');
+lc_assert(str_contains($robotsTxt, 'User-agent: OAI-SearchBot'), 'robots.txt includes explicit OpenAI search crawler group');
+lc_assert(str_contains($robotsTxt, 'Allow: /.well-known/ai.json'), 'robots.txt explicitly allows the AI feed');
+lc_assert(str_contains($robotsTxt, 'User-agent: PerplexityBot'), 'robots.txt includes explicit Perplexity crawler group');
 $blogArchiveHtml = ccms_render_blog_archive_page($data['site'], ccms_posts_published($data), ccms_menu_pages($data));
 lc_assert(str_contains($blogArchiveHtml, 'How founders should approach contract review'), 'blog archive renders published post title');
 lc_assert(str_contains($blogArchiveHtml, '/blog/how-founders-should-approach-contract-review'), 'blog archive links to post slug');
@@ -1032,6 +1100,9 @@ $blogPost = ccms_post_by_slug($data, 'how-founders-should-approach-contract-revi
 $blogPostHtml = ccms_render_blog_post_page($data['site'], $blogPost, ccms_menu_pages($data));
 lc_assert(str_contains($blogPostHtml, 'Founder contract review checklist'), 'blog post render uses meta title');
 lc_assert(str_contains($blogPostHtml, 'Review risk, scope, payment terms'), 'blog post render includes content html');
+lc_assert(str_contains($blogPostHtml, 'article:modified_time'), 'blog post render includes article modified time meta');
+lc_assert(str_contains($blogPostHtml, '"@type":"BlogPosting"'), 'blog post render includes blog posting schema');
+lc_assert(str_contains($blogPostHtml, '"@type":"BreadcrumbList"'), 'blog post render includes breadcrumb schema');
 $rssXml = ccms_render_blog_rss($data['site'], ccms_posts_published($data));
 lc_assert(str_contains($rssXml, '<rss version="2.0">'), 'blog rss renders rss root');
 lc_assert(str_contains($rssXml, '<title>How founders should approach contract review</title>'), 'blog rss includes post item title');
@@ -1171,6 +1242,8 @@ lc_assert(str_contains($adminHtml, 'Studio local'), 'admin shows studio tab');
 lc_assert(str_contains($adminHtml, 'Crea una web completa desde un brief'), 'studio panel is rendered');
 lc_assert(str_contains($adminHtml, 'Guardar configuración'), 'studio settings form rendered');
 lc_assert(str_contains($adminHtml, 'Generar borrador con LM Studio'), 'studio generate button rendered');
+lc_assert(str_contains($adminHtml, 'Pack premium de partida'), 'studio panel renders premium pack selector');
+lc_assert(str_contains($adminHtml, 'legal-prestige'), 'studio panel renders curated premium pack options');
 lc_assert(str_contains($adminHtml, 'Agency Console'), 'admin renders white-label brand name');
 lc_assert(str_contains($adminHtml, 'Private client portal'), 'admin renders white-label brand tagline');
 lc_assert(str_contains($adminHtml, 'Modo cliente'), 'admin renders client mode toggle');
@@ -1388,6 +1461,10 @@ lc_assert(ccms_capsule_media_url('/uploads/demo.png', 'seed', 800, 600) === '/up
 $optimizedFragment = ccms_optimize_public_images_html('<figure><img src="/uploads/demo.png" alt="Demo"></figure>');
 lc_assert(str_contains($optimizedFragment, 'loading="lazy"'), 'optimized public images add lazy loading');
 lc_assert(str_contains($optimizedFragment, 'decoding="async"'), 'optimized public images add async decoding');
+ccms_set_current_public_page(['title' => 'Casa Maria']);
+$optimizedFragmentMissingAlt = ccms_optimize_public_images_html('<figure><img src="/uploads/demo.png"></figure>');
+ccms_set_current_public_page(null);
+lc_assert(str_contains($optimizedFragmentMissingAlt, 'alt="Casa Maria"'), 'optimized public images add fallback alt text when missing');
 if (!empty($generatedImageVariants['generated']) || !empty($generatedImageVariants['webp_generated'])) {
     lc_assert(str_contains($optimizedFragment, 'srcset='), 'optimized public images add srcset when variants exist');
 }

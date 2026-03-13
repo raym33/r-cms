@@ -1,0 +1,262 @@
+{
+  "version": 2,
+  "template_id": "legal",
+  "lang": "es",
+  "created_at": "2026-03-09T11:13:12",
+  "updated_at": "2026-03-09T11:13:12",
+  "meta": {
+    "business_name": "Senda Legal",
+    "page_title": "Senda Legal | Derecho mercantil y conflictos societarios con claridad, rigor y respuesta rapida",
+    "description": "Senda Legal organiza su propuesta alrededor de derecho mercantil y conflictos societarios y usa esta landing para conectar con familias, explicar mejor el valor y llevar la visita hacia solicitar consulta.",
+    "style_pack": "impeccable_hero"
+  },
+  "style": {
+    "accent": "#c8ab7b",
+    "accent_dark": "#8a6a45",
+    "accent_rgb": "200,171,123",
+    "bg_from": "#050505",
+    "bg_to": "#121212",
+    "card_bg": "rgba(18,18,18,0.78)",
+    "card_border": "rgba(255,255,255,0.08)",
+    "gradient_accent": "linear-gradient(135deg, #c8ab7b 0%, #8a6a45 100%)",
+    "theme_mode": "dark",
+    "text_primary": "#f6f1ea",
+    "text_secondary": "#d0c6b8",
+    "text_muted": "#8d8478",
+    "nav_bg": "rgba(10,10,10,0.48)",
+    "hero_style": "minimal",
+    "card_style": "elevated",
+    "nav_style": "transparent",
+    "animation_preset": "fade",
+    "font_pairing": "elegant",
+    "font_family": "'Source Sans 3'",
+    "font_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap",
+    "section_padding": "8rem",
+    "card_radius": "1.5rem",
+    "shadow_intensity": "0.24",
+    "animation_style": "fade-up",
+    "font_heading": "'Playfair Display'"
+  },
+  "wildcard": {
+    "theme": {
+      "scene": "document_columns",
+      "desc": "Document stacks, balance lines, and subtle columns.",
+      "colors": [
+        "#1e3a5f",
+        "#60a5fa",
+        "#dbeafe"
+      ]
+    },
+    "enabled": false
+  },
+  "blocks": [
+    {
+      "id": "1c38820b",
+      "type": "sticky_header",
+      "props": {
+        "brand": "Senda Legal",
+        "announcement": "Madrid · derecho mercantil y conflictos societarios",
+        "links": [
+          {
+            "text": "Inicio",
+            "href": "#hero_fullscreen"
+          },
+          {
+            "text": "Historia",
+            "href": "#text_block"
+          },
+          {
+            "text": "Servicios",
+            "href": "#services_cards"
+          },
+          {
+            "text": "Resenas",
+            "href": "#reviews_summary"
+          },
+          {
+            "text": "Contacto",
+            "href": "#lead_form"
+          }
+        ],
+        "cta_text": "Solicitar consulta",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "a0b95bfe",
+      "type": "hero_fullscreen",
+      "props": {
+        "badge": "Despachos y Asesorias",
+        "title": "Derecho mercantil y conflictos societarios con claridad, rigor y respuesta rapida",
+        "subtitle": "Senda Legal organiza su propuesta alrededor de derecho mercantil y conflictos societarios y usa esta landing para conectar con familias, explicar mejor el valor y llevar la visita hacia solicitar consulta.",
+        "background_image": "https://loremflickr.com/1800/1200/professional?lock=44757",
+        "cta_primary": "Solicitar consulta",
+        "cta_secondary": "Ver detalle",
+        "cta_href": "#lead-form"
+      }
+    },
+    {
+      "id": "fedcc6d1",
+      "type": "text_block",
+      "props": {
+        "badge": "Narrativa",
+        "title": "Cuando la venta necesita contexto",
+        "paragraphs": [
+          "Senda Legal trabaja derecho mercantil y conflictos societarios y necesita que la pagina explique mejor despacho orientado a pymes y socios fundadores.",
+          "Este bloque deja espacio para posicionamiento, contexto y una promesa mas creible."
+        ],
+        "quote": "La claridad no simplifica en exceso: ordena mejor lo importante.",
+        "quote_author": "Senda Legal"
+      }
+    },
+    {
+      "id": "8e2fa784",
+      "type": "services_cards",
+      "props": {
+        "badge": "Servicios",
+        "title": "Servicios principales",
+        "subtitle": "Una vista clara de como Senda Legal organiza la oferta.",
+        "services": [
+          {
+            "icon": "target",
+            "title": "Consulta inicial",
+            "desc": "Consulta inicial aterrizado para familias con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en derecho mercantil",
+              "Entrega alineada con despacho orientado a pymes",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Solicitar consulta",
+            "cta_href": "#lead-form"
+          },
+          {
+            "icon": "zap",
+            "title": "Estrategia legal",
+            "desc": "Estrategia legal aterrizado para familias con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en derecho mercantil",
+              "Entrega alineada con despacho orientado a pymes",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Solicitar consulta",
+            "cta_href": "#lead-form"
+          },
+          {
+            "icon": "shield",
+            "title": "Seguimiento de expedientes",
+            "desc": "Seguimiento de expedientes aterrizado para familias con una ejecucion clara, ritmo visual y siguiente paso bien definido.",
+            "bullets": [
+              "Enfoque en derecho mercantil",
+              "Entrega alineada con despacho orientado a pymes",
+              "Seguimiento y respuesta rapida"
+            ],
+            "cta_text": "Solicitar consulta",
+            "cta_href": "#lead-form"
+          }
+        ]
+      }
+    },
+    {
+      "id": "b06d4028",
+      "type": "reviews_summary",
+      "props": {
+        "badge": "Resenas",
+        "title": "Prueba resumida en segundos",
+        "score": "4.9/5",
+        "review_count": "535+ resenas",
+        "source": "Google, directorios y recomendacion directa",
+        "breakdown": [
+          {
+            "label": "5 estrellas",
+            "value": 91
+          },
+          {
+            "label": "4 estrellas",
+            "value": 7
+          },
+          {
+            "label": "3 estrellas",
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "fc6e368f",
+      "type": "lead_form",
+      "props": {
+        "badge": "Contacto",
+        "title": "Listo para solicitar consulta?",
+        "subtitle": "Una peticion clara basta para que Senda Legal responda con el siguiente paso.",
+        "button_text": "Solicitar consulta",
+        "show_phone": true,
+        "show_message": true,
+        "privacy_text": "Tus datos solo se usan para responder a esta solicitud."
+      }
+    },
+    {
+      "id": "4343e224",
+      "type": "map_embed",
+      "props": {
+        "badge": "Ubicacion",
+        "title": "Direccion, horario y contacto en un bloque",
+        "subtitle": "Especialmente util cuando la proximidad importa para convertir.",
+        "embed_url": "https://www.google.com/maps?q=Calle+Almadena%2C+36%2C+Madrid%2C+Spain&output=embed",
+        "address": "Calle Almadena, 36, Madrid",
+        "phone": "+34 6762 933 479",
+        "email": "hola@sendalegal.es",
+        "hours": "Lun-Vie 09:00-18:00"
+      }
+    },
+    {
+      "id": "1ddc7fbc",
+      "type": "footer_multi",
+      "props": {
+        "brand": "Senda Legal",
+        "description": "Senda Legal organiza su propuesta alrededor de derecho mercantil y conflictos societarios y usa esta landing para conectar con familias, explicar mejor el valor y llevar la visita hacia solicitar consulta.",
+        "columns": [
+          {
+            "title": "Empresa",
+            "links": [
+              {
+                "text": "Inicio",
+                "href": "#hero-split"
+              },
+              {
+                "text": "Servicios",
+                "href": "#services_cards"
+              },
+              {
+                "text": "Contacto",
+                "href": "#lead-form"
+              }
+            ]
+          },
+          {
+            "title": "Recursos",
+            "links": [
+              {
+                "text": "Portfolio",
+                "href": "#portfolio_grid"
+              },
+              {
+                "text": "Testimonios",
+                "href": "#testimonial_cards"
+              },
+              {
+                "text": "FAQ",
+                "href": "#faq"
+              }
+            ]
+          }
+        ],
+        "contact_lines": [
+          "hola@sendalegal.es",
+          "+34 6762 933 479",
+          "Calle Almadena, 36, Madrid"
+        ],
+        "copyright": "© 2026 Senda Legal. Todos los derechos reservados."
+      }
+    }
+  ]
+}

@@ -7,6 +7,7 @@ require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/plugins.php';
 require_once __DIR__ . '/render.php';
+require_once __DIR__ . '/premium_packs.php';
 require_once __DIR__ . '/forms.php';
 require_once __DIR__ . '/images.php';
 require_once __DIR__ . '/export.php';
