@@ -72,6 +72,7 @@ lc_assert(is_array(ccms_default_data()), 'default data returns array');
 $defaults = ccms_default_data();
 lc_assert(($defaults['site']['title'] ?? '') === 'LinuxCMS', 'default site title is LinuxCMS');
 lc_assert(($defaults['site']['theme_preset'] ?? '') === 'warm', 'default site theme preset is warm');
+lc_assert(($defaults['site']['font_pairing'] ?? '') === 'auto', 'default site font pairing is auto');
 lc_assert(array_key_exists('custom_css', $defaults['site']), 'default site includes custom css');
 lc_assert(array_key_exists('trusted_plugins_enabled', $defaults['site']), 'default site includes trusted plugins flag');
 lc_assert(array_key_exists('white_label_enabled', $defaults['site']), 'default site includes white-label flag');
@@ -512,6 +513,11 @@ $supported = ccms_capsule_supported_blocks();
 foreach (['sticky_header','hero_fullscreen','split_image_right','features','testimonial_cards','faq','lead_form','footer_multi'] as $type) {
     lc_assert(in_array($type, $supported, true), 'supported blocks include ' . $type);
 }
+$builderTemplates = ccms_admin_capsule_builder_templates();
+$builderTemplateTypes = array_map(static fn (array $template): string => (string) ($template['type'] ?? ''), $builderTemplates);
+foreach (['pricing_toggle', 'blog_featured', 'blog_carousel'] as $type) {
+    lc_assert(in_array($type, $builderTemplateTypes, true), 'builder templates include ' . $type);
+}
 lc_assert(ccms_capsule_can_render($capsule) === true, 'generated capsule is fully renderable');
 $bodyHtml = ccms_render_capsule_body($capsule);
 lc_assert(str_contains($bodyHtml, 'Corporate Law for fast-moving businesses'), 'render body contains generated title');
@@ -519,6 +525,189 @@ lc_assert(str_contains($bodyHtml, 'Book a consultation'), 'render body contains 
 lc_assert(str_contains($bodyHtml, 'Start the conversation'), 'render body contains form block');
 lc_assert(str_contains($bodyHtml, '/api/forms/submit'), 'render body includes public form endpoint');
 lc_assert(str_contains($bodyHtml, 'method="post"'), 'render body includes public form post method');
+lc_assert(!str_contains($bodyHtml, 'IntersectionObserver'), 'capsule render skips motion observer when no blocks are animated');
+$animatedCapsule = $capsule;
+$animatedCapsule['style']['button_radius'] = '12px';
+$animatedCapsule['style']['line_height_body'] = '1.9';
+$animatedCapsule['blocks'][0]['style']['animation'] = 'fade-up';
+$animatedBodyHtml = ccms_render_capsule_body($animatedCapsule, [
+    'theme_preset' => 'corporate',
+    'font_pairing' => 'humanist',
+    'colors' => $data['site']['colors'] ?? [],
+]);
+lc_assert(str_contains($animatedBodyHtml, 'data-ccms-animate="fade-up"'), 'capsule render includes block animation attribute');
+lc_assert(str_contains($animatedBodyHtml, 'IntersectionObserver'), 'capsule render injects motion observer when a block is animated');
+lc_assert(str_contains($animatedBodyHtml, '--site-button-radius:12px'), 'capsule style override controls button radius');
+lc_assert(str_contains($animatedBodyHtml, '--site-body-leading:1.9'), 'capsule style override controls body line height');
+$layoutCapsule = $capsule;
+foreach (($layoutCapsule['blocks'] ?? []) as $layoutIndex => $layoutBlock) {
+    $layoutType = (string) ($layoutBlock['type'] ?? '');
+    if ($layoutType === 'hero_fullscreen') {
+        $layoutCapsule['blocks'][$layoutIndex]['layout'] = 'reversed';
+        $layoutCapsule['blocks'][$layoutIndex]['props']['background_image'] = '/uploads/demo.png';
+    }
+    if ($layoutType === 'features') {
+        $layoutCapsule['blocks'][$layoutIndex]['layout'] = '4-col';
+    }
+    if ($layoutType === 'testimonial_cards') {
+        $layoutCapsule['blocks'][$layoutIndex]['layout'] = 'spotlight';
+    }
+}
+$layoutBodyHtml = ccms_render_capsule_body($layoutCapsule, $data['site']);
+lc_assert(str_contains($layoutBodyHtml, 'data-ccms-layout="reversed"'), 'hero layout variant is rendered on capsule output');
+lc_assert(str_contains($layoutBodyHtml, 'data-ccms-layout="4-col"'), 'features layout variant is rendered on capsule output');
+lc_assert(str_contains($layoutBodyHtml, 'grid-template-columns:repeat(4,minmax(0,1fr))'), 'features 4-col layout changes the grid structure');
+lc_assert(str_contains($layoutBodyHtml, 'data-ccms-layout="spotlight"'), 'testimonial spotlight layout is rendered on capsule output');
+lc_assert(str_contains($layoutBodyHtml, 'class="ccms-grid-2" style="align-items:stretch"'), 'testimonial spotlight layout uses a split spotlight composition');
+$sprint3Capsule = [
+    'style' => [],
+    'blocks' => [
+        [
+            'id' => 'pricing-sprint3',
+            'type' => 'pricing',
+            'layout' => 'comparison',
+            'style' => ['background_effect' => 'glass'],
+            'props' => [
+                'badge' => 'Pricing',
+                'title' => 'Compare plans',
+                'plans' => [
+                    ['name' => 'Starter', 'price' => '$29/mo', 'features' => ['Audit', 'Support'], 'cta' => 'Start'],
+                    ['name' => 'Growth', 'price' => '$79/mo', 'features' => ['Audit', 'Support', 'Strategy'], 'cta' => 'Scale', 'highlighted' => true],
+                ],
+            ],
+        ],
+        [
+            'id' => 'gallery-sprint3',
+            'type' => 'gallery',
+            'layout' => 'masonry',
+            'style' => ['background_effect' => 'grain'],
+            'props' => [
+                'badge' => 'Gallery',
+                'title' => 'Selected visuals',
+                'images' => [
+                    ['url' => '', 'alt' => 'Gallery image 1'],
+                    ['url' => '', 'alt' => 'Gallery image 2'],
+                    ['url' => '', 'alt' => 'Gallery image 3'],
+                    ['url' => '', 'alt' => 'Gallery image 4'],
+                ],
+            ],
+        ],
+        [
+            'id' => 'blog-sprint3-featured',
+            'type' => 'blog_grid',
+            'layout' => 'featured-left',
+            'props' => [
+                'badge' => 'Insights',
+                'title' => 'Latest ideas',
+                'subtitle' => 'Fresh notes from the studio',
+                'posts' => [
+                    ['category' => 'Guide', 'title' => 'Featured story', 'excerpt' => 'A longer lead article.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#featured', 'image' => ''],
+                    ['category' => 'Guide', 'title' => 'Second story', 'excerpt' => 'A compact supporting post.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#second', 'image' => ''],
+                    ['category' => 'Guide', 'title' => 'Third story', 'excerpt' => 'Another supporting post.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#third', 'image' => ''],
+                ],
+            ],
+        ],
+        [
+            'id' => 'blog-sprint3-list',
+            'type' => 'blog_grid',
+            'layout' => 'list',
+            'style' => ['background_effect' => 'dots'],
+            'props' => [
+                'badge' => 'Archive',
+                'title' => 'More reads',
+                'subtitle' => 'List presentation',
+                'posts' => [
+                    ['category' => 'Briefing', 'title' => 'List item one', 'excerpt' => 'Short summary one.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#one', 'image' => ''],
+                    ['category' => 'Briefing', 'title' => 'List item two', 'excerpt' => 'Short summary two.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#two', 'image' => ''],
+                ],
+            ],
+        ],
+    ],
+];
+$sprint3Html = ccms_render_capsule_body($sprint3Capsule, $data['site']);
+lc_assert(str_contains($sprint3Html, 'data-ccms-layout="comparison"'), 'pricing comparison layout is rendered on capsule output');
+lc_assert(str_contains($sprint3Html, '<th>Starter</th><th>Growth</th>'), 'pricing comparison layout renders plan headers');
+lc_assert(str_contains($sprint3Html, 'data-ccms-bg="glass"'), 'pricing block renders glass background effect');
+lc_assert(str_contains($sprint3Html, 'data-ccms-layout="masonry"'), 'gallery masonry layout is rendered on capsule output');
+lc_assert(str_contains($sprint3Html, 'class="ccms-gallery-masonry"'), 'gallery masonry layout uses masonry wrapper');
+lc_assert(str_contains($sprint3Html, 'data-ccms-bg="grain"'), 'gallery block renders grain background effect');
+lc_assert(str_contains($sprint3Html, 'data-ccms-layout="featured-left"'), 'blog featured-left layout is rendered on capsule output');
+lc_assert(str_contains($sprint3Html, 'data-ccms-layout="list"'), 'blog list layout is rendered on capsule output');
+lc_assert(str_contains($sprint3Html, 'ccms-blog-list-card'), 'blog list layout uses list card composition');
+$sprint4Capsule = [
+    'style' => [],
+    'blocks' => [
+        [
+            'id' => 'pricing-toggle-sprint4',
+            'type' => 'pricing_toggle',
+            'layout' => 'stacked',
+            'props' => [
+                'badge' => 'Plans',
+                'title' => 'Annual pricing',
+                'subtitle' => 'Choose your pace.',
+                'annual_label' => 'Save 25% yearly',
+                'plans' => [
+                    ['name' => 'Core', 'price' => '$39/mo', 'features' => ['Support', 'Reporting'], 'cta' => 'Choose core'],
+                    ['name' => 'Scale', 'price' => '$99/mo', 'features' => ['Support', 'Reporting', 'Advisory'], 'cta' => 'Choose scale', 'highlighted' => true],
+                ],
+            ],
+        ],
+        [
+            'id' => 'blog-featured-sprint4',
+            'type' => 'blog_featured',
+            'layout' => 'reversed',
+            'props' => [
+                'badge' => 'Magazine',
+                'title' => 'Editorial feature',
+                'subtitle' => 'Lead story and side reads.',
+                'posts' => [
+                    ['category' => 'Feature', 'title' => 'Lead feature', 'excerpt' => 'Main story.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#lead', 'image' => ''],
+                    ['category' => 'Feature', 'title' => 'Support one', 'excerpt' => 'Support copy one.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#support-one', 'image' => ''],
+                    ['category' => 'Feature', 'title' => 'Support two', 'excerpt' => 'Support copy two.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#support-two', 'image' => ''],
+                ],
+            ],
+        ],
+        [
+            'id' => 'blog-carousel-spotlight',
+            'type' => 'blog_carousel',
+            'layout' => 'spotlight',
+            'props' => [
+                'badge' => 'Stories',
+                'title' => 'Spotlight stories',
+                'subtitle' => 'Main story plus supporting rail.',
+                'posts' => [
+                    ['category' => 'Story', 'title' => 'Spotlight lead', 'excerpt' => 'Lead story.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#spotlight-lead', 'image' => ''],
+                    ['category' => 'Story', 'title' => 'Spotlight support', 'excerpt' => 'Secondary story.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#spotlight-support', 'image' => ''],
+                ],
+            ],
+        ],
+        [
+            'id' => 'blog-carousel-compact',
+            'type' => 'blog_carousel',
+            'layout' => 'compact',
+            'props' => [
+                'badge' => 'Stories',
+                'title' => 'Compact stories',
+                'subtitle' => 'Tighter article rail.',
+                'posts' => [
+                    ['category' => 'Story', 'title' => 'Compact one', 'excerpt' => 'Short brief one.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#compact-one', 'image' => ''],
+                    ['category' => 'Story', 'title' => 'Compact two', 'excerpt' => 'Short brief two.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#compact-two', 'image' => ''],
+                    ['category' => 'Story', 'title' => 'Compact three', 'excerpt' => 'Short brief three.', 'author' => 'Editor', 'date' => 'March 2026', 'href' => '#compact-three', 'image' => ''],
+                ],
+            ],
+        ],
+    ],
+];
+$sprint4Html = ccms_render_capsule_body($sprint4Capsule, $data['site']);
+lc_assert(str_contains($sprint4Html, 'data-ccms-layout="stacked"'), 'pricing toggle stacked layout is rendered on capsule output');
+lc_assert(str_contains($sprint4Html, 'ccms-pricing-stack-card'), 'pricing toggle stacked layout uses stacked pricing composition');
+lc_assert(str_contains($sprint4Html, 'Save 25% yearly'), 'pricing toggle layout preserves annual helper label');
+lc_assert(str_contains($sprint4Html, 'data-ccms-layout="reversed"'), 'blog featured reversed layout is rendered on capsule output');
+lc_assert(strpos($sprint4Html, 'Support one') < strpos($sprint4Html, 'Lead feature'), 'blog featured reversed layout swaps featured and side content order');
+lc_assert(str_contains($sprint4Html, 'data-ccms-layout="spotlight"'), 'blog carousel spotlight layout is rendered on capsule output');
+lc_assert(str_contains($sprint4Html, 'Spotlight lead'), 'blog carousel spotlight layout renders lead story');
+lc_assert(str_contains($sprint4Html, 'data-ccms-layout="compact"'), 'blog carousel compact layout is rendered on capsule output');
+lc_assert(substr_count($sprint4Html, 'padding:22px"><span class="ccms-kicker">') >= 3, 'blog carousel compact layout uses compact article cards');
 $submissionFixture = [
     'id' => 'sub_fixture',
     'kind' => 'lead_form',
@@ -564,12 +753,23 @@ $adminPagesHtml = ob_get_clean();
 ob_start();
 lc_assert(str_contains($adminPagesHtml, '/r-admin/assets/admin.js'), 'admin pages view includes extracted admin javascript asset');
 lc_assert(str_contains($adminPagesHtml, '/r-admin/assets/admin.css'), 'admin pages view includes extracted admin stylesheet asset');
+$adminJsAsset = (string) file_get_contents($sourceRoot . '/r-admin/assets/admin.js');
+lc_assert(str_contains($adminJsAsset, 'data-builder-layout-field'), 'admin builder asset includes block layout selector logic');
+lc_assert(str_contains($adminJsAsset, 'background_effect'), 'admin builder asset includes background effect control');
+lc_assert(str_contains($adminJsAsset, 'comparison'), 'admin builder asset includes pricing layout options');
+lc_assert(str_contains($adminJsAsset, 'pricing_toggle'), 'admin builder asset includes pricing toggle layout options');
+lc_assert(str_contains($adminJsAsset, 'masonry'), 'admin builder asset includes gallery layout options');
+lc_assert(str_contains($adminJsAsset, 'featured-left'), 'admin builder asset includes blog featured layout option');
+lc_assert(str_contains($adminJsAsset, 'blog_featured'), 'admin builder asset includes blog featured block layout map');
+lc_assert(str_contains($adminJsAsset, 'blog_carousel'), 'admin builder asset includes blog carousel layout map');
+lc_assert(str_contains($adminJsAsset, 'compact'), 'admin builder asset includes compact blog carousel layout option');
 $publicHtml = ccms_render_public_page($data['site'], $homepage, ccms_menu_pages($data));
 lc_assert(str_contains($publicHtml, '<!doctype html>'), 'public page is full html');
 lc_assert(str_contains($publicHtml, 'Corporate Law for fast-moving businesses'), 'public page contains generated title');
 lc_assert(str_contains($publicHtml, 'OTM Lawyers'), 'public page contains business name');
 lc_assert(str_contains($publicHtml, 'Book a consultation'), 'public page contains CTA text');
 lc_assert(str_contains($publicHtml, '--site-surface-radius:16px'), 'public page includes editorial theme radius');
+lc_assert(str_contains($publicHtml, '--site-heading-weight:400'), 'public page includes editorial heading weight');
 lc_assert(str_contains($publicHtml, 'id="ccms-custom-css"'), 'public page includes custom css block');
 lc_assert(str_contains($publicHtml, 'data-ccms-plugin="announcement-chip"'), 'public page includes enabled plugin markup');
 lc_assert(str_contains($publicHtml, 'property="og:title"'), 'public page includes og title');
@@ -578,6 +778,18 @@ lc_assert(str_contains($publicHtml, 'application/ld+json'), 'public page include
 lc_assert(str_contains($publicHtml, 'googletagmanager.com/gtag/js?id=G-DEEPTEST1'), 'public page includes GA4 script');
 lc_assert(str_contains($publicHtml, 'gtag("config","G-DEEPTEST1")') || str_contains($publicHtml, 'gtag("config", "G-DEEPTEST1")'), 'public page includes GA4 config');
 lc_assert(!str_contains($publicHtml, 'Agency Console'), 'public page does not leak admin white-label branding');
+$corporateSite = $data['site'];
+$corporateSite['theme_preset'] = 'corporate';
+$corporateSite['font_pairing'] = 'humanist';
+$corporateHtml = ccms_render_public_page($corporateSite, $homepage, ccms_menu_pages($data));
+lc_assert(str_contains($corporateHtml, '--site-surface-radius:8px'), 'corporate profile sets tight surface radius');
+lc_assert(str_contains($corporateHtml, 'Verdana, Geneva, sans-serif'), 'font pairing overrides corporate body font');
+$playfulSite = $data['site'];
+$playfulSite['theme_preset'] = 'playful';
+$playfulSite['font_pairing'] = 'modern';
+$playfulHtml = ccms_render_public_page($playfulSite, $homepage, ccms_menu_pages($data));
+lc_assert(str_contains($playfulHtml, '--site-surface-radius:32px'), 'playful profile sets large surface radius');
+lc_assert(str_contains($playfulHtml, '--site-space-scale:1.3'), 'playful profile increases spacing scale');
 lc_assert(ccms_capsule_can_render(['blocks' => [['type' => 'unknown_block']]]) === false, 'unknown block capsule falls back correctly');
 $sitemapXml = ccms_render_sitemap_xml($data);
 lc_assert(str_contains($sitemapXml, '<urlset'), 'sitemap xml renders urlset');
@@ -614,6 +826,8 @@ lc_assert(($backupPayload['format'] ?? '') === 'linuxcms-backup', 'backup payloa
 lc_assert(count($backupPayload['uploads'] ?? []) >= 1, 'backup payload includes uploaded files');
 $mutatedPayload = $backupPayload;
 $mutatedPayload['data']['site']['title'] = 'Restored Test Site';
+$mutatedPayload['data']['site']['theme_preset'] = 'playful';
+$mutatedPayload['data']['site']['font_pairing'] = 'evil';
 $mutatedPayload['data']['site']['trusted_plugins_enabled'] = true;
 $mutatedPayload['data']['site']['enabled_plugins'] = ['announcement-chip', 'malicious-plugin'];
 $mutatedPayload['data']['site']['colors']['evil'] = '#000000';
@@ -623,6 +837,8 @@ $mutatedPayload['uploads'][] = [
 ];
 $restoredData = ccms_import_backup_payload($mutatedPayload);
 lc_assert(($restoredData['site']['title'] ?? '') === 'Restored Test Site', 'backup import restores mutated site title');
+lc_assert(($restoredData['site']['theme_preset'] ?? '') === 'playful', 'backup import restores extended visual profile');
+lc_assert(($restoredData['site']['font_pairing'] ?? '') === 'auto', 'backup import normalizes invalid font pairing');
 lc_assert(($restoredData['site']['trusted_plugins_enabled'] ?? false) === true, 'backup import restores trusted plugins flag');
 lc_assert(($restoredData['site']['enabled_plugins'] ?? []) === ['announcement-chip'], 'backup import filters unknown plugins');
 lc_assert(!isset($restoredData['site']['colors']['evil']), 'backup import whitelists site color keys');
@@ -726,7 +942,8 @@ $_SERVER['REQUEST_METHOD'] = 'GET';
 ob_start();
 include $sourceRoot . '/r-admin/index.php';
 $siteHtml = ob_get_clean();
-lc_assert(str_contains($siteHtml, 'Tema visual'), 'site settings render theme preset selector');
+lc_assert(str_contains($siteHtml, 'Perfil visual'), 'site settings render visual profile selector');
+lc_assert(str_contains($siteHtml, 'Tipografía'), 'site settings render font pairing selector');
 lc_assert(str_contains($siteHtml, 'CSS personalizado del sitio'), 'site settings render custom css editor');
 lc_assert(str_contains($siteHtml, 'Google Analytics 4'), 'site settings render analytics provider selector');
 lc_assert(str_contains($siteHtml, 'ID / dominio analytics'), 'site settings render analytics id field');
@@ -914,6 +1131,8 @@ lc_assert(str_contains($styleAttr, 'background:#fff'), 'section style attr inclu
 $buttonStyleAttr = ccms_capsule_section_style_attr(['style' => ['button_bg' => '#112233', 'button_text_color' => '#ffffff']], '');
 lc_assert(str_contains($buttonStyleAttr, '--ccms-button-bg:#112233'), 'section style attr includes button background var');
 lc_assert(str_contains($buttonStyleAttr, '--ccms-button-color:#ffffff'), 'section style attr includes button text color var');
+$backgroundEffectAttr = ccms_capsule_section_style_attr(['style' => ['background_effect' => 'dots']], '');
+lc_assert(str_contains($backgroundEffectAttr, 'data-ccms-bg="dots"'), 'section style attr includes background effect attribute');
 lc_assert(ccms_capsule_button_classes(['style' => []], false) === 'ccms-btn', 'button classes default to primary');
 lc_assert(ccms_capsule_button_classes(['style' => ['button_variant' => 'ghost']], false) === 'ccms-btn ccms-btn--ghost', 'button classes support ghost variant');
 $innerAttr = ccms_capsule_inner_style_attr(['style' => ['content_width' => 900]]);

@@ -79,6 +79,46 @@ function ccms_admin_branding(array $site): array
     ];
 }
 
+function ccms_allowed_theme_presets(): array
+{
+    return [
+        'warm',
+        'editorial',
+        'minimal',
+        'bold',
+        'corporate',
+        'playful',
+        'brutalist',
+        'luxury',
+        'startup',
+    ];
+}
+
+function ccms_allowed_font_pairings(): array
+{
+    return [
+        'auto',
+        'modern',
+        'editorial',
+        'elegant',
+        'classic',
+        'mono',
+        'humanist',
+    ];
+}
+
+function ccms_normalize_theme_preset(string $value, string $fallback = 'warm'): string
+{
+    $value = trim($value);
+    return in_array($value, ccms_allowed_theme_presets(), true) ? $value : $fallback;
+}
+
+function ccms_normalize_font_pairing(string $value, string $fallback = 'auto'): string
+{
+    $value = trim($value);
+    return in_array($value, ccms_allowed_font_pairings(), true) ? $value : $fallback;
+}
+
 function ccms_send_common_security_headers(): void
 {
     if (headers_sent()) {

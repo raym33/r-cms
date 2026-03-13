@@ -223,6 +223,16 @@ const cspNonce = bootstrap.cspNonce || "";
       { key: "nav_bg", label: "Navigation background", type: "text", fallback: "rgba(255,255,255,0.92)" },
       { key: "font_family", label: "Body font", type: "text", fallback: "Inter, Arial, Helvetica, sans-serif" },
       { key: "font_heading", label: "Heading font", type: "text", fallback: "Inter, Arial, Helvetica, sans-serif" },
+      { key: "surface_radius", label: "Surface radius", type: "text", fallback: "24px" },
+      { key: "card_radius", label: "Card radius", type: "text", fallback: "24px" },
+      { key: "button_radius", label: "Button radius", type: "text", fallback: "999px" },
+      { key: "image_radius", label: "Image radius", type: "text", fallback: "28px" },
+      { key: "shadow_style", label: "Shadow style", type: "select", fallback: "soft", options: ["soft", "none", "hard", "glow", "layered"] },
+      { key: "spacing_scale", label: "Spacing scale", type: "text", fallback: "1" },
+      { key: "font_weight_heading", label: "Heading weight", type: "select", fallback: "800", options: ["400", "500", "600", "700", "800", "900"] },
+      { key: "letter_spacing_heading", label: "Heading spacing", type: "text", fallback: "0" },
+      { key: "text_transform_heading", label: "Heading transform", type: "select", fallback: "none", options: ["none", "uppercase", "capitalize"] },
+      { key: "line_height_body", label: "Body line height", type: "text", fallback: "1.7" },
     ];
 
     const blockStyleFields = [
@@ -230,6 +240,8 @@ const cspNonce = bootstrap.cspNonce || "";
       { key: "padding_bottom", label: "Padding bottom", type: "number", placeholder: "Default" },
       { key: "content_width", label: "Content width", type: "number", placeholder: "Default" },
       { key: "text_align", label: "Text align", type: "select", options: ["", "left", "center", "right"] },
+      { key: "animation", label: "Animation", type: "select", options: ["", "fade-up", "fade-left", "fade-right", "scale", "none"] },
+      { key: "background_effect", label: "Background effect", type: "select", options: ["", "none", "gradient", "mesh", "grain", "dots", "glass"] },
       { key: "background", label: "Background override", type: "text", placeholder: "#fff or linear-gradient(...)" },
       { key: "text_color", label: "Text color", type: "color", placeholder: "Optional" },
       { key: "button_bg", label: "Button background", type: "color", placeholder: "Optional" },
@@ -239,6 +251,75 @@ const cspNonce = bootstrap.cspNonce || "";
       { key: "button_ghost_text_color", label: "Ghost button text color", type: "color", placeholder: "Optional" },
       { key: "button_ghost_border_color", label: "Ghost button border color", type: "color", placeholder: "Optional" },
     ];
+
+    const blockLayoutOptions = {
+      hero: [
+        { value: "default", label: "Default" },
+        { value: "reversed", label: "Reversed" },
+        { value: "centered", label: "Centered" },
+        { value: "text-only", label: "Text only" },
+      ],
+      hero_fullscreen: [
+        { value: "default", label: "Default" },
+        { value: "reversed", label: "Reversed" },
+        { value: "centered", label: "Centered" },
+        { value: "text-only", label: "Text only" },
+      ],
+      hero_split: [
+        { value: "default", label: "Default" },
+        { value: "reversed", label: "Reversed" },
+        { value: "centered", label: "Centered" },
+        { value: "text-only", label: "Text only" },
+      ],
+      features: [
+        { value: "3-col", label: "3 columns" },
+        { value: "2x2-grid", label: "2x2 grid" },
+        { value: "stacked", label: "Stacked" },
+        { value: "4-col", label: "4 columns" },
+      ],
+      testimonials: [
+        { value: "grid", label: "Grid" },
+        { value: "spotlight", label: "Spotlight" },
+        { value: "review-list", label: "Review list" },
+      ],
+      testimonial_cards: [
+        { value: "grid", label: "Grid" },
+        { value: "spotlight", label: "Spotlight" },
+        { value: "review-list", label: "Review list" },
+      ],
+      pricing: [
+        { value: "3-col", label: "3 columns" },
+        { value: "2-col", label: "2 columns" },
+        { value: "stacked", label: "Stacked" },
+        { value: "comparison", label: "Comparison" },
+      ],
+      pricing_toggle: [
+        { value: "3-col", label: "3 columns" },
+        { value: "2-col", label: "2 columns" },
+        { value: "stacked", label: "Stacked" },
+        { value: "comparison", label: "Comparison" },
+      ],
+      gallery: [
+        { value: "grid", label: "Grid" },
+        { value: "masonry", label: "Masonry" },
+        { value: "spotlight", label: "Spotlight" },
+      ],
+      blog_grid: [
+        { value: "grid", label: "Grid" },
+        { value: "featured-left", label: "Featured left" },
+        { value: "list", label: "List" },
+      ],
+      blog_featured: [
+        { value: "split", label: "Split" },
+        { value: "reversed", label: "Reversed" },
+        { value: "stacked", label: "Stacked" },
+      ],
+      blog_carousel: [
+        { value: "grid", label: "Grid" },
+        { value: "spotlight", label: "Spotlight" },
+        { value: "compact", label: "Compact" },
+      ],
+    };
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -519,6 +600,19 @@ const cspNonce = bootstrap.cspNonce || "";
       if (!builderGlobalStyle) return;
       builderGlobalStyle.innerHTML = capsuleGlobalStyleFields.map((field) => {
         const currentValue = capsuleState.style?.[field.key] ?? field.fallback ?? "";
+        if (field.type === "select") {
+          const options = (field.options || []).map((option) => {
+            const selected = String(currentValue) === String(option) ? "selected" : "";
+            const label = option === "" ? "Default" : option;
+            return `<option value="${escapeHtml(option)}" ${selected}>${escapeHtml(label)}</option>`;
+          }).join("");
+          return `
+            <div class="field">
+              <label>${escapeHtml(field.label)}</label>
+              <select data-builder-global-style="${escapeHtml(field.key)}" data-mode="select">${options}</select>
+            </div>
+          `;
+        }
         if (field.type === "color") {
           return `
             <div class="field">
@@ -541,6 +635,20 @@ const cspNonce = bootstrap.cspNonce || "";
 
     function blockDisplayName(block) {
       return (block?.props && (block.props.title || block.props.brand || block.props.badge || block.props.name)) || block?.type || "Bloque";
+    }
+
+    function renderBlockLayoutField(index, block) {
+      const options = blockLayoutOptions[block?.type || ""];
+      if (!options?.length) return "";
+      const currentValue = String(block?.layout || options[0].value);
+      return `
+        <div class="field">
+          <label>Layout</label>
+          <select data-builder-layout-field="${index}">
+            ${options.map((option) => `<option value="${escapeHtml(option.value)}" ${currentValue === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+          </select>
+        </div>
+      `;
     }
 
     function renderBuilderContext() {
@@ -1262,6 +1370,7 @@ const cspNonce = bootstrap.cspNonce || "";
         const scalarFields = [];
         const complexFields = [];
         const styleFields = blockStyleFields.map((field) => renderBlockStyleField(index, field, block.style?.[field.key] ?? ""));
+        const layoutField = renderBlockLayoutField(index, block);
         Object.entries(block.props || {}).forEach(([key, value]) => {
           if (Array.isArray(value)) {
             complexFields.push(renderRepeaterArray(index, key, value));
@@ -1348,6 +1457,7 @@ const cspNonce = bootstrap.cspNonce || "";
                 <div class="builder-full builder-subsection">
                   <h4>Layout y estilo del bloque</h4>
                   <div class="builder-style-grid">
+                    ${layoutField}
                     ${styleFields.join("")}
                   </div>
                 </div>
@@ -1371,6 +1481,7 @@ const cspNonce = bootstrap.cspNonce || "";
         id: createBlockId(),
         type: template.type,
         props: deepClone(template.props || {}),
+        layout: template.layout || "",
         style: {},
       });
       markAutosaveDirty("Se añadió una sección.");
@@ -1584,6 +1695,18 @@ const cspNonce = bootstrap.cspNonce || "";
     }
 
     if (builderList) {
+      builderList.addEventListener("change", (event) => {
+        if (builderReadOnly) return;
+        const field = event.target.closest("[data-builder-layout-field]");
+        if (!field) return;
+        const index = Number(field.dataset.builderLayoutField || -1);
+        if (index < 0 || index >= capsuleState.blocks.length) return;
+        capsuleState.blocks[index].layout = String(field.value || "").trim();
+        markAutosaveDirty("Se actualizó el layout del bloque.");
+        syncCapsuleTextarea();
+        renderBuilderBlocks();
+      });
+
       builderList.addEventListener("click", (event) => {
         const insertSlot = event.target.closest("[data-builder-insert-slot]");
         if (insertSlot) {

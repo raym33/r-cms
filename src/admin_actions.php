@@ -233,11 +233,8 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             }
             $data['site']['analytics_provider'] = $analyticsProvider;
             $data['site']['analytics_id'] = trim((string) ($_POST['analytics_id'] ?? ''));
-            $themePreset = trim((string) ($_POST['theme_preset'] ?? 'warm'));
-            if (!in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
-                $themePreset = 'warm';
-            }
-            $data['site']['theme_preset'] = $themePreset;
+            $data['site']['theme_preset'] = ccms_normalize_theme_preset((string) ($_POST['theme_preset'] ?? $data['site']['theme_preset'] ?? 'warm'));
+            $data['site']['font_pairing'] = ccms_normalize_font_pairing((string) ($_POST['font_pairing'] ?? $data['site']['font_pairing'] ?? 'auto'));
             $data['site']['custom_css'] = ccms_sanitize_css(trim((string) ($_POST['custom_css'] ?? '')));
             $data['site']['colors'] = [
                 'bg' => trim((string) ($_POST['color_bg'] ?? '#f7f4ee')),
@@ -250,6 +247,7 @@ function ccms_admin_handle_authenticated_post(string $action, array &$data, arra
             ccms_push_audit_log($data, 'site.updated', 'Site settings updated', $currentAdmin, [
                 'contact_email' => $data['site']['contact_email'],
                 'theme_preset' => $data['site']['theme_preset'],
+                'font_pairing' => $data['site']['font_pairing'],
                 'analytics_provider' => $data['site']['analytics_provider'],
                 'white_label_enabled' => $data['site']['white_label_enabled'],
                 'admin_brand_name' => $data['site']['admin_brand_name'],

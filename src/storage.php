@@ -108,6 +108,7 @@ function ccms_default_data(): array
             'analytics_provider' => '',
             'analytics_id' => '',
             'theme_preset' => 'warm',
+            'font_pairing' => 'auto',
             'custom_css' => '',
             'onboarding' => ccms_default_onboarding_state(),
             'trusted_plugins_enabled' => false,
@@ -366,6 +367,8 @@ function ccms_normalize_users(array $data): array
         ? (string) ($data['site']['analytics_provider'] ?? '')
         : '';
     $data['site']['analytics_id'] = trim((string) ($data['site']['analytics_id'] ?? ''));
+    $data['site']['theme_preset'] = ccms_normalize_theme_preset((string) ($data['site']['theme_preset'] ?? 'warm'));
+    $data['site']['font_pairing'] = ccms_normalize_font_pairing((string) ($data['site']['font_pairing'] ?? 'auto'));
     $data['site']['onboarding'] = array_merge(
         ccms_default_onboarding_state(),
         is_array($data['site']['onboarding'] ?? null) ? $data['site']['onboarding'] : []
@@ -699,10 +702,8 @@ function ccms_import_backup_payload(array $payload): array
             ? (string) ($site['analytics_provider'] ?? '')
             : '';
         $data['site']['analytics_id'] = trim((string) ($site['analytics_id'] ?? ''));
-        $themePreset = trim((string) ($site['theme_preset'] ?? $data['site']['theme_preset']));
-        if (in_array($themePreset, ['warm', 'editorial', 'minimal', 'bold'], true)) {
-            $data['site']['theme_preset'] = $themePreset;
-        }
+        $data['site']['theme_preset'] = ccms_normalize_theme_preset((string) ($site['theme_preset'] ?? $data['site']['theme_preset']));
+        $data['site']['font_pairing'] = ccms_normalize_font_pairing((string) ($site['font_pairing'] ?? $data['site']['font_pairing']));
         $data['site']['custom_css'] = ccms_sanitize_css((string) ($site['custom_css'] ?? ''));
         if (is_array($site['onboarding'] ?? null)) {
             $onboarding = $site['onboarding'];

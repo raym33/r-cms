@@ -459,7 +459,7 @@ function ccms_ai_page_record_from_payload(array $payload, array $existingPages, 
     $capsule['meta']['business_name'] = (string) ($capsule['meta']['business_name'] ?? $title);
     $capsule['meta']['template'] = (string) ($capsule['meta']['template'] ?? 'generic');
     $capsule['style'] ??= [];
-    $htmlContent = ccms_render_capsule_body($capsule);
+    $htmlContent = ccms_render_capsule_body($capsule, $site);
     $status = trim((string) ($page['status'] ?? 'draft'));
     if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
         $status = 'draft';

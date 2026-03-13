@@ -52,7 +52,7 @@
       </div>
       <div class="split-2">
         <div class="field">
-          <label>Tema visual</label>
+          <label>Perfil visual</label>
           <select name="theme_preset">
             <?php
               $themeOptions = [
@@ -60,6 +60,11 @@
                   'editorial' => 'Editorial',
                   'minimal' => 'Minimal',
                   'bold' => 'Bold',
+                  'corporate' => 'Corporate',
+                  'playful' => 'Playful',
+                  'brutalist' => 'Brutalist',
+                  'luxury' => 'Luxury',
+                  'startup' => 'Startup',
               ];
               $activeThemePreset = (string) ($data['site']['theme_preset'] ?? 'warm');
             ?>
@@ -70,7 +75,26 @@
         </div>
         <div class="help-box" style="padding:14px 16px">
           <h4 style="margin:0 0 6px">Cómo funciona</h4>
-          <p class="small" style="margin:0">El preset cambia tipografía, radios, sombras y el look general. Los colores siguen mandando desde la paleta de abajo.</p>
+          <p class="small" style="margin:0">El perfil cambia tipografía, radios, sombras, peso visual y espaciado general. Los colores siguen mandando desde la paleta de abajo.</p>
+        </div>
+      </div>
+      <div class="split-2">
+        <div class="field">
+          <label>Tipografía</label>
+          <?php $activeFontPairing = (string) ($data['site']['font_pairing'] ?? 'auto'); ?>
+          <select name="font_pairing">
+            <option value="auto" <?= $activeFontPairing === 'auto' ? 'selected' : '' ?>>Automática según perfil</option>
+            <option value="modern" <?= $activeFontPairing === 'modern' ? 'selected' : '' ?>>Modern</option>
+            <option value="editorial" <?= $activeFontPairing === 'editorial' ? 'selected' : '' ?>>Editorial</option>
+            <option value="elegant" <?= $activeFontPairing === 'elegant' ? 'selected' : '' ?>>Elegant</option>
+            <option value="classic" <?= $activeFontPairing === 'classic' ? 'selected' : '' ?>>Classic</option>
+            <option value="mono" <?= $activeFontPairing === 'mono' ? 'selected' : '' ?>>Mono</option>
+            <option value="humanist" <?= $activeFontPairing === 'humanist' ? 'selected' : '' ?>>Humanist</option>
+          </select>
+        </div>
+        <div class="help-box" style="padding:14px 16px">
+          <h4 style="margin:0 0 6px">Cuándo tocarlo</h4>
+          <p class="small" style="margin:0">Déjalo en automático para respetar el perfil visual. Cámbialo si quieres una voz tipográfica distinta sin rehacer colores ni bloques.</p>
         </div>
       </div>
       <div class="color-grid">
@@ -109,7 +133,8 @@
     <ul>
       <li>Cambia los colores principales si quieres adaptar toda la web a una nueva marca.</li>
       <li>El bloque white-label sirve para entregar el panel con tu nombre, logo y marca en vez de LinuxCMS.</li>
-      <li>Elige un preset visual si quieres cambiar el tono general sin tocar cada bloque.</li>
+      <li>Elige un perfil visual si quieres cambiar el tono general sin tocar cada bloque.</li>
+      <li>Usa la tipografía en modo automático para que el perfil siga teniendo coherencia.</li>
       <li>Usa el CSS personalizado solo para ajustes globales más avanzados.</li>
       <li>El título y el subtítulo aparecen en la cabecera y ayudan al posicionamiento básico.</li>
       <li>El email de contacto se puede reutilizar luego en formularios y páginas.</li>
